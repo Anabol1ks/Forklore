@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package forklore.common.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/common/v1;commonv1";
+
+message UUID { string value = 1; }
+
+enum UserRole {
+  USER_ROLE_UNSPECIFIED = 0;
+  USER_ROLE_USER = 1;
+  USER_ROLE_ADMIN = 2;
+}
+
+enum UserStatus {
+  USER_STATUS_UNSPECIFIED = 0;
+  USER_STATUS_ACTIVE = 1;
+  USER_STATUS_BLOCKED = 2;
+  USER_STATUS_DELETED = 3;
+}

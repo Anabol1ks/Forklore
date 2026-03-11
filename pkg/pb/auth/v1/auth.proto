@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package forklore.auth.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/auth/v1;authv1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "common/v1/common.proto";
+
+service AuthService {
+  rpc Register(RegisterRequest) returns (AuthResponse);
+  rpc Login(LoginRequest) returns (AuthResponse);
+  rpc Refresh(RefreshRequest) returns (AuthResponse);
+
+  rpc Logout(LogoutRequest) returns (google.protobuf.Empty);
+  rpc LogoutAll(google.protobuf.Empty) returns (google.protobuf.Empty);
+
+  rpc Introspect(IntrospectRequest) returns (IntrospectResponse);
+  rpc GetMe(google.protobuf.Empty) returns (GetMeResponse);
+
+}
+
+message User {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+
+  string username = 2 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 32,
+      pattern: "^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$"
+    }
+  ];
+
+  string email = 3 [(validate.rules).string = {email: true, max_len: 254}];
+
+  common.v1.UserRole role = 4;
+  common.v1.UserStatus status = 5;
+
+  google.protobuf.Timestamp created_at = 6 [(validate.rules).timestamp = {required: true}];
+  google.protobuf.Timestamp updated_at = 7;
+  google.protobuf.Timestamp last_login_at = 8;
+}
+
+message TokenPair {
+  string access_token = 1 [(validate.rules).string = {min_len: 16, max_len: 4096}];
+  string refresh_token = 2 [(validate.rules).string = {min_len: 32, max_len: 1024}];
+  string token_type = 3 [(validate.rules).string = {const: "Bearer"}];
+  google.protobuf.Timestamp access_expires_at = 4;
+  google.protobuf.Timestamp refresh_expires_at = 5;
+  common.v1.UUID session_id = 6 [(validate.rules).message = {required: true}];
+}
+
+message AuthResponse {
+  User user = 1;
+  TokenPair tokens = 2;
+}
+
+message RegisterRequest {
+  string username = 1 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 32,
+      pattern: "^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$"
+    }
+  ];
+
+  string email = 2 [
+    (validate.rules).string = {
+      email: true,
+      max_len: 254
+    }
+  ];
+
+  string password = 3 [
+    (validate.rules).string = {
+      min_len: 8,
+      max_len: 72
+    }
+  ];
+
+  string device_name = 4 [(validate.rules).string = {max_len: 128}];
+  string user_agent = 5 [(validate.rules).string = {max_len: 512}];
+  string ip = 6 [(validate.rules).string = {max_len: 64}];
+}
+
+message LoginRequest {
+  string login = 1 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 254
+    }
+  ];
+
+  string password = 2 [
+    (validate.rules).string = {
+      min_len: 8,
+      max_len: 72
+    }
+  ];
+
+  string device_name = 3 [(validate.rules).string = {max_len: 128}];
+  string user_agent = 4 [(validate.rules).string = {max_len: 512}];
+  string ip = 5 [(validate.rules).string = {max_len: 64}];
+}
+
+message RefreshRequest {
+  string refresh_token = 1 [
+    (validate.rules).string = {
+      min_len: 32,
+      max_len: 1024
+    }
+  ];
+
+  string device_name = 2 [(validate.rules).string = {max_len: 128}];
+  string user_agent = 3 [(validate.rules).string = {max_len: 512}];
+  string ip = 4 [(validate.rules).string = {max_len: 64}];
+}
+
+message LogoutRequest {
+  string refresh_token = 1 [
+    (validate.rules).string = {
+      min_len: 32,
+      max_len: 1024
+    }
+  ];
+}
+
+message IntrospectRequest {
+  string access_token = 1 [
+    (validate.rules).string = {
+      min_len: 16,
+      max_len: 4096
+    }
+  ];
+}
+
+message IntrospectResponse {
+  bool active = 1;
+  common.v1.UUID user_id = 2;
+  common.v1.UUID session_id = 3;
+  string username = 4;
+  string email = 5;
+  common.v1.UserRole role = 6;
+  common.v1.UserStatus status = 7;
+  google.protobuf.Timestamp expires_at = 8;
+}
+
+message GetMeResponse {
+  User user = 1;
+}
