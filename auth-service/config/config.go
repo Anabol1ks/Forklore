@@ -14,10 +14,18 @@ import (
 type Config struct {
 	Port string
 	DB   DB
+	Auth Auth
 }
 
 type DB struct {
 	database.Config
+}
+
+type Auth struct {
+	JWTSecret       string
+	AccessTokenTTL  time.Duration
+	RefreshTokenTTL time.Duration
+	BcryptCost      int
 }
 
 func Load(log *zap.Logger) *Config {
@@ -32,6 +40,12 @@ func Load(log *zap.Logger) *Config {
 				Name:     getEnv("DB_NAME", log),
 				SSLMode:  getEnv("DB_SSLMODE", log),
 			},
+		},
+		Auth: Auth{
+			JWTSecret:       getEnv("JWTSecret", log),
+			AccessTokenTTL:  parseDurationWithDays(getEnv("AccessTokenTTL", log)),
+			RefreshTokenTTL: parseDurationWithDays(getEnv("RefreshTokenTTL", log)),
+			BcryptCost:      atoiDefault(getEnv("BcryptCost", log), 12),
 		},
 	}
 }
