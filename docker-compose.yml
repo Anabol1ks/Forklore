@@ -17,10 +17,29 @@ services:
       start_period: 10s
     networks:
       - forklore-network
+  repository-db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${DB_REPO_USER}
+      POSTGRES_PASSWORD: ${DB_REPO_PASSWORD}
+      POSTGRES_DB: repository-db
+    volumes:
+      - repository_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_REPO_USER} -d ${DB_REPO_NAME} -h localhost -p 5432 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - forklore-network
 
 
 volumes:
   auth_db_data:
+  repository_db_data:
 
 networks:
   forklore-network:

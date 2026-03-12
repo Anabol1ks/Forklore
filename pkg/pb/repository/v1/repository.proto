@@ -1,0 +1,192 @@
+syntax = "proto3";
+
+package forklore.repository.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/repository/v1;repositoryv1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "common/v1/common.proto";
+
+service RepositoryService {
+  rpc CreateRepository(CreateRepositoryRequest) returns (CreateRepositoryResponse);
+  rpc GetRepositoryById(GetRepositoryByIdRequest) returns (GetRepositoryResponse);
+  rpc GetRepositoryBySlug(GetRepositoryBySlugRequest) returns (GetRepositoryResponse);
+
+  rpc UpdateRepository(UpdateRepositoryRequest) returns (UpdateRepositoryResponse);
+  rpc DeleteRepository(DeleteRepositoryRequest) returns (google.protobuf.Empty);
+
+  rpc ForkRepository(ForkRepositoryRequest) returns (ForkRepositoryResponse);
+
+  rpc ListMyRepositories(ListMyRepositoriesRequest) returns (ListRepositoriesResponse);
+  rpc ListUserRepositories(ListUserRepositoriesRequest) returns (ListRepositoriesResponse);
+  rpc ListForks(ListForksRequest) returns (ListRepositoriesResponse);
+}
+
+message Repository {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID owner_id = 2 [(validate.rules).message = {required: true}];
+
+  string name = 3 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 100
+    }
+  ];
+
+  string slug = 4 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 64,
+      pattern: "^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$"
+    }
+  ];
+
+  string description = 5 [
+    (validate.rules).string = {
+      max_len: 2000
+    }
+  ];
+
+  common.v1.RepositoryVisibility visibility = 6;
+  common.v1.RepositoryType type = 7;
+
+  common.v1.UUID parent_repo_id = 8;
+
+  google.protobuf.Timestamp created_at = 9 [(validate.rules).timestamp = {required: true}];
+  google.protobuf.Timestamp updated_at = 10;
+  google.protobuf.Timestamp deleted_at = 11;
+}
+
+message CreateRepositoryRequest {
+  string name = 1 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 100
+    }
+  ];
+
+  string slug = 2 [
+    (validate.rules).string = {
+      max_len: 64
+    }
+  ];
+
+  string description = 3 [
+    (validate.rules).string = {
+      max_len: 2000
+    }
+  ];
+
+  common.v1.RepositoryVisibility visibility = 4;
+  common.v1.RepositoryType type = 5;
+}
+
+message CreateRepositoryResponse {
+  Repository repository = 1;
+}
+
+message GetRepositoryByIdRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message GetRepositoryBySlugRequest {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+
+  string slug = 2 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 64,
+      pattern: "^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$"
+    }
+  ];
+}
+
+message GetRepositoryResponse {
+  Repository repository = 1;
+}
+
+message UpdateRepositoryRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+
+  string name = 2 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 100
+    }
+  ];
+
+  string slug = 3 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 64,
+      pattern: "^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$"
+    }
+  ];
+
+  string description = 4 [
+    (validate.rules).string = {
+      max_len: 2000
+    }
+  ];
+
+  common.v1.RepositoryVisibility visibility = 5;
+  common.v1.RepositoryType type = 6;
+}
+
+message UpdateRepositoryResponse {
+  Repository repository = 1;
+}
+
+message DeleteRepositoryRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message ForkRepositoryRequest {
+  common.v1.UUID source_repo_id = 1 [(validate.rules).message = {required: true}];
+
+  string name = 2 [
+    (validate.rules).string = {
+      max_len: 100
+    }
+  ];
+
+  string slug = 3 [
+    (validate.rules).string = {
+      max_len: 64
+    }
+  ];
+
+  string description = 4 [
+    (validate.rules).string = {
+      max_len: 2000
+    }
+  ];
+}
+
+message ForkRepositoryResponse {
+  Repository repository = 1;
+}
+
+message ListMyRepositoriesRequest {
+  uint32 limit = 1 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 2;
+}
+
+message ListUserRepositoriesRequest {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  uint32 limit = 2 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 3;
+}
+
+message ListForksRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+  uint32 limit = 2 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 3;
+}
+
+message ListRepositoriesResponse {
+  repeated Repository repositories = 1;
+  uint64 total = 2;
+}

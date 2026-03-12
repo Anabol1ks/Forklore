@@ -122,6 +122,107 @@ func (UserStatus) EnumDescriptor() ([]byte, []int) {
 	return file_common_v1_common_proto_rawDescGZIP(), []int{1}
 }
 
+type RepositoryVisibility int32
+
+const (
+	RepositoryVisibility_REPOSITORY_VISIBILITY_UNSPECIFIED RepositoryVisibility = 0
+	RepositoryVisibility_REPOSITORY_VISIBILITY_PUBLIC      RepositoryVisibility = 1
+	RepositoryVisibility_REPOSITORY_VISIBILITY_PRIVATE     RepositoryVisibility = 2
+)
+
+// Enum value maps for RepositoryVisibility.
+var (
+	RepositoryVisibility_name = map[int32]string{
+		0: "REPOSITORY_VISIBILITY_UNSPECIFIED",
+		1: "REPOSITORY_VISIBILITY_PUBLIC",
+		2: "REPOSITORY_VISIBILITY_PRIVATE",
+	}
+	RepositoryVisibility_value = map[string]int32{
+		"REPOSITORY_VISIBILITY_UNSPECIFIED": 0,
+		"REPOSITORY_VISIBILITY_PUBLIC":      1,
+		"REPOSITORY_VISIBILITY_PRIVATE":     2,
+	}
+)
+
+func (x RepositoryVisibility) Enum() *RepositoryVisibility {
+	p := new(RepositoryVisibility)
+	*p = x
+	return p
+}
+
+func (x RepositoryVisibility) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RepositoryVisibility) Descriptor() protoreflect.EnumDescriptor {
+	return file_common_v1_common_proto_enumTypes[2].Descriptor()
+}
+
+func (RepositoryVisibility) Type() protoreflect.EnumType {
+	return &file_common_v1_common_proto_enumTypes[2]
+}
+
+func (x RepositoryVisibility) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RepositoryVisibility.Descriptor instead.
+func (RepositoryVisibility) EnumDescriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{2}
+}
+
+type RepositoryType int32
+
+const (
+	RepositoryType_REPOSITORY_TYPE_UNSPECIFIED RepositoryType = 0
+	RepositoryType_REPOSITORY_TYPE_ARTICLE     RepositoryType = 1
+	RepositoryType_REPOSITORY_TYPE_NOTES       RepositoryType = 2
+	RepositoryType_REPOSITORY_TYPE_MIXED       RepositoryType = 3
+)
+
+// Enum value maps for RepositoryType.
+var (
+	RepositoryType_name = map[int32]string{
+		0: "REPOSITORY_TYPE_UNSPECIFIED",
+		1: "REPOSITORY_TYPE_ARTICLE",
+		2: "REPOSITORY_TYPE_NOTES",
+		3: "REPOSITORY_TYPE_MIXED",
+	}
+	RepositoryType_value = map[string]int32{
+		"REPOSITORY_TYPE_UNSPECIFIED": 0,
+		"REPOSITORY_TYPE_ARTICLE":     1,
+		"REPOSITORY_TYPE_NOTES":       2,
+		"REPOSITORY_TYPE_MIXED":       3,
+	}
+)
+
+func (x RepositoryType) Enum() *RepositoryType {
+	p := new(RepositoryType)
+	*p = x
+	return p
+}
+
+func (x RepositoryType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RepositoryType) Descriptor() protoreflect.EnumDescriptor {
+	return file_common_v1_common_proto_enumTypes[3].Descriptor()
+}
+
+func (RepositoryType) Type() protoreflect.EnumType {
+	return &file_common_v1_common_proto_enumTypes[3]
+}
+
+func (x RepositoryType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RepositoryType.Descriptor instead.
+func (RepositoryType) EnumDescriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{3}
+}
+
 type UUID struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -182,7 +283,16 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x17USER_STATUS_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12USER_STATUS_ACTIVE\x10\x01\x12\x17\n" +
 	"\x13USER_STATUS_BLOCKED\x10\x02\x12\x17\n" +
-	"\x13USER_STATUS_DELETED\x10\x03B9Z7github.com/Anabol1ks/Forklore/pkg/pb/common/v1;commonv1b\x06proto3"
+	"\x13USER_STATUS_DELETED\x10\x03*\x82\x01\n" +
+	"\x14RepositoryVisibility\x12%\n" +
+	"!REPOSITORY_VISIBILITY_UNSPECIFIED\x10\x00\x12 \n" +
+	"\x1cREPOSITORY_VISIBILITY_PUBLIC\x10\x01\x12!\n" +
+	"\x1dREPOSITORY_VISIBILITY_PRIVATE\x10\x02*\x84\x01\n" +
+	"\x0eRepositoryType\x12\x1f\n" +
+	"\x1bREPOSITORY_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17REPOSITORY_TYPE_ARTICLE\x10\x01\x12\x19\n" +
+	"\x15REPOSITORY_TYPE_NOTES\x10\x02\x12\x19\n" +
+	"\x15REPOSITORY_TYPE_MIXED\x10\x03B9Z7github.com/Anabol1ks/Forklore/pkg/pb/common/v1;commonv1b\x06proto3"
 
 var (
 	file_common_v1_common_proto_rawDescOnce sync.Once
@@ -196,12 +306,14 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_common_v1_common_proto_rawDescData
 }
 
-var file_common_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_common_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
 var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_common_v1_common_proto_goTypes = []any{
-	(UserRole)(0),   // 0: forklore.common.v1.UserRole
-	(UserStatus)(0), // 1: forklore.common.v1.UserStatus
-	(*UUID)(nil),    // 2: forklore.common.v1.UUID
+	(UserRole)(0),             // 0: forklore.common.v1.UserRole
+	(UserStatus)(0),           // 1: forklore.common.v1.UserStatus
+	(RepositoryVisibility)(0), // 2: forklore.common.v1.RepositoryVisibility
+	(RepositoryType)(0),       // 3: forklore.common.v1.RepositoryType
+	(*UUID)(nil),              // 4: forklore.common.v1.UUID
 }
 var file_common_v1_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -221,7 +333,7 @@ func file_common_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_v1_common_proto_rawDesc), len(file_common_v1_common_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      4,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
