@@ -21,7 +21,11 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 
 	// Таблицы через GORM AutoMigrate
 	log.Info("Создание базовых таблиц")
-	if err := db.AutoMigrate(&model.Repository{}); err != nil {
+	modelsAny := []any{
+		&model.RepositoryTag{},
+		&model.Repository{},
+	}
+	if err := db.AutoMigrate(modelsAny...); err != nil {
 		log.Error("Не удалось создать базовые таблицы", zap.Error(err))
 		return err
 	}
@@ -33,6 +37,21 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 		name string
 		sql  string
 	}{
+		{
+			"chk_repository_tags_name_len",
+			`ALTER TABLE repository_tags ADD CONSTRAINT chk_repository_tags_name_len
+				CHECK (char_length(name) BETWEEN 2 AND 64)`,
+		},
+		{
+			"chk_repository_tags_slug_len",
+			`ALTER TABLE repository_tags ADD CONSTRAINT chk_repository_tags_slug_len
+				CHECK (char_length(slug) BETWEEN 2 AND 64)`,
+		},
+		{
+			"chk_repository_tags_slug_format",
+			`ALTER TABLE repository_tags ADD CONSTRAINT chk_repository_tags_slug_format
+				CHECK (slug ~ '^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$')`,
+		},
 		{
 			"chk_repositories_name_len",
 			`ALTER TABLE repositories ADD CONSTRAINT chk_repositories_name_len
@@ -74,6 +93,8 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 			ON repositories(owner_id, slug) WHERE deleted_at IS NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_repositories_owner_id_active
 			ON repositories(owner_id) WHERE deleted_at IS NULL`,
+		`CREATE INDEX IF NOT EXISTS idx_repositories_tag_id_active
+			ON repositories(tag_id) WHERE deleted_at IS NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_repositories_parent_repo_id_active
 			ON repositories(parent_repo_id) WHERE deleted_at IS NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_repositories_visibility_active

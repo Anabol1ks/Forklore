@@ -25,6 +25,7 @@ const (
 type Repository struct {
 	ID           uuid.UUID            `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	OwnerID      uuid.UUID            `gorm:"type:uuid;not null;index"`
+	TagID        uuid.UUID            `gorm:"type:uuid;not null;index"`
 	Name         string               `gorm:"type:varchar(100);not null"`
 	Slug         string               `gorm:"type:varchar(64);not null"`
 	Description  *string              `gorm:"type:text"`
@@ -32,6 +33,7 @@ type Repository struct {
 	Type         RepositoryType       `gorm:"type:varchar(16);not null;default:'mixed'"`
 	ParentRepoID *uuid.UUID           `gorm:"type:uuid;index"`
 	ParentRepo   *Repository          `gorm:"foreignKey:ParentRepoID;references:ID;constraint:OnDelete:SET NULL"`
+	Tag          *RepositoryTag       `gorm:"foreignKey:TagID;references:ID"`
 
 	CreatedAt time.Time      `gorm:"type:timestamptz;not null;default:now()"`
 	UpdatedAt time.Time      `gorm:"type:timestamptz;not null;default:now()"`

@@ -22,20 +22,48 @@ service RepositoryService {
   rpc ListMyRepositories(ListMyRepositoriesRequest) returns (ListRepositoriesResponse);
   rpc ListUserRepositories(ListUserRepositoriesRequest) returns (ListRepositoriesResponse);
   rpc ListForks(ListForksRequest) returns (ListRepositoriesResponse);
+
+  rpc ListRepositoryTags(google.protobuf.Empty) returns (ListRepositoryTagsResponse);
+}
+
+message RepositoryTag {
+  common.v1.UUID tag_id = 1 [(validate.rules).message = {required: true}];
+  string name = 2 [
+    (validate.rules).string = {
+      min_len: 2,
+      max_len: 64
+    }
+  ];
+  string slug = 3 [
+    (validate.rules).string = {
+      min_len: 2,
+      max_len: 64,
+      pattern: "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+    }
+  ];
+  string description = 4 [
+    (validate.rules).string = {
+      max_len: 1000
+    }
+  ];
+  bool is_active = 5;
+  google.protobuf.Timestamp created_at = 6 [(validate.rules).timestamp = {required: true}];
+  google.protobuf.Timestamp updated_at = 7;
 }
 
 message Repository {
   common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
   common.v1.UUID owner_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
 
-  string name = 3 [
+  string name = 4 [
     (validate.rules).string = {
       min_len: 3,
       max_len: 100
     }
   ];
 
-  string slug = 4 [
+  string slug = 5 [
     (validate.rules).string = {
       min_len: 3,
       max_len: 64,
@@ -43,20 +71,21 @@ message Repository {
     }
   ];
 
-  string description = 5 [
+  string description = 6 [
     (validate.rules).string = {
       max_len: 2000
     }
   ];
 
-  common.v1.RepositoryVisibility visibility = 6;
-  common.v1.RepositoryType type = 7;
+  common.v1.RepositoryVisibility visibility = 7;
+  common.v1.RepositoryType type = 8;
 
-  common.v1.UUID parent_repo_id = 8;
+  RepositoryTag tag = 9;
+  common.v1.UUID parent_repo_id = 10;
 
-  google.protobuf.Timestamp created_at = 9 [(validate.rules).timestamp = {required: true}];
-  google.protobuf.Timestamp updated_at = 10;
-  google.protobuf.Timestamp deleted_at = 11;
+  google.protobuf.Timestamp created_at = 11 [(validate.rules).timestamp = {required: true}];
+  google.protobuf.Timestamp updated_at = 12;
+  google.protobuf.Timestamp deleted_at = 13;
 }
 
 message CreateRepositoryRequest {
@@ -79,8 +108,9 @@ message CreateRepositoryRequest {
     }
   ];
 
-  common.v1.RepositoryVisibility visibility = 4;
-  common.v1.RepositoryType type = 5;
+  common.v1.UUID tag_id = 4 [(validate.rules).message = {required: true}];
+  common.v1.RepositoryVisibility visibility = 5;
+  common.v1.RepositoryType type = 6;
 }
 
 message CreateRepositoryResponse {
@@ -131,8 +161,9 @@ message UpdateRepositoryRequest {
     }
   ];
 
-  common.v1.RepositoryVisibility visibility = 5;
-  common.v1.RepositoryType type = 6;
+  common.v1.UUID tag_id = 5;
+  common.v1.RepositoryVisibility visibility = 6;
+  common.v1.RepositoryType type = 7;
 }
 
 message UpdateRepositoryResponse {
@@ -189,4 +220,8 @@ message ListForksRequest {
 message ListRepositoriesResponse {
   repeated Repository repositories = 1;
   uint64 total = 2;
+}
+
+message ListRepositoryTagsResponse {
+  repeated RepositoryTag tags = 1;
 }

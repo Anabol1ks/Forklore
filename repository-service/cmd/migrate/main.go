@@ -23,6 +23,8 @@ func main() {
 	log := logger.L()
 	cfg := config.Load(log)
 
+	log.Info("CFG", zap.Any("cfg", cfg))
+
 	db := database.ConnectDB(&cfg.DB.Config, log)
 	defer database.CloseDB(db, log)
 

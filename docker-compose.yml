@@ -1,6 +1,7 @@
 services:
   auth-db:
     image: postgres:17
+    env_file: .env
     environment:
       POSTGRES_USER: ${DB_AUTH_USER}
       POSTGRES_PASSWORD: ${DB_AUTH_PASSWORD}
@@ -17,16 +18,17 @@ services:
       start_period: 10s
     networks:
       - forklore-network
-  repository-db:
+  repo-db:
     image: postgres:17
+    env_file: .env
     environment:
       POSTGRES_USER: ${DB_REPO_USER}
       POSTGRES_PASSWORD: ${DB_REPO_PASSWORD}
-      POSTGRES_DB: repository-db
+      POSTGRES_DB: repo-db
     volumes:
-      - repository_db_data:/var/lib/postgresql/data
+      - repo_db_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "5437:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_REPO_USER} -d ${DB_REPO_NAME} -h localhost -p 5432 || exit 1"]
       interval: 5s
@@ -39,7 +41,7 @@ services:
 
 volumes:
   auth_db_data:
-  repository_db_data:
+  repo_db_data:
 
 networks:
   forklore-network:
