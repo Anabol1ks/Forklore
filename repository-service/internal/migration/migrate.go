@@ -34,52 +34,61 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 	// CHECK-ограничения
 	log.Info("Создание CHECK-ограничений")
 	checks := []struct {
-		name string
-		sql  string
+		table string
+		name  string
+		sql   string
 	}{
 		{
+			"repository_tags",
 			"chk_repository_tags_name_len",
 			`ALTER TABLE repository_tags ADD CONSTRAINT chk_repository_tags_name_len
 				CHECK (char_length(name) BETWEEN 2 AND 64)`,
 		},
 		{
+			"repository_tags",
 			"chk_repository_tags_slug_len",
 			`ALTER TABLE repository_tags ADD CONSTRAINT chk_repository_tags_slug_len
 				CHECK (char_length(slug) BETWEEN 2 AND 64)`,
 		},
 		{
+			"repository_tags",
 			"chk_repository_tags_slug_format",
 			`ALTER TABLE repository_tags ADD CONSTRAINT chk_repository_tags_slug_format
 				CHECK (slug ~ '^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$')`,
 		},
 		{
+			"repositories",
 			"chk_repositories_name_len",
 			`ALTER TABLE repositories ADD CONSTRAINT chk_repositories_name_len
 				CHECK (char_length(name) BETWEEN 3 AND 100)`,
 		},
 		{
+			"repositories",
 			"chk_repositories_slug_len",
 			`ALTER TABLE repositories ADD CONSTRAINT chk_repositories_slug_len
 				CHECK (char_length(slug) BETWEEN 3 AND 64)`,
 		},
 		{
+			"repositories",
 			"chk_repositories_slug_format",
 			`ALTER TABLE repositories ADD CONSTRAINT chk_repositories_slug_format
 				CHECK (slug ~ '^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$')`,
 		},
 		{
+			"repositories",
 			"chk_repositories_visibility",
 			`ALTER TABLE repositories ADD CONSTRAINT chk_repositories_visibility
 				CHECK (visibility IN ('public', 'private'))`,
 		},
 		{
+			"repositories",
 			"chk_repositories_type",
 			`ALTER TABLE repositories ADD CONSTRAINT chk_repositories_type
 				CHECK (type IN ('article', 'notes', 'mixed'))`,
 		},
 	}
 	for _, c := range checks {
-		if err := addConstraintIfNotExists(db, "repositories", c.name, c.sql); err != nil {
+		if err := addConstraintIfNotExists(db, c.table, c.name, c.sql); err != nil {
 			log.Error("Не удалось создать ограничение", zap.String("constraint", c.name), zap.Error(err))
 			return err
 		}
@@ -109,6 +118,26 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 		}
 	}
 	log.Info("Частичные индексы успешно созданы")
+
+	// Вставка дефолтных тегов (без дублирования по slug)
+	insertTagsSQL := `INSERT INTO repository_tags (name, slug, description)
+	VALUES
+		('Математика', 'mathematics', 'Материалы по математике'),
+		('Физика', 'physics', 'Материалы по физике'),
+		('Программирование', 'programming', 'Материалы по программированию'),
+		('Алгоритмы', 'algorithms', 'Алгоритмы и структуры данных'),
+		('Базы данных', 'databases', 'Материалы по базам данных'),
+		('Машинное обучение', 'machine-learning', 'ML и AI'),
+		('Сети', 'networks', 'Компьютерные сети'),
+		('Операционные системы', 'operating-systems', 'ОС и системное ПО'),
+		('Экономика', 'economics', 'Материалы по экономике'),
+		('Право', 'law', 'Материалы по праву')
+	ON CONFLICT (slug) DO NOTHING;`
+
+	if err := db.Exec(insertTagsSQL).Error; err != nil {
+		log.Error("Не удалось вставить дефолтные теги", zap.Error(err))
+		return err
+	}
 
 	return nil
 }
