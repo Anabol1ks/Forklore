@@ -24,7 +24,7 @@ definitions:
   models.LoginRequest:
     properties:
       login:
-        example: john_doe
+        example: johnDoe
         maxLength: 254
         minLength: 3
         type: string
@@ -65,7 +65,7 @@ definitions:
         minLength: 8
         type: string
       username:
-        example: john_doe
+        example: johnDoe
         maxLength: 32
         minLength: 3
         type: string
@@ -126,7 +126,7 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       username:
-        example: john_doe
+        example: johnDoe
         type: string
     type: object
 host: localhost:8080

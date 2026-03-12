@@ -336,7 +336,7 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 254,
                     "minLength": 3,
-                    "example": "john_doe"
+                    "example": "johnDoe"
                 },
                 "password": {
                     "type": "string",
@@ -393,7 +393,7 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 32,
                     "minLength": 3,
-                    "example": "john_doe"
+                    "example": "johnDoe"
                 }
             }
         },
@@ -468,7 +468,7 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string",
-                    "example": "john_doe"
+                    "example": "johnDoe"
                 }
             }
         }

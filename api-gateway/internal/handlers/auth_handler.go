@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -225,14 +226,13 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 }
 
 // forwardAuth пробрасывает Authorization заголовок в gRPC metadata.
-func forwardAuth(c *gin.Context) *gin.Context {
+func forwardAuth(c *gin.Context) context.Context {
 	token := c.GetHeader("Authorization")
 	if token != "" {
 		md := metadata.Pairs("authorization", token)
-		ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
-		c.Request = c.Request.WithContext(ctx)
+		return metadata.NewOutgoingContext(c.Request.Context(), md)
 	}
-	return c
+	return c.Request.Context()
 }
 
 // extractToken извлекает токен из Authorization заголовка.

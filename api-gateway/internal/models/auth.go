@@ -4,14 +4,14 @@ package models
 
 // RegisterRequest represents registration data.
 type RegisterRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=32" example:"john_doe"`
+	Username string `json:"username" binding:"required,min=3,max=32" example:"johnDoe"`
 	Email    string `json:"email" binding:"required,email,max=254" example:"john@example.com"`
 	Password string `json:"password" binding:"required,min=8,max=72" example:"secureP@ssw0rd"`
 }
 
 // LoginRequest represents login data.
 type LoginRequest struct {
-	Login    string `json:"login" binding:"required,min=3,max=254" example:"john_doe"`
+	Login    string `json:"login" binding:"required,min=3,max=254" example:"johnDoe"`
 	Password string `json:"password" binding:"required,min=8,max=72" example:"secureP@ssw0rd"`
 }
 
@@ -30,7 +30,7 @@ type LogoutRequest struct {
 // UserResponse represents user information.
 type UserResponse struct {
 	UserID      string  `json:"user_id" example:"550e8400-e29b-41d4-a716-446655440000"`
-	Username    string  `json:"username" example:"john_doe"`
+	Username    string  `json:"username" example:"johnDoe"`
 	Email       string  `json:"email" example:"john@example.com"`
 	Role        string  `json:"role" example:"user" enums:"user,admin"`
 	Status      string  `json:"status" example:"active" enums:"active,blocked,deleted"`

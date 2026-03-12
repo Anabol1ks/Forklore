@@ -330,7 +330,7 @@
                     "type": "string",
                     "maxLength": 254,
                     "minLength": 3,
-                    "example": "john_doe"
+                    "example": "johnDoe"
                 },
                 "password": {
                     "type": "string",
@@ -387,7 +387,7 @@
                     "type": "string",
                     "maxLength": 32,
                     "minLength": 3,
-                    "example": "john_doe"
+                    "example": "johnDoe"
                 }
             }
         },
@@ -462,7 +462,7 @@
                 },
                 "username": {
                     "type": "string",
-                    "example": "john_doe"
+                    "example": "johnDoe"
                 }
             }
         }
