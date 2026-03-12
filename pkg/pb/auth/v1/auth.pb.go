@@ -725,10 +725,10 @@ var File_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x12auth/v1/auth.proto\x12\x10forklore.auth.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x16common/v1/common.proto\"\xe0\x03\n" +
+	"\x12auth/v1/auth.proto\x12\x10forklore.auth.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17validate/validate.proto\x1a\x16common/v1/common.proto\"\xe9\x03\n" +
 	"\x04User\x12;\n" +
-	"\auser_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06userId\x12O\n" +
-	"\busername\x18\x02 \x01(\tB3\xfaB0r.\x10\x03\x18 2(^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$R\busername\x12 \n" +
+	"\auser_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06userId\x12X\n" +
+	"\busername\x18\x02 \x01(\tB<\xfaB9r7\x10\x03\x18 21^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30}[A-Za-z0-9])?$R\busername\x12 \n" +
 	"\x05email\x18\x03 \x01(\tB\n" +
 	"\xfaB\ar\x05\x18\xfe\x01`\x01R\x05email\x120\n" +
 	"\x04role\x18\x04 \x01(\x0e2\x1c.forklore.common.v1.UserRoleR\x04role\x126\n" +
@@ -753,9 +753,9 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"session_id\x18\x06 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tsessionId\"o\n" +
 	"\fAuthResponse\x12*\n" +
 	"\x04user\x18\x01 \x01(\v2\x16.forklore.auth.v1.UserR\x04user\x123\n" +
-	"\x06tokens\x18\x02 \x01(\v2\x1b.forklore.auth.v1.TokenPairR\x06tokens\"\x98\x02\n" +
-	"\x0fRegisterRequest\x12O\n" +
-	"\busername\x18\x01 \x01(\tB3\xfaB0r.\x10\x03\x18 2(^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$R\busername\x12 \n" +
+	"\x06tokens\x18\x02 \x01(\v2\x1b.forklore.auth.v1.TokenPairR\x06tokens\"\xa1\x02\n" +
+	"\x0fRegisterRequest\x12X\n" +
+	"\busername\x18\x01 \x01(\tB<\xfaB9r7\x10\x03\x18 21^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30}[A-Za-z0-9])?$R\busername\x12 \n" +
 	"\x05email\x18\x02 \x01(\tB\n" +
 	"\xfaB\ar\x05\x18\xfe\x01`\x01R\x05email\x12%\n" +
 	"\bpassword\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\b\x18HR\bpassword\x12)\n" +

@@ -31,15 +31,15 @@ type Auth struct {
 
 func Load(log *zap.Logger) *Config {
 	return &Config{
-		Port: getEnv("APP_PORT", log),
+		Port: getEnv("AUTH_PORT", log),
 		DB: DB{
 			Config: database.Config{
-				Host:     getEnv("DB_HOST", log),
-				Port:     getEnv("DB_PORT", log),
-				User:     getEnv("DB_USER", log),
-				Password: getEnv("DB_PASSWORD", log),
-				Name:     getEnv("DB_NAME", log),
-				SSLMode:  getEnv("DB_SSLMODE", log),
+				Host:     getEnv("DB_AUTH_HOST", log),
+				Port:     getEnv("DB_AUTH_PORT", log),
+				User:     getEnv("DB_AUTH_USER", log),
+				Password: getEnv("DB_AUTH_PASSWORD", log),
+				Name:     getEnv("DB_AUTH_NAME", log),
+				SSLMode:  getEnv("DB_AUTH_SSLMODE", log),
 			},
 		},
 		Auth: Auth{

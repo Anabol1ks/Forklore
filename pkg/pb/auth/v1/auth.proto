@@ -29,7 +29,7 @@ message User {
     (validate.rules).string = {
       min_len: 3,
       max_len: 32,
-      pattern: "^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$"
+      pattern: "^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30}[A-Za-z0-9])?$"
     }
   ];
 
@@ -62,7 +62,7 @@ message RegisterRequest {
     (validate.rules).string = {
       min_len: 3,
       max_len: 32,
-      pattern: "^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$"
+      pattern: "^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30}[A-Za-z0-9])?$"
     }
   ];
 

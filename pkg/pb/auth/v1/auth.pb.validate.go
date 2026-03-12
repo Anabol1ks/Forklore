@@ -114,7 +114,7 @@ func (m *User) validate(all bool) error {
 	if !_User_Username_Pattern.MatchString(m.GetUsername()) {
 		err := UserValidationError{
 			field:  "Username",
-			reason: "value does not match regex pattern \"^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$\"",
+			reason: "value does not match regex pattern \"^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30}[A-Za-z0-9])?$\"",
 		}
 		if !all {
 			return err
@@ -345,7 +345,7 @@ var _ interface {
 	ErrorName() string
 } = UserValidationError{}
 
-var _User_Username_Pattern = regexp.MustCompile("^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$")
+var _User_Username_Pattern = regexp.MustCompile("^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30}[A-Za-z0-9])?$")
 
 // Validate checks the field values on TokenPair with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -770,7 +770,7 @@ func (m *RegisterRequest) validate(all bool) error {
 	if !_RegisterRequest_Username_Pattern.MatchString(m.GetUsername()) {
 		err := RegisterRequestValidationError{
 			field:  "Username",
-			reason: "value does not match regex pattern \"^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$\"",
+			reason: "value does not match regex pattern \"^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30}[A-Za-z0-9])?$\"",
 		}
 		if !all {
 			return err
@@ -973,7 +973,7 @@ var _ interface {
 	ErrorName() string
 } = RegisterRequestValidationError{}
 
-var _RegisterRequest_Username_Pattern = regexp.MustCompile("^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$")
+var _RegisterRequest_Username_Pattern = regexp.MustCompile("^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30}[A-Za-z0-9])?$")
 
 // Validate checks the field values on LoginRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
