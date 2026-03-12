@@ -23,6 +23,7 @@ type DB struct {
 
 type Auth struct {
 	JWTSecret       string
+	JWTIssuer       string
 	AccessTokenTTL  time.Duration
 	RefreshTokenTTL time.Duration
 	BcryptCost      int
@@ -43,6 +44,7 @@ func Load(log *zap.Logger) *Config {
 		},
 		Auth: Auth{
 			JWTSecret:       getEnv("JWTSecret", log),
+			JWTIssuer:       getEnv("JWTIssuer", log),
 			AccessTokenTTL:  parseDurationWithDays(getEnv("AccessTokenTTL", log)),
 			RefreshTokenTTL: parseDurationWithDays(getEnv("RefreshTokenTTL", log)),
 			BcryptCost:      atoiDefault(getEnv("BcryptCost", log), 12),

@@ -3,6 +3,7 @@ package main
 import (
 	"auth-service/config"
 	"auth-service/internal/repository"
+	"auth-service/internal/security"
 	"os"
 
 	"github.com/Anabol1ks/Forklore/pkg/utils/database"
@@ -26,4 +27,14 @@ func main() {
 
 	repo := repository.New(db)
 	_ = repo
+
+	passwordManager := security.NewBcryptPasswordManager(cfg.Auth.BcryptCost)
+	tokenManager := security.NewJWTTokenManager(
+		cfg.Auth.JWTSecret,
+		cfg.Auth.JWTIssuer,
+		cfg.Auth.AccessTokenTTL,
+	)
+
+	_ = passwordManager
+	_ = tokenManager
 }
