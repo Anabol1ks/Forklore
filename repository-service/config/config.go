@@ -14,10 +14,15 @@ import (
 type Config struct {
 	Port string
 	DB   DB
+	Auth Auth
 }
 
 type DB struct {
 	database.Config
+}
+
+type Auth struct {
+	JWTSecret string
 }
 
 func Load(log *zap.Logger) *Config {
@@ -32,6 +37,9 @@ func Load(log *zap.Logger) *Config {
 				Name:     getEnv("DB_REPO_NAME", log),
 				SSLMode:  getEnv("DB_REPO_SSLMODE", log),
 			},
+		},
+		Auth: Auth{
+			JWTSecret: getEnv("JWTSecret", log),
 		},
 	}
 }
