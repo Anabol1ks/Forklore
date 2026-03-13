@@ -29,6 +29,7 @@ const (
 	RepositoryService_ListMyRepositories_FullMethodName   = "/forklore.repository.v1.RepositoryService/ListMyRepositories"
 	RepositoryService_ListUserRepositories_FullMethodName = "/forklore.repository.v1.RepositoryService/ListUserRepositories"
 	RepositoryService_ListForks_FullMethodName            = "/forklore.repository.v1.RepositoryService/ListForks"
+	RepositoryService_ListRepositoryTags_FullMethodName   = "/forklore.repository.v1.RepositoryService/ListRepositoryTags"
 )
 
 // RepositoryServiceClient is the client API for RepositoryService service.
@@ -44,6 +45,7 @@ type RepositoryServiceClient interface {
 	ListMyRepositories(ctx context.Context, in *ListMyRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
 	ListUserRepositories(ctx context.Context, in *ListUserRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
 	ListForks(ctx context.Context, in *ListForksRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
+	ListRepositoryTags(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListRepositoryTagsResponse, error)
 }
 
 type repositoryServiceClient struct {
@@ -144,6 +146,16 @@ func (c *repositoryServiceClient) ListForks(ctx context.Context, in *ListForksRe
 	return out, nil
 }
 
+func (c *repositoryServiceClient) ListRepositoryTags(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListRepositoryTagsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRepositoryTagsResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_ListRepositoryTags_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RepositoryServiceServer is the server API for RepositoryService service.
 // All implementations must embed UnimplementedRepositoryServiceServer
 // for forward compatibility.
@@ -157,6 +169,7 @@ type RepositoryServiceServer interface {
 	ListMyRepositories(context.Context, *ListMyRepositoriesRequest) (*ListRepositoriesResponse, error)
 	ListUserRepositories(context.Context, *ListUserRepositoriesRequest) (*ListRepositoriesResponse, error)
 	ListForks(context.Context, *ListForksRequest) (*ListRepositoriesResponse, error)
+	ListRepositoryTags(context.Context, *emptypb.Empty) (*ListRepositoryTagsResponse, error)
 	mustEmbedUnimplementedRepositoryServiceServer()
 }
 
@@ -193,6 +206,9 @@ func (UnimplementedRepositoryServiceServer) ListUserRepositories(context.Context
 }
 func (UnimplementedRepositoryServiceServer) ListForks(context.Context, *ListForksRequest) (*ListRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListForks not implemented")
+}
+func (UnimplementedRepositoryServiceServer) ListRepositoryTags(context.Context, *emptypb.Empty) (*ListRepositoryTagsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRepositoryTags not implemented")
 }
 func (UnimplementedRepositoryServiceServer) mustEmbedUnimplementedRepositoryServiceServer() {}
 func (UnimplementedRepositoryServiceServer) testEmbeddedByValue()                           {}
@@ -377,6 +393,24 @@ func _RepositoryService_ListForks_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RepositoryService_ListRepositoryTags_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).ListRepositoryTags(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_ListRepositoryTags_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).ListRepositoryTags(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RepositoryService_ServiceDesc is the grpc.ServiceDesc for RepositoryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -419,6 +453,10 @@ var RepositoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListForks",
 			Handler:    _RepositoryService_ListForks_Handler,
+		},
+		{
+			MethodName: "ListRepositoryTags",
+			Handler:    _RepositoryService_ListRepositoryTags_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

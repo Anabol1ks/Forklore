@@ -39,6 +39,234 @@ var (
 	_ = commonv1.RepositoryVisibility(0)
 )
 
+// Validate checks the field values on RepositoryTag with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *RepositoryTag) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RepositoryTag with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in RepositoryTagMultiError, or
+// nil if none found.
+func (m *RepositoryTag) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RepositoryTag) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetTagId() == nil {
+		err := RepositoryTagValidationError{
+			field:  "TagId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTagId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RepositoryTagValidationError{
+					field:  "TagId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RepositoryTagValidationError{
+					field:  "TagId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTagId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RepositoryTagValidationError{
+				field:  "TagId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if l := utf8.RuneCountInString(m.GetName()); l < 2 || l > 64 {
+		err := RepositoryTagValidationError{
+			field:  "Name",
+			reason: "value length must be between 2 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetSlug()); l < 2 || l > 64 {
+		err := RepositoryTagValidationError{
+			field:  "Slug",
+			reason: "value length must be between 2 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_RepositoryTag_Slug_Pattern.MatchString(m.GetSlug()) {
+		err := RepositoryTagValidationError{
+			field:  "Slug",
+			reason: "value does not match regex pattern \"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetDescription()) > 1000 {
+		err := RepositoryTagValidationError{
+			field:  "Description",
+			reason: "value length must be at most 1000 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for IsActive
+
+	if m.GetCreatedAt() == nil {
+		err := RepositoryTagValidationError{
+			field:  "CreatedAt",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetUpdatedAt()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RepositoryTagValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RepositoryTagValidationError{
+					field:  "UpdatedAt",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUpdatedAt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RepositoryTagValidationError{
+				field:  "UpdatedAt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return RepositoryTagMultiError(errors)
+	}
+
+	return nil
+}
+
+// RepositoryTagMultiError is an error wrapping multiple validation errors
+// returned by RepositoryTag.ValidateAll() if the designated constraints
+// aren't met.
+type RepositoryTagMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RepositoryTagMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RepositoryTagMultiError) AllErrors() []error { return m }
+
+// RepositoryTagValidationError is the validation error returned by
+// RepositoryTag.Validate if the designated constraints aren't met.
+type RepositoryTagValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RepositoryTagValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RepositoryTagValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RepositoryTagValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RepositoryTagValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RepositoryTagValidationError) ErrorName() string { return "RepositoryTagValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RepositoryTagValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRepositoryTag.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RepositoryTagValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RepositoryTagValidationError{}
+
+var _RepositoryTag_Slug_Pattern = regexp.MustCompile("^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
+
 // Validate checks the field values on Repository with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -141,6 +369,46 @@ func (m *Repository) validate(all bool) error {
 		}
 	}
 
+	if m.GetTagId() == nil {
+		err := RepositoryValidationError{
+			field:  "TagId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTagId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RepositoryValidationError{
+					field:  "TagId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RepositoryValidationError{
+					field:  "TagId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTagId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RepositoryValidationError{
+				field:  "TagId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if l := utf8.RuneCountInString(m.GetName()); l < 3 || l > 100 {
 		err := RepositoryValidationError{
 			field:  "Name",
@@ -188,6 +456,35 @@ func (m *Repository) validate(all bool) error {
 	// no validation rules for Visibility
 
 	// no validation rules for Type
+
+	if all {
+		switch v := interface{}(m.GetTag()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RepositoryValidationError{
+					field:  "Tag",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RepositoryValidationError{
+					field:  "Tag",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTag()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RepositoryValidationError{
+				field:  "Tag",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if all {
 		switch v := interface{}(m.GetParentRepoId()).(type) {
@@ -419,6 +716,46 @@ func (m *CreateRepositoryRequest) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if m.GetTagId() == nil {
+		err := CreateRepositoryRequestValidationError{
+			field:  "TagId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTagId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CreateRepositoryRequestValidationError{
+					field:  "TagId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CreateRepositoryRequestValidationError{
+					field:  "TagId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTagId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CreateRepositoryRequestValidationError{
+				field:  "TagId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	// no validation rules for Visibility
@@ -1179,6 +1516,35 @@ func (m *UpdateRepositoryRequest) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTagId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, UpdateRepositoryRequestValidationError{
+					field:  "TagId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, UpdateRepositoryRequestValidationError{
+					field:  "TagId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTagId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UpdateRepositoryRequestValidationError{
+				field:  "TagId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	// no validation rules for Visibility
@@ -2407,3 +2773,139 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListRepositoriesResponseValidationError{}
+
+// Validate checks the field values on ListRepositoryTagsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListRepositoryTagsResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListRepositoryTagsResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListRepositoryTagsResponseMultiError, or nil if none found.
+func (m *ListRepositoryTagsResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListRepositoryTagsResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetTags() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListRepositoryTagsResponseValidationError{
+						field:  fmt.Sprintf("Tags[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListRepositoryTagsResponseValidationError{
+						field:  fmt.Sprintf("Tags[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListRepositoryTagsResponseValidationError{
+					field:  fmt.Sprintf("Tags[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListRepositoryTagsResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListRepositoryTagsResponseMultiError is an error wrapping multiple
+// validation errors returned by ListRepositoryTagsResponse.ValidateAll() if
+// the designated constraints aren't met.
+type ListRepositoryTagsResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListRepositoryTagsResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListRepositoryTagsResponseMultiError) AllErrors() []error { return m }
+
+// ListRepositoryTagsResponseValidationError is the validation error returned
+// by ListRepositoryTagsResponse.Validate if the designated constraints aren't met.
+type ListRepositoryTagsResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListRepositoryTagsResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListRepositoryTagsResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListRepositoryTagsResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListRepositoryTagsResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListRepositoryTagsResponseValidationError) ErrorName() string {
+	return "ListRepositoryTagsResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListRepositoryTagsResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListRepositoryTagsResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListRepositoryTagsResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListRepositoryTagsResponseValidationError{}
