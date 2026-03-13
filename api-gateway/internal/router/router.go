@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Setup(log *zap.Logger, authHandler *handlers.AuthHandler) *gin.Engine {
+func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.Logger(log))
@@ -36,9 +36,35 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler) *gin.Engine {
 			}
 		}
 
-		// ── Future microservices ──
-		// projects := v1.Group("/projects")
-		// { ... }
+		// ── Repositories ──
+		repositories := v1.Group("/repositories")
+		repositories.Use(middleware.AuthRequired())
+		{
+			// Create repository
+			repositories.POST("", repositoryHandler.CreateRepository)
+
+			// Special paths (must be before parameterized paths)
+			repositories.GET("/me", repositoryHandler.ListMyRepositories)
+			repositories.GET("/tags", repositoryHandler.ListRepositoryTags)
+
+			// Repository-specific paths (by ID)
+			repositories.GET("/:repo_id", repositoryHandler.GetRepositoryByID)
+			repositories.PATCH("/:repo_id", repositoryHandler.UpdateRepository)
+			repositories.DELETE("/:repo_id", repositoryHandler.DeleteRepository)
+			repositories.POST("/:repo_id/fork", repositoryHandler.ForkRepository)
+			repositories.GET("/:repo_id/forks", repositoryHandler.ListForks)
+		}
+
+		// ── Users - for user-specific repository operations ──
+		users := v1.Group("/users")
+		users.Use(middleware.AuthRequired())
+		{
+			// Get user repositories
+			users.GET("/:owner_id/repositories", repositoryHandler.ListUserRepositories)
+
+			// Get repository by owner and slug
+			users.GET("/:owner_id/repositories/:slug", repositoryHandler.GetRepositoryBySlug)
+		}
 	}
 
 	return r

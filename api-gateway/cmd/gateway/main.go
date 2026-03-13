@@ -49,11 +49,18 @@ func main() {
 	}
 	defer authClient.Close()
 
+	repositoryClient, err := clients.NewRepositoryClient(cfg.RepositoryServiceAddr)
+	if err != nil {
+		log.Fatal("failed to connect to repository-service", zap.Error(err))
+	}
+	defer repositoryClient.Close()
+
 	// ── Handlers ──
 	authHandler := handlers.NewAuthHandler(authClient)
+	repositoryHandler := handlers.NewRepositoryHandler(repositoryClient)
 
 	// ── Router ──
-	r := router.Setup(log, authHandler)
+	r := router.Setup(log, authHandler, repositoryHandler)
 
 	// ── HTTP server ──
 	srv := &http.Server{

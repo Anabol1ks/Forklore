@@ -7,14 +7,16 @@ import (
 )
 
 type Config struct {
-	Port            string
-	AuthServiceAddr string
+	Port                  string
+	AuthServiceAddr       string
+	RepositoryServiceAddr string
 }
 
 func Load(log *zap.Logger) *Config {
 	return &Config{
-		Port:            getEnv("GATEWAY_PORT", "8080", log),
-		AuthServiceAddr: getEnv("AUTH_SERVICE_ADDR", "localhost:8081", log),
+		Port:                  getEnv("GATEWAY_PORT", "8080", log),
+		AuthServiceAddr:       getEnv("AUTH_SERVICE_ADDR", "localhost:8081", log),
+		RepositoryServiceAddr: getEnv("REPOSITORY_SERVICE_ADDR", "localhost:8082", log),
 	}
 }
 

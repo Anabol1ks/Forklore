@@ -7,6 +7,50 @@ definitions:
       user:
         $ref: '#/definitions/models.UserResponse'
     type: object
+  models.CreateRepositoryRequest:
+    properties:
+      description:
+        example: An interesting article
+        maxLength: 2000
+        type: string
+      name:
+        example: My Article
+        maxLength: 100
+        minLength: 3
+        type: string
+      slug:
+        example: my-article
+        maxLength: 64
+        type: string
+      tag_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/models.RepositoryType'
+        enum:
+        - article
+        - notes
+        - mixed
+        example: article
+      visibility:
+        allOf:
+        - $ref: '#/definitions/models.RepositoryVisibility'
+        enum:
+        - public
+        - private
+        example: public
+    required:
+    - name
+    - tag_id
+    - type
+    - visibility
+    type: object
+  models.CreateRepositoryResponse:
+    properties:
+      repository:
+        $ref: '#/definitions/models.RepositoryResponse'
+    type: object
   models.ErrorResponse:
     properties:
       code:
@@ -16,10 +60,52 @@ definitions:
         example: invalid request
         type: string
     type: object
+  models.ForkRepositoryRequest:
+    properties:
+      description:
+        example: My fork of the original
+        maxLength: 2000
+        type: string
+      name:
+        example: Forked Article
+        maxLength: 100
+        type: string
+      slug:
+        example: forked-article
+        maxLength: 64
+        type: string
+    type: object
+  models.ForkRepositoryResponse:
+    properties:
+      repository:
+        $ref: '#/definitions/models.RepositoryResponse'
+    type: object
   models.GetMeResponse:
     properties:
       user:
         $ref: '#/definitions/models.UserResponse'
+    type: object
+  models.GetRepositoryResponse:
+    properties:
+      repository:
+        $ref: '#/definitions/models.RepositoryResponse'
+    type: object
+  models.ListRepositoriesResponse:
+    properties:
+      repositories:
+        items:
+          $ref: '#/definitions/models.RepositoryResponse'
+        type: array
+      total:
+        example: 42
+        type: integer
+    type: object
+  models.ListRepositoryTagsResponse:
+    properties:
+      tags:
+        items:
+          $ref: '#/definitions/models.RepositoryTagResponse'
+        type: array
     type: object
   models.LoginRequest:
     properties:
@@ -74,6 +160,93 @@ definitions:
     - password
     - username
     type: object
+  models.RepositoryResponse:
+    properties:
+      created_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+      deleted_at:
+        example: "2026-01-02T00:00:00Z"
+        type: string
+      description:
+        example: An interesting article
+        type: string
+      name:
+        example: My Article
+        type: string
+      owner_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+      parent_repo_id:
+        example: 550e8400-e29b-41d4-a716-446655440002
+        type: string
+      repo_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      slug:
+        example: my-article
+        type: string
+      tag:
+        $ref: '#/definitions/models.RepositoryTagResponse'
+      type:
+        enum:
+        - article
+        - notes
+        - mixed
+        example: article
+        type: string
+      updated_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+      visibility:
+        enum:
+        - public
+        - private
+        example: public
+        type: string
+    type: object
+  models.RepositoryTagResponse:
+    properties:
+      created_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+      description:
+        example: Backend related repositories
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: Backend
+        type: string
+      slug:
+        example: backend
+        type: string
+      tag_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      updated_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+    type: object
+  models.RepositoryType:
+    enum:
+    - article
+    - notes
+    - mixed
+    type: string
+    x-enum-varnames:
+    - RepositoryTypeArticle
+    - RepositoryTypeNotes
+    - RepositoryTypeMixed
+  models.RepositoryVisibility:
+    enum:
+    - public
+    - private
+    type: string
+    x-enum-varnames:
+    - RepositoryVisibilityPublic
+    - RepositoryVisibilityPrivate
   models.TokenPairResponse:
     properties:
       access_expires_at:
@@ -94,6 +267,46 @@ definitions:
       token_type:
         example: Bearer
         type: string
+    type: object
+  models.UpdateRepositoryRequest:
+    properties:
+      description:
+        example: Updated description
+        maxLength: 2000
+        type: string
+      name:
+        example: Updated Article
+        maxLength: 100
+        minLength: 3
+        type: string
+      slug:
+        example: updated-article
+        maxLength: 64
+        minLength: 3
+        type: string
+      tag_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/models.RepositoryType'
+        enum:
+        - article
+        - notes
+        - mixed
+        example: notes
+      visibility:
+        allOf:
+        - $ref: '#/definitions/models.RepositoryVisibility'
+        enum:
+        - public
+        - private
+        example: private
+    type: object
+  models.UpdateRepositoryResponse:
+    properties:
+      repository:
+        $ref: '#/definitions/models.RepositoryResponse'
     type: object
   models.UserResponse:
     properties:
@@ -314,6 +527,429 @@ paths:
       summary: Регистрация нового пользователя
       tags:
       - auth
+  /repositories:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новый репозиторий для текущего пользователя
+      parameters:
+      - description: Данные репозитория
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateRepositoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.CreateRepositoryResponse'
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Тег не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: Slug уже занят
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создание нового репозитория
+      tags:
+      - repositories
+  /repositories/{repo_id}:
+    delete:
+      description: Удаляет репозиторий (только владелец может удалять)
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удаление репозитория
+      tags:
+      - repositories
+    get:
+      description: Возвращает информацию о репозитории по его ID
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetRepositoryResponse'
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение репозитория по ID
+      tags:
+      - repositories
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет информацию о репозитории (только владелец может обновлять)
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      - description: Данные для обновления
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateRepositoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpdateRepositoryResponse'
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: Slug уже занят
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновление репозитория
+      tags:
+      - repositories
+  /repositories/{repo_id}/fork:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт копию публичного репозитория от другого пользователя
+      parameters:
+      - description: ID оригинального репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      - description: Данные для форка
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ForkRepositoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ForkRepositoryResponse'
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Репозиторий приватный или это твой репозиторий
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: Slug уже занят
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Форк репозитория
+      tags:
+      - repositories
+  /repositories/{repo_id}/forks:
+    get:
+      description: Возвращает список всех форков указанного репозитория
+      parameters:
+      - description: ID оригинального репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      - default: 10
+        description: Лимит элементов
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListRepositoriesResponse'
+        "400":
+          description: Неверные параметры
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение форков репозитория
+      tags:
+      - repositories
+  /repositories/me:
+    get:
+      description: Возвращает список всех репозиториев текущего пользователя
+      parameters:
+      - default: 10
+        description: Лимит элементов
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListRepositoriesResponse'
+        "400":
+          description: Неверные параметры
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение моих репозиториев
+      tags:
+      - repositories
+  /repositories/tags:
+    get:
+      description: Возвращает список всех доступных тегов для категоризации репозиториев
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListRepositoryTagsResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение всех тегов репозиториев
+      tags:
+      - repositories
+  /users/{owner_id}/repositories:
+    get:
+      description: Возвращает список публичных репозиториев указанного пользователя
+      parameters:
+      - description: ID владельца
+        in: path
+        name: owner_id
+        required: true
+        type: string
+      - default: 10
+        description: Лимит элементов
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListRepositoriesResponse'
+        "400":
+          description: Неверные параметры
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение репозиториев пользователя
+      tags:
+      - repositories
+  /users/{owner_id}/repositories/{slug}:
+    get:
+      description: Возвращает информацию о репозитории по owner_id и slug
+      parameters:
+      - description: ID владельца
+        in: path
+        name: owner_id
+        required: true
+        type: string
+      - description: Slug репозитория
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetRepositoryResponse'
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение репозитория по slug
+      tags:
+      - repositories
 securityDefinitions:
   BearerAuth:
     description: Введите "Bearer" и через пробел JWT access токен.
