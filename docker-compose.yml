@@ -18,6 +18,7 @@ services:
       start_period: 10s
     networks:
       - forklore-network
+
   repo-db:
     image: postgres:17
     env_file: .env
@@ -38,10 +39,31 @@ services:
     networks:
       - forklore-network
 
+  content-db:
+    image: postgres:17
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DB_CONTENT_USER}
+      POSTGRES_PASSWORD: ${DB_CONTENT_PASSWORD}
+      POSTGRES_DB: content-db
+    volumes:
+      - content_db_data:/var/lib/postgresql/data
+    ports:
+      - "5439:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_CONTENT_USER} -d ${DB_CONTENT_NAME} -h localhost -p 5432 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - forklore-network
+
 
 volumes:
   auth_db_data:
   repo_db_data:
+  content_db_data:
 
 networks:
   forklore-network:

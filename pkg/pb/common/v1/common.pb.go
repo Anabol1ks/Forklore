@@ -223,6 +223,52 @@ func (RepositoryType) EnumDescriptor() ([]byte, []int) {
 	return file_common_v1_common_proto_rawDescGZIP(), []int{3}
 }
 
+type DocumentFormat int32
+
+const (
+	DocumentFormat_DOCUMENT_FORMAT_UNSPECIFIED DocumentFormat = 0
+	DocumentFormat_DOCUMENT_FORMAT_MARKDOWN    DocumentFormat = 1
+)
+
+// Enum value maps for DocumentFormat.
+var (
+	DocumentFormat_name = map[int32]string{
+		0: "DOCUMENT_FORMAT_UNSPECIFIED",
+		1: "DOCUMENT_FORMAT_MARKDOWN",
+	}
+	DocumentFormat_value = map[string]int32{
+		"DOCUMENT_FORMAT_UNSPECIFIED": 0,
+		"DOCUMENT_FORMAT_MARKDOWN":    1,
+	}
+)
+
+func (x DocumentFormat) Enum() *DocumentFormat {
+	p := new(DocumentFormat)
+	*p = x
+	return p
+}
+
+func (x DocumentFormat) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DocumentFormat) Descriptor() protoreflect.EnumDescriptor {
+	return file_common_v1_common_proto_enumTypes[4].Descriptor()
+}
+
+func (DocumentFormat) Type() protoreflect.EnumType {
+	return &file_common_v1_common_proto_enumTypes[4]
+}
+
+func (x DocumentFormat) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DocumentFormat.Descriptor instead.
+func (DocumentFormat) EnumDescriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{4}
+}
+
 type UUID struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -292,7 +338,10 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x1bREPOSITORY_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17REPOSITORY_TYPE_ARTICLE\x10\x01\x12\x19\n" +
 	"\x15REPOSITORY_TYPE_NOTES\x10\x02\x12\x19\n" +
-	"\x15REPOSITORY_TYPE_MIXED\x10\x03B9Z7github.com/Anabol1ks/Forklore/pkg/pb/common/v1;commonv1b\x06proto3"
+	"\x15REPOSITORY_TYPE_MIXED\x10\x03*O\n" +
+	"\x0eDocumentFormat\x12\x1f\n" +
+	"\x1bDOCUMENT_FORMAT_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18DOCUMENT_FORMAT_MARKDOWN\x10\x01B9Z7github.com/Anabol1ks/Forklore/pkg/pb/common/v1;commonv1b\x06proto3"
 
 var (
 	file_common_v1_common_proto_rawDescOnce sync.Once
@@ -306,14 +355,15 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_common_v1_common_proto_rawDescData
 }
 
-var file_common_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_common_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
 var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_common_v1_common_proto_goTypes = []any{
 	(UserRole)(0),             // 0: forklore.common.v1.UserRole
 	(UserStatus)(0),           // 1: forklore.common.v1.UserStatus
 	(RepositoryVisibility)(0), // 2: forklore.common.v1.RepositoryVisibility
 	(RepositoryType)(0),       // 3: forklore.common.v1.RepositoryType
-	(*UUID)(nil),              // 4: forklore.common.v1.UUID
+	(DocumentFormat)(0),       // 4: forklore.common.v1.DocumentFormat
+	(*UUID)(nil),              // 5: forklore.common.v1.UUID
 }
 var file_common_v1_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -333,7 +383,7 @@ func file_common_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_v1_common_proto_rawDesc), len(file_common_v1_common_proto_rawDesc)),
-			NumEnums:      4,
+			NumEnums:      5,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,

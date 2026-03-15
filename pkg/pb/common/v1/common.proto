@@ -31,3 +31,8 @@ enum RepositoryType {
   REPOSITORY_TYPE_NOTES = 2;
   REPOSITORY_TYPE_MIXED = 3;
 }
+
+enum DocumentFormat {
+  DOCUMENT_FORMAT_UNSPECIFIED = 0;
+  DOCUMENT_FORMAT_MARKDOWN = 1;
+}
