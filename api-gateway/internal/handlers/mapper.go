@@ -6,6 +6,7 @@ import (
 
 	authv1 "github.com/Anabol1ks/Forklore/pkg/pb/auth/v1"
 	commonv1 "github.com/Anabol1ks/Forklore/pkg/pb/common/v1"
+	contentv1 "github.com/Anabol1ks/Forklore/pkg/pb/content/v1"
 	repositoryv1 "github.com/Anabol1ks/Forklore/pkg/pb/repository/v1"
 )
 
@@ -186,4 +187,170 @@ func toPointerString(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+// Content mapping functions
+
+func mapDocument(d *contentv1.Document) models.DocumentDetailResponse {
+	if d == nil {
+		return models.DocumentDetailResponse{}
+	}
+
+	var createdAt, updatedAt, deletedAt, latestDraftUpdatedAt string
+	if d.GetCreatedAt() != nil {
+		createdAt = d.GetCreatedAt().AsTime().Format(time.RFC3339)
+	}
+	if d.GetUpdatedAt() != nil {
+		updatedAt = d.GetUpdatedAt().AsTime().Format(time.RFC3339)
+	}
+	if d.GetDeletedAt() != nil {
+		deletedAt = d.GetDeletedAt().AsTime().Format(time.RFC3339)
+	}
+	if d.GetLatestDraftUpdatedAt() != nil {
+		latestDraftUpdatedAt = d.GetLatestDraftUpdatedAt().AsTime().Format(time.RFC3339)
+	}
+
+	var updatedAtPtr, deletedAtPtr, latestDraftUpdatedAtPtr *string
+	if updatedAt != "" {
+		updatedAtPtr = &updatedAt
+	}
+	if deletedAt != "" {
+		deletedAtPtr = &deletedAt
+	}
+	if latestDraftUpdatedAt != "" {
+		latestDraftUpdatedAtPtr = &latestDraftUpdatedAt
+	}
+
+	return models.DocumentDetailResponse{
+		DocumentID:           d.GetDocumentId().GetValue(),
+		RepoID:               d.GetRepoId().GetValue(),
+		AuthorID:             d.GetAuthorId().GetValue(),
+		Title:                d.GetTitle(),
+		Slug:                 d.GetSlug(),
+		Format:               mapDocumentFormat(d.GetFormat()),
+		CurrentVersionID:     d.GetCurrentVersionId().GetValue(),
+		LatestDraftUpdatedAt: latestDraftUpdatedAtPtr,
+		CreatedAt:            createdAt,
+		UpdatedAt:            updatedAtPtr,
+		DeletedAt:            deletedAtPtr,
+	}
+}
+
+func mapDocumentWithDraft(d *contentv1.Document, draft *contentv1.DocumentDraft, version *contentv1.DocumentVersion) models.DocumentDetailResponse {
+	doc := mapDocument(d)
+	if draft != nil {
+		doc.Draft = mapDocumentDraft(draft)
+	}
+	if version != nil {
+		doc.CurrentVersion = mapDocumentVersion(version)
+	}
+	return doc
+}
+
+func mapDocumentDraft(d *contentv1.DocumentDraft) *models.DocumentDraftResponse {
+	if d == nil {
+		return nil
+	}
+
+	var updatedAt string
+	if d.GetUpdatedAt() != nil {
+		updatedAt = d.GetUpdatedAt().AsTime().Format(time.RFC3339)
+	}
+
+	return &models.DocumentDraftResponse{
+		DocumentID: d.GetDocumentId().GetValue(),
+		Content:    d.GetContent(),
+		UpdatedBy:  d.GetUpdatedBy().GetValue(),
+		UpdatedAt:  updatedAt,
+	}
+}
+
+func mapDocumentVersion(v *contentv1.DocumentVersion) *models.DocumentVersionDetail {
+	if v == nil {
+		return nil
+	}
+
+	var createdAt string
+	if v.GetCreatedAt() != nil {
+		createdAt = v.GetCreatedAt().AsTime().Format(time.RFC3339)
+	}
+
+	return &models.DocumentVersionDetail{
+		VersionID:     v.GetVersionId().GetValue(),
+		DocumentID:    v.GetDocumentId().GetValue(),
+		AuthorID:      v.GetAuthorId().GetValue(),
+		VersionNumber: v.GetVersionNumber(),
+		Content:       v.GetContent(),
+		ChangeSummary: v.GetChangeSummary(),
+		CreatedAt:     createdAt,
+	}
+}
+
+func mapDocumentFormat(f commonv1.DocumentFormat) string {
+	switch f {
+	case commonv1.DocumentFormat_DOCUMENT_FORMAT_MARKDOWN:
+		return "markdown"
+	default:
+		return "markdown"
+	}
+}
+
+func mapFile(f *contentv1.File) models.FileDetailResponse {
+	if f == nil {
+		return models.FileDetailResponse{}
+	}
+
+	var createdAt, updatedAt, deletedAt string
+	if f.GetCreatedAt() != nil {
+		createdAt = f.GetCreatedAt().AsTime().Format(time.RFC3339)
+	}
+	if f.GetUpdatedAt() != nil {
+		updatedAt = f.GetUpdatedAt().AsTime().Format(time.RFC3339)
+	}
+	if f.GetDeletedAt() != nil {
+		deletedAt = f.GetDeletedAt().AsTime().Format(time.RFC3339)
+	}
+
+	var updatedAtPtr, deletedAtPtr *string
+	if updatedAt != "" {
+		updatedAtPtr = &updatedAt
+	}
+	if deletedAt != "" {
+		deletedAtPtr = &deletedAt
+	}
+
+	return models.FileDetailResponse{
+		FileID:           f.GetFileId().GetValue(),
+		RepoID:           f.GetRepoId().GetValue(),
+		UploadedBy:       f.GetUploadedBy().GetValue(),
+		FileName:         f.GetFileName(),
+		CurrentVersionID: f.GetCurrentVersionId().GetValue(),
+		CreatedAt:        createdAt,
+		UpdatedAt:        updatedAtPtr,
+		DeletedAt:        deletedAtPtr,
+	}
+}
+
+func mapFileVersion(v *contentv1.FileVersion) models.FileVersionDetail {
+	if v == nil {
+		return models.FileVersionDetail{}
+	}
+
+	var createdAt string
+	if v.GetCreatedAt() != nil {
+		createdAt = v.GetCreatedAt().AsTime().Format(time.RFC3339)
+	}
+
+	return models.FileVersionDetail{
+		VersionID:      v.GetVersionId().GetValue(),
+		FileID:         v.GetFileId().GetValue(),
+		UploadedBy:     v.GetUploadedBy().GetValue(),
+		VersionNumber:  v.GetVersionNumber(),
+		StorageKey:     v.GetStorageKey(),
+		MimeType:       v.GetMimeType(),
+		SizeBytes:      v.GetSizeBytes(),
+		ChecksumSHA256: v.GetChecksumSha256(),
+		ChangeSummary:  v.GetChangeSummary(),
+		CreatedAt:      createdAt,
+	}
 }

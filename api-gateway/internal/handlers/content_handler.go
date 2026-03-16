@@ -62,7 +62,7 @@ func (h *ContentHandler) CreateDocument(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, models.DocumentResponse{
-		Document: resp.Document,
+		Document: mapDocumentWithDraft(resp.Document, resp.Draft, resp.CurrentVersion),
 	})
 }
 
@@ -89,7 +89,7 @@ func (h *ContentHandler) GetDocument(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, models.DocumentResponse{
-		Document: resp.Document,
+		Document: mapDocumentWithDraft(resp.Document, resp.Draft, resp.CurrentVersion),
 	})
 }
 
@@ -136,8 +136,13 @@ func (h *ContentHandler) ListRepositoryDocuments(c *gin.Context) {
 		return
 	}
 
+	documents := make([]models.DocumentDetailResponse, len(resp.Documents))
+	for i, d := range resp.Documents {
+		documents[i] = mapDocument(d)
+	}
+
 	c.JSON(http.StatusOK, models.DocumentListResponse{
-		Documents: resp.Documents,
+		Documents: documents,
 		Total:     resp.Total,
 	})
 }
@@ -178,8 +183,10 @@ func (h *ContentHandler) SaveDocumentDraft(c *gin.Context) {
 		return
 	}
 
+	doc := mapDocument(resp.Document)
+	doc.Draft = mapDocumentDraft(resp.Draft)
 	c.JSON(http.StatusOK, models.DocumentResponse{
-		Document: resp.Document,
+		Document: doc,
 	})
 }
 
@@ -221,7 +228,7 @@ func (h *ContentHandler) CreateDocumentVersion(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, models.VersionResponse{
-		Version: resp.Version,
+		Version: *mapDocumentVersion(resp.Version),
 	})
 }
 
@@ -248,7 +255,7 @@ func (h *ContentHandler) GetDocumentVersion(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, models.VersionResponse{
-		Version: resp.Version,
+		Version: *mapDocumentVersion(resp.Version),
 	})
 }
 
@@ -292,8 +299,13 @@ func (h *ContentHandler) ListDocumentVersions(c *gin.Context) {
 		return
 	}
 
+	versions := make([]models.DocumentVersionDetail, len(resp.Versions))
+	for i, v := range resp.Versions {
+		versions[i] = *mapDocumentVersion(v)
+	}
+
 	c.JSON(http.StatusOK, models.VersionListResponse{
-		Versions: resp.Versions,
+		Versions: versions,
 		Total:    resp.Total,
 	})
 }
@@ -338,7 +350,7 @@ func (h *ContentHandler) RestoreDocumentVersion(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, models.VersionResponse{
-		Version: resp.Version,
+		Version: *mapDocumentVersion(resp.Version),
 	})
 }
 
@@ -413,7 +425,7 @@ func (h *ContentHandler) CreateFile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, models.FileResponse{
-		File: resp.File,
+		File: mapFile(resp.File),
 	})
 }
 
@@ -440,7 +452,7 @@ func (h *ContentHandler) GetFile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, models.FileResponse{
-		File: resp.File,
+		File: mapFile(resp.File),
 	})
 }
 
@@ -481,8 +493,13 @@ func (h *ContentHandler) ListRepositoryFiles(c *gin.Context) {
 		return
 	}
 
+	files := make([]models.FileDetailResponse, len(resp.Files))
+	for i, f := range resp.Files {
+		files[i] = mapFile(f)
+	}
+
 	c.JSON(http.StatusOK, models.FileListResponse{
-		Files: resp.Files,
+		Files: files,
 		Total: resp.Total,
 	})
 }
@@ -528,7 +545,7 @@ func (h *ContentHandler) AddFileVersion(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, models.FileVersionResponse{
-		Version: resp.Version,
+		Version: mapFileVersion(resp.Version),
 	})
 }
 
@@ -555,7 +572,7 @@ func (h *ContentHandler) GetFileVersion(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, models.FileVersionResponse{
-		Version: resp.Version,
+		Version: mapFileVersion(resp.Version),
 	})
 }
 
@@ -596,8 +613,13 @@ func (h *ContentHandler) ListFileVersions(c *gin.Context) {
 		return
 	}
 
+	versions := make([]models.FileVersionDetail, len(resp.Versions))
+	for i, v := range resp.Versions {
+		versions[i] = mapFileVersion(v)
+	}
+
 	c.JSON(http.StatusOK, models.FileVersionListResponse{
-		Versions: resp.Versions,
+		Versions: versions,
 		Total:    resp.Total,
 	})
 }
@@ -642,7 +664,7 @@ func (h *ContentHandler) RestoreFileVersion(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, models.FileVersionResponse{
-		Version: resp.Version,
+		Version: mapFileVersion(resp.Version),
 	})
 }
 

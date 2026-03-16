@@ -1,11 +1,79 @@
 basePath: /api/v1
 definitions:
+  models.AddFileVersionRequest:
+    properties:
+      change_summary:
+        maxLength: 255
+        type: string
+      checksum_sha256:
+        maxLength: 64
+        type: string
+      mime_type:
+        maxLength: 255
+        minLength: 1
+        type: string
+      size_bytes:
+        type: integer
+      storage_key:
+        maxLength: 2048
+        minLength: 1
+        type: string
+    required:
+    - mime_type
+    - size_bytes
+    - storage_key
+    type: object
   models.AuthResponse:
     properties:
       tokens:
         $ref: '#/definitions/models.TokenPairResponse'
       user:
         $ref: '#/definitions/models.UserResponse'
+    type: object
+  models.CreateDocumentRequest:
+    properties:
+      change_summary:
+        maxLength: 255
+        type: string
+      initial_content:
+        type: string
+      slug:
+        maxLength: 100
+        type: string
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - title
+    type: object
+  models.CreateFileRequest:
+    properties:
+      change_summary:
+        maxLength: 255
+        type: string
+      checksum_sha256:
+        maxLength: 64
+        type: string
+      file_name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      mime_type:
+        maxLength: 255
+        minLength: 1
+        type: string
+      size_bytes:
+        type: integer
+      storage_key:
+        maxLength: 2048
+        minLength: 1
+        type: string
+    required:
+    - file_name
+    - mime_type
+    - size_bytes
+    - storage_key
     type: object
   models.CreateRepositoryRequest:
     properties:
@@ -51,6 +119,106 @@ definitions:
       repository:
         $ref: '#/definitions/models.RepositoryResponse'
     type: object
+  models.CreateVersionRequest:
+    properties:
+      change_summary:
+        maxLength: 255
+        type: string
+      content:
+        type: string
+    type: object
+  models.DocumentDetailResponse:
+    properties:
+      author_id:
+        example: 550e8400-e29b-41d4-a716-446655440002
+        type: string
+      created_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+      current_version:
+        $ref: '#/definitions/models.DocumentVersionDetail'
+      current_version_id:
+        example: 550e8400-e29b-41d4-a716-446655440003
+        type: string
+      deleted_at:
+        example: "2026-01-03T00:00:00Z"
+        type: string
+      document_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      draft:
+        $ref: '#/definitions/models.DocumentDraftResponse'
+      format:
+        example: markdown
+        type: string
+      latest_draft_updated_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+      repo_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+      slug:
+        example: my-document
+        type: string
+      title:
+        example: My Document
+        type: string
+      updated_at:
+        example: "2026-01-02T00:00:00Z"
+        type: string
+    type: object
+  models.DocumentDraftResponse:
+    properties:
+      content:
+        type: string
+      document_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      updated_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+      updated_by:
+        example: 550e8400-e29b-41d4-a716-446655440002
+        type: string
+    type: object
+  models.DocumentListResponse:
+    properties:
+      documents:
+        items:
+          $ref: '#/definitions/models.DocumentDetailResponse'
+        type: array
+      total:
+        example: 42
+        type: integer
+    type: object
+  models.DocumentResponse:
+    properties:
+      document:
+        $ref: '#/definitions/models.DocumentDetailResponse'
+    type: object
+  models.DocumentVersionDetail:
+    properties:
+      author_id:
+        example: 550e8400-e29b-41d4-a716-446655440002
+        type: string
+      change_summary:
+        example: Initial version
+        type: string
+      content:
+        type: string
+      created_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+      document_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      version_id:
+        example: 550e8400-e29b-41d4-a716-446655440003
+        type: string
+      version_number:
+        example: 1
+        type: integer
+    type: object
   models.ErrorResponse:
     properties:
       code:
@@ -59,6 +227,96 @@ definitions:
       message:
         example: invalid request
         type: string
+    type: object
+  models.FileDetailResponse:
+    properties:
+      created_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+      current_version_id:
+        example: 550e8400-e29b-41d4-a716-446655440005
+        type: string
+      deleted_at:
+        example: "2026-01-03T00:00:00Z"
+        type: string
+      file_id:
+        example: 550e8400-e29b-41d4-a716-446655440004
+        type: string
+      file_name:
+        example: document.pdf
+        type: string
+      repo_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+      updated_at:
+        example: "2026-01-02T00:00:00Z"
+        type: string
+      uploaded_by:
+        example: 550e8400-e29b-41d4-a716-446655440002
+        type: string
+    type: object
+  models.FileListResponse:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/models.FileDetailResponse'
+        type: array
+      total:
+        example: 42
+        type: integer
+    type: object
+  models.FileResponse:
+    properties:
+      file:
+        $ref: '#/definitions/models.FileDetailResponse'
+    type: object
+  models.FileVersionDetail:
+    properties:
+      change_summary:
+        example: Updated file
+        type: string
+      checksum_sha256:
+        example: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        type: string
+      created_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+      file_id:
+        example: 550e8400-e29b-41d4-a716-446655440004
+        type: string
+      mime_type:
+        example: application/pdf
+        type: string
+      size_bytes:
+        example: 1024000
+        type: integer
+      storage_key:
+        example: uploads/file-123.pdf
+        type: string
+      uploaded_by:
+        example: 550e8400-e29b-41d4-a716-446655440002
+        type: string
+      version_id:
+        example: 550e8400-e29b-41d4-a716-446655440005
+        type: string
+      version_number:
+        example: 1
+        type: integer
+    type: object
+  models.FileVersionListResponse:
+    properties:
+      total:
+        example: 42
+        type: integer
+      versions:
+        items:
+          $ref: '#/definitions/models.FileVersionDetail'
+        type: array
+    type: object
+  models.FileVersionResponse:
+    properties:
+      version:
+        $ref: '#/definitions/models.FileVersionDetail'
     type: object
   models.ForkRepositoryRequest:
     properties:
@@ -247,6 +505,23 @@ definitions:
     x-enum-varnames:
     - RepositoryVisibilityPublic
     - RepositoryVisibilityPrivate
+  models.RestoreFileVersionRequest:
+    properties:
+      change_summary:
+        maxLength: 255
+        type: string
+    type: object
+  models.RestoreVersionRequest:
+    properties:
+      change_summary:
+        maxLength: 255
+        type: string
+    type: object
+  models.SaveDraftRequest:
+    properties:
+      content:
+        type: string
+    type: object
   models.TokenPairResponse:
     properties:
       access_expires_at:
@@ -341,6 +616,21 @@ definitions:
       username:
         example: johnDoe
         type: string
+    type: object
+  models.VersionListResponse:
+    properties:
+      total:
+        example: 42
+        type: integer
+      versions:
+        items:
+          $ref: '#/definitions/models.DocumentVersionDetail'
+        type: array
+    type: object
+  models.VersionResponse:
+    properties:
+      version:
+        $ref: '#/definitions/models.DocumentVersionDetail'
     type: object
 host: localhost:8080
 info:
@@ -527,6 +817,393 @@ paths:
       summary: Регистрация нового пользователя
       tags:
       - auth
+  /document-versions/{version_id}:
+    get:
+      description: Получает информацию о конкретной версии документа
+      parameters:
+      - description: ID версии
+        in: path
+        name: version_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.VersionResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить версию документа
+      tags:
+      - content
+  /documents/{document_id}:
+    delete:
+      description: Удаляет документ из репозитория
+      parameters:
+      - description: ID документа
+        in: path
+        name: document_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить документ
+      tags:
+      - content
+    get:
+      description: Получает информацию о документе по ID
+      parameters:
+      - description: ID документа
+        in: path
+        name: document_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DocumentResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить документ
+      tags:
+      - content
+  /documents/{document_id}/draft:
+    patch:
+      description: Сохраняет черновик документа без создания версии
+      parameters:
+      - description: ID документа
+        in: path
+        name: document_id
+        required: true
+        type: string
+      - description: Содержание черновика
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SaveDraftRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DocumentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Сохранить черновик документа
+      tags:
+      - content
+  /documents/{document_id}/versions:
+    get:
+      description: Получает список всех версий документа с пагинацией
+      parameters:
+      - description: ID документа
+        in: path
+        name: document_id
+        required: true
+        type: string
+      - default: 10
+        description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.VersionListResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список версий документа
+      tags:
+      - content
+    post:
+      description: Создаёт новую версию документа и опубликовывает её
+      parameters:
+      - description: ID документа
+        in: path
+        name: document_id
+        required: true
+        type: string
+      - description: Данные версии
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateVersionRequest'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.VersionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать версию документа
+      tags:
+      - content
+  /documents/{document_id}/versions/{version_id}/restore:
+    post:
+      description: Восстанавливает документ до выбранной версии
+      parameters:
+      - description: ID документа
+        in: path
+        name: document_id
+        required: true
+        type: string
+      - description: ID версии для восстановления
+        in: path
+        name: version_id
+        required: true
+        type: string
+      - description: Данные восстановления
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RestoreVersionRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.VersionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Восстановить версию документа
+      tags:
+      - content
+  /file-versions/{version_id}:
+    get:
+      description: Получает информацию о конкретной версии файла
+      parameters:
+      - description: ID версии файла
+        in: path
+        name: version_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FileVersionResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить версию файла
+      tags:
+      - content
+  /files/{file_id}:
+    delete:
+      description: Удаляет файл из репозитория
+      parameters:
+      - description: ID файла
+        in: path
+        name: file_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить файл
+      tags:
+      - content
+    get:
+      description: Получает информацию о файле по ID
+      parameters:
+      - description: ID файла
+        in: path
+        name: file_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FileResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить файл
+      tags:
+      - content
+  /files/{file_id}/versions:
+    get:
+      description: Получает список всех версий файла с пагинацией
+      parameters:
+      - description: ID файла
+        in: path
+        name: file_id
+        required: true
+        type: string
+      - default: 10
+        description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FileVersionListResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список версий файла
+      tags:
+      - content
+    post:
+      description: Добавляет новую версию существующего файла
+      parameters:
+      - description: ID файла
+        in: path
+        name: file_id
+        required: true
+        type: string
+      - description: Данные новой версии
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AddFileVersionRequest'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.FileVersionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Добавить версию файла
+      tags:
+      - content
+  /files/{file_id}/versions/{version_id}/restore:
+    post:
+      description: Восстанавливает файл до выбранной версии
+      parameters:
+      - description: ID файла
+        in: path
+        name: file_id
+        required: true
+        type: string
+      - description: ID версии для восстановления
+        in: path
+        name: version_id
+        required: true
+        type: string
+      - description: Данные восстановления
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.RestoreFileVersionRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FileVersionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Восстановить версию файла
+      tags:
+      - content
   /repositories:
     post:
       consumes:
@@ -696,6 +1373,140 @@ paths:
       summary: Обновление репозитория
       tags:
       - repositories
+  /repositories/{repo_id}/documents:
+    get:
+      description: Получает список документов в репозитории с пагинацией
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      - default: 10
+        description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DocumentListResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список документов репозитория
+      tags:
+      - content
+    post:
+      description: Создаёт новый документ в репозитории
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      - description: Данные документа
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateDocumentRequest'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.DocumentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать документ
+      tags:
+      - content
+  /repositories/{repo_id}/files:
+    get:
+      description: Получает список файлов в репозитории с пагинацией
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      - default: 10
+        description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FileListResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список файлов репозитория
+      tags:
+      - content
+    post:
+      description: Создаёт новый файл в репозитории
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      - description: Данные файла
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateFileRequest'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.FileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать файл
+      tags:
+      - content
   /repositories/{repo_id}/fork:
     post:
       consumes:
