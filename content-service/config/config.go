@@ -12,9 +12,10 @@ import (
 )
 
 type Config struct {
-	Port string
-	DB   DB
-	Auth Auth
+	Port           string
+	DB             DB
+	Auth           Auth
+	RepoistoryGRPC RepoistoryGRPC
 }
 
 type DB struct {
@@ -23,6 +24,12 @@ type DB struct {
 
 type Auth struct {
 	JWTSecret string
+}
+
+type RepoistoryGRPC struct {
+	Addres         string
+	DialTimeout    time.Duration
+	RequestTimeout time.Duration
 }
 
 func Load(log *zap.Logger) *Config {
@@ -41,6 +48,11 @@ func Load(log *zap.Logger) *Config {
 		Auth: Auth{
 			JWTSecret: getEnv("JWTSecret", log),
 		},
+		RepoistoryGRPC: RepoistoryGRPC{
+			Addres:         getEnv("REPOSITORY_SERVICE_ADDR", log),
+			DialTimeout:    parseSecondsDuration(getEnv("REPOSITORY_GRPC_DIAL_TIMEOUT", log)),
+			RequestTimeout: parseSecondsDuration(getEnv("REPOSITORY_GRPC_REQUEST_TIMEOUT", log)),
+		},
 	}
 }
 
@@ -50,6 +62,24 @@ func getEnv(key string, log *zap.Logger) string {
 	}
 	log.Error("Обязательная переменная окружения не установлена", zap.String("key", key))
 	panic("missing required environment variable: " + key)
+}
+
+func parseSecondsDuration(s string) time.Duration {
+	if strings.HasSuffix(s, "s") {
+		secondsStr := strings.TrimSuffix(s, "s")
+		seconds, err := strconv.Atoi(secondsStr)
+		if err != nil {
+			log.Printf("Ошибка парсинга длительности: %v", err)
+			return 0
+		}
+		return time.Duration(seconds) * time.Second
+	}
+	duration, err := time.ParseDuration(s)
+	if err != nil {
+		log.Printf("Ошибка парсинга длительности: %v", err)
+		return 0
+	}
+	return duration
 }
 
 func parseDurationWithDays(s string) time.Duration {
