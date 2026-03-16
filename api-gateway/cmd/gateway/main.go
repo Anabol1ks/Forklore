@@ -55,12 +55,19 @@ func main() {
 	}
 	defer repositoryClient.Close()
 
+	contentClient, err := clients.NewContentClient(cfg.ContentServiceAddr)
+	if err != nil {
+		log.Fatal("failed to connect to content-service", zap.Error(err))
+	}
+	defer contentClient.Close()
+
 	// ── Handlers ──
 	authHandler := handlers.NewAuthHandler(authClient)
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryClient)
+	contentHandler := handlers.NewContentHandler(contentClient)
 
 	// ── Router ──
-	r := router.Setup(log, authHandler, repositoryHandler)
+	r := router.Setup(log, authHandler, repositoryHandler, contentHandler)
 
 	// ── HTTP server ──
 	srv := &http.Server{

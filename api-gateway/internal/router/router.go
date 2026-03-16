@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler) *gin.Engine {
+func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.Logger(log))
@@ -53,6 +53,53 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 			repositories.DELETE("/:repo_id", repositoryHandler.DeleteRepository)
 			repositories.POST("/:repo_id/fork", repositoryHandler.ForkRepository)
 			repositories.GET("/:repo_id/forks", repositoryHandler.ListForks)
+
+			// ── Documents ──
+			repositories.POST("/:repo_id/documents", contentHandler.CreateDocument)
+			repositories.GET("/:repo_id/documents", contentHandler.ListRepositoryDocuments)
+
+			// ── Files ──
+			repositories.POST("/:repo_id/files", contentHandler.CreateFile)
+			repositories.GET("/:repo_id/files", contentHandler.ListRepositoryFiles)
+		}
+
+		// ── Documents ──
+		documents := v1.Group("/documents")
+		documents.Use(middleware.AuthRequired())
+		{
+			documents.GET("/:document_id", contentHandler.GetDocument)
+			documents.PATCH("/:document_id/draft", contentHandler.SaveDocumentDraft)
+			documents.DELETE("/:document_id", contentHandler.DeleteDocument)
+
+			// ── Document Versions ──
+			documents.POST("/:document_id/versions", contentHandler.CreateDocumentVersion)
+			documents.GET("/:document_id/versions", contentHandler.ListDocumentVersions)
+			documents.POST("/:document_id/versions/:version_id/restore", contentHandler.RestoreDocumentVersion)
+		}
+
+		// ── Document Versions (public access) ──
+		docVersions := v1.Group("/document-versions")
+		{
+			docVersions.GET("/:version_id", contentHandler.GetDocumentVersion)
+		}
+
+		// ── Files ──
+		files := v1.Group("/files")
+		files.Use(middleware.AuthRequired())
+		{
+			files.GET("/:file_id", contentHandler.GetFile)
+			files.DELETE("/:file_id", contentHandler.DeleteFile)
+
+			// ── File Versions ──
+			files.POST("/:file_id/versions", contentHandler.AddFileVersion)
+			files.GET("/:file_id/versions", contentHandler.ListFileVersions)
+			files.POST("/:file_id/versions/:version_id/restore", contentHandler.RestoreFileVersion)
+		}
+
+		// ── File Versions (public access) ──
+		fileVersions := v1.Group("/file-versions")
+		{
+			fileVersions.GET("/:version_id", contentHandler.GetFileVersion)
 		}
 
 		// ── Users - for user-specific repository operations ──
