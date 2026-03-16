@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"net"
 	"os"
 	"os/signal"
+	migrations "repository-service/internal/migration"
 	"syscall"
 
 	"repository-service/config"
@@ -36,6 +38,11 @@ func main() {
 
 	db := database.ConnectDB(&cfg.DB.Config, log)
 	defer database.CloseDB(db, log)
+
+	// Keep runtime schema in sync for safe zero-downtime field additions.
+	if err := migrations.AutoMigrate(context.Background(), db, log); err != nil {
+		log.Fatal("failed to auto-migrate repository database", zap.Error(err))
+	}
 
 	repos := repository.New(db)
 	repoService := service.NewRepositoryService(repos)

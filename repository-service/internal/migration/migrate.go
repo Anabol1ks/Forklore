@@ -102,6 +102,8 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 			ON repositories(owner_id, slug) WHERE deleted_at IS NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_repositories_owner_id_active
 			ON repositories(owner_id) WHERE deleted_at IS NULL`,
+		`CREATE INDEX IF NOT EXISTS idx_repositories_owner_username_active
+			ON repositories(owner_username) WHERE deleted_at IS NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_repositories_tag_id_active
 			ON repositories(tag_id) WHERE deleted_at IS NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_repositories_parent_repo_id_active

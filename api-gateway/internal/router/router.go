@@ -19,6 +19,25 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 
 	v1 := r.Group("/api/v1")
 	{
+		// Public read routes with optional auth header (service enforces private visibility checks)
+		v1.GET("/repositories/tags", repositoryHandler.ListRepositoryTags)
+		v1.GET("/repositories/:repo_id", repositoryHandler.GetRepositoryByID)
+		v1.GET("/repositories/:repo_id/forks", repositoryHandler.ListForks)
+		v1.GET("/repositories/:repo_id/documents", contentHandler.ListRepositoryDocuments)
+		v1.GET("/repositories/:repo_id/files", contentHandler.ListRepositoryFiles)
+
+		v1.GET("/documents/:document_id", contentHandler.GetDocument)
+		v1.GET("/documents/:document_id/versions", contentHandler.ListDocumentVersions)
+
+		v1.GET("/files/:file_id", contentHandler.GetFile)
+		v1.GET("/files/:file_id/versions", contentHandler.ListFileVersions)
+
+		v1.GET("/document-versions/:version_id", contentHandler.GetDocumentVersion)
+		v1.GET("/file-versions/:version_id", contentHandler.GetFileVersion)
+
+		v1.GET("/users/:owner_id/repositories", repositoryHandler.ListUserRepositories)
+		v1.GET("/users/:owner_id/repositories/:slug", repositoryHandler.GetRepositoryBySlug)
+
 		// ── Auth ──
 		auth := v1.Group("/auth")
 		{
@@ -42,74 +61,42 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 			// Create repository
 			repositories.POST("", repositoryHandler.CreateRepository)
 
-			// Special paths (must be before parameterized paths)
+			// Special paths
 			repositories.GET("/me", repositoryHandler.ListMyRepositories)
-			repositories.GET("/tags", repositoryHandler.ListRepositoryTags)
 
-			// Repository-specific paths (by ID)
-			repositories.GET("/:repo_id", repositoryHandler.GetRepositoryByID)
+			// Repository write paths (by ID)
 			repositories.PATCH("/:repo_id", repositoryHandler.UpdateRepository)
 			repositories.DELETE("/:repo_id", repositoryHandler.DeleteRepository)
 			repositories.POST("/:repo_id/fork", repositoryHandler.ForkRepository)
-			repositories.GET("/:repo_id/forks", repositoryHandler.ListForks)
 
 			// ── Documents ──
 			repositories.POST("/:repo_id/documents", contentHandler.CreateDocument)
-			repositories.GET("/:repo_id/documents", contentHandler.ListRepositoryDocuments)
 
 			// ── Files ──
 			repositories.POST("/:repo_id/files", contentHandler.CreateFile)
-			repositories.GET("/:repo_id/files", contentHandler.ListRepositoryFiles)
 		}
 
 		// ── Documents ──
 		documents := v1.Group("/documents")
 		documents.Use(middleware.AuthRequired())
 		{
-			documents.GET("/:document_id", contentHandler.GetDocument)
 			documents.PATCH("/:document_id/draft", contentHandler.SaveDocumentDraft)
 			documents.DELETE("/:document_id", contentHandler.DeleteDocument)
 
 			// ── Document Versions ──
 			documents.POST("/:document_id/versions", contentHandler.CreateDocumentVersion)
-			documents.GET("/:document_id/versions", contentHandler.ListDocumentVersions)
 			documents.POST("/:document_id/versions/:version_id/restore", contentHandler.RestoreDocumentVersion)
-		}
-
-		// ── Document Versions (public access) ──
-		docVersions := v1.Group("/document-versions")
-		{
-			docVersions.GET("/:version_id", contentHandler.GetDocumentVersion)
 		}
 
 		// ── Files ──
 		files := v1.Group("/files")
 		files.Use(middleware.AuthRequired())
 		{
-			files.GET("/:file_id", contentHandler.GetFile)
 			files.DELETE("/:file_id", contentHandler.DeleteFile)
 
 			// ── File Versions ──
 			files.POST("/:file_id/versions", contentHandler.AddFileVersion)
-			files.GET("/:file_id/versions", contentHandler.ListFileVersions)
 			files.POST("/:file_id/versions/:version_id/restore", contentHandler.RestoreFileVersion)
-		}
-
-		// ── File Versions (public access) ──
-		fileVersions := v1.Group("/file-versions")
-		{
-			fileVersions.GET("/:version_id", contentHandler.GetFileVersion)
-		}
-
-		// ── Users - for user-specific repository operations ──
-		users := v1.Group("/users")
-		users.Use(middleware.AuthRequired())
-		{
-			// Get user repositories
-			users.GET("/:owner_id/repositories", repositoryHandler.ListUserRepositories)
-
-			// Get repository by owner and slug
-			users.GET("/:owner_id/repositories/:slug", repositoryHandler.GetRepositoryBySlug)
 		}
 	}
 

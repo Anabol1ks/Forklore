@@ -4,6 +4,7 @@ import (
 	"context"
 	"repository-service/internal/domain"
 	"repository-service/internal/service"
+	"strings"
 
 	repositoryv1 "github.com/Anabol1ks/Forklore/pkg/pb/repository/v1"
 	"github.com/google/uuid"
@@ -47,13 +48,14 @@ func (h *RepositoryHandler) CreateRepository(ctx context.Context, req *repositor
 	}
 
 	repo, err := h.service.CreateRepository(ctx, service.CreateRepositoryInput{
-		OwnerID:     claims.UserID,
-		TagID:       tagID,
-		Name:        req.GetName(),
-		Slug:        req.GetSlug(),
-		Description: req.GetDescription(),
-		Visibility:  toModelRepositoryVisibility(req.GetVisibility()),
-		Type:        toModelRepositoryType(req.GetType()),
+		OwnerID:       claims.UserID,
+		OwnerUsername: claims.Username,
+		TagID:         tagID,
+		Name:          req.GetName(),
+		Slug:          req.GetSlug(),
+		Description:   req.GetDescription(),
+		Visibility:    toModelRepositoryVisibility(req.GetVisibility()),
+		Type:          toModelRepositoryType(req.GetType()),
 	})
 	if err != nil {
 		return nil, LogAndMapError(h.logger, "create repository failed", err,
@@ -110,24 +112,25 @@ func (h *RepositoryHandler) GetRepositoryBySlug(ctx context.Context, req *reposi
 		return nil, err
 	}
 
-	ownerID, err := parseProtoUUID(req.GetOwnerId(), "owner_id")
-	if err != nil {
-		return nil, err
+	ownerKey := strings.TrimSpace(req.GetOwnerId().GetValue())
+	if ownerKey == "" {
+		return nil, grpcstatus.Error(codes.InvalidArgument, "owner_id is required")
 	}
 
 	requesterID := requesterIDFromContext(ctx)
+	requesterUsername := requesterUsernameFromContext(ctx)
 
-	repo, err := h.service.GetRepositoryBySlug(ctx, requesterID, ownerID, req.GetSlug())
+	repo, err := h.service.GetRepositoryBySlug(ctx, requesterID, requesterUsername, ownerKey, req.GetSlug())
 	if err != nil {
 		return nil, LogAndMapError(h.logger, "get repository by slug failed", err,
-			zap.String("owner_id", ownerID.String()),
+			zap.String("owner_key", ownerKey),
 			zap.String("slug", req.GetSlug()),
 			zap.String("requester_id", requesterID.String()),
 		)
 	}
 
 	h.logger.Debug("repository fetched by slug",
-		zap.String("owner_id", ownerID.String()),
+		zap.String("owner_key", ownerKey),
 		zap.String("slug", req.GetSlug()),
 		zap.String("requester_id", requesterID.String()),
 	)
@@ -231,11 +234,12 @@ func (h *RepositoryHandler) ForkRepository(ctx context.Context, req *repositoryv
 	}
 
 	repo, err := h.service.ForkRepository(ctx, service.ForkRepositoryInput{
-		RequesterID:  claims.UserID,
-		SourceRepoID: sourceRepoID,
-		Name:         req.GetName(),
-		Slug:         req.GetSlug(),
-		Description:  req.GetDescription(),
+		RequesterID:       claims.UserID,
+		RequesterUsername: claims.Username,
+		SourceRepoID:      sourceRepoID,
+		Name:              req.GetName(),
+		Slug:              req.GetSlug(),
+		Description:       req.GetDescription(),
 	})
 	if err != nil {
 		return nil, LogAndMapError(h.logger, "fork repository failed", err,
@@ -292,26 +296,27 @@ func (h *RepositoryHandler) ListUserRepositories(ctx context.Context, req *repos
 		return nil, err
 	}
 
-	ownerID, err := parseProtoUUID(req.GetOwnerId(), "owner_id")
-	if err != nil {
-		return nil, err
+	ownerKey := strings.TrimSpace(req.GetOwnerId().GetValue())
+	if ownerKey == "" {
+		return nil, grpcstatus.Error(codes.InvalidArgument, "owner_id is required")
 	}
 
 	requesterID := requesterIDFromContext(ctx)
+	requesterUsername := requesterUsernameFromContext(ctx)
 
-	repos, total, err := h.service.ListUserRepositories(ctx, requesterID, ownerID, service.Pagination{
+	repos, total, err := h.service.ListUserRepositories(ctx, requesterID, requesterUsername, ownerKey, service.Pagination{
 		Limit:  int(req.GetLimit()),
 		Offset: int(req.GetOffset()),
 	})
 	if err != nil {
 		return nil, LogAndMapError(h.logger, "list user repositories failed", err,
-			zap.String("owner_id", ownerID.String()),
+			zap.String("owner_key", ownerKey),
 			zap.String("requester_id", requesterID.String()),
 		)
 	}
 
 	h.logger.Debug("repositories listed for user",
-		zap.String("owner_id", ownerID.String()),
+		zap.String("owner_key", ownerKey),
 		zap.String("requester_id", requesterID.String()),
 		zap.Int("count", len(repos)),
 		zap.Uint64("total", uint64(total)),
@@ -391,4 +396,12 @@ func requesterIDFromContext(ctx context.Context) uuid.UUID {
 		return uuid.Nil
 	}
 	return claims.UserID
+}
+
+func requesterUsernameFromContext(ctx context.Context) string {
+	claims, ok := ClaimsFromContext(ctx)
+	if !ok || claims == nil {
+		return ""
+	}
+	return claims.Username
 }

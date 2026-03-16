@@ -13,11 +13,14 @@ type RepoRepository interface {
 	Create(ctx context.Context, repo *model.Repository) error
 	GetByID(ctx context.Context, repoID uuid.UUID) (*model.Repository, error)
 	GetByOwnerAndSlug(ctx context.Context, ownerID uuid.UUID, slug string) (*model.Repository, error)
+	GetByOwnerUsernameAndSlug(ctx context.Context, ownerUsername string, slug string) (*model.Repository, error)
 	Update(ctx context.Context, repo *model.Repository) error
 	DeleteByID(ctx context.Context, repoID uuid.UUID) error
 
 	ListByOwner(ctx context.Context, ownerID uuid.UUID, params ListParams) ([]*model.Repository, int64, error)
+	ListByOwnerUsername(ctx context.Context, ownerUsername string, params ListParams) ([]*model.Repository, int64, error)
 	ListPublicByOwner(ctx context.Context, ownerID uuid.UUID, params ListParams) ([]*model.Repository, int64, error)
+	ListPublicByOwnerUsername(ctx context.Context, ownerUsername string, params ListParams) ([]*model.Repository, int64, error)
 	ListForks(ctx context.Context, parentRepoID uuid.UUID, params ListParams) ([]*model.Repository, int64, error)
 }
 
@@ -51,6 +54,19 @@ func (r *repoRepository) GetByOwnerAndSlug(ctx context.Context, ownerID uuid.UUI
 
 	err := r.queryWithTag(ctx).
 		Where("owner_id = ? AND slug = ?", ownerID, slug).
+		Take(&repo).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &repo, nil
+}
+
+func (r *repoRepository) GetByOwnerUsernameAndSlug(ctx context.Context, ownerUsername string, slug string) (*model.Repository, error) {
+	var repo model.Repository
+
+	err := r.queryWithTag(ctx).
+		Where("owner_username = ? AND slug = ?", ownerUsername, slug).
 		Take(&repo).Error
 	if err != nil {
 		return nil, err
@@ -106,6 +122,31 @@ func (r *repoRepository) ListByOwner(ctx context.Context, ownerID uuid.UUID, par
 	return repos, total, nil
 }
 
+func (r *repoRepository) ListByOwnerUsername(ctx context.Context, ownerUsername string, params ListParams) ([]*model.Repository, int64, error) {
+	limit, offset := normalizePagination(params)
+
+	countQuery := r.baseQuery(ctx).
+		Where("owner_username = ?", ownerUsername)
+
+	var total int64
+	if err := countQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var repos []*model.Repository
+	err := r.queryWithTag(ctx).
+		Where("owner_username = ?", ownerUsername).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&repos).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return repos, total, nil
+}
+
 func (r *repoRepository) ListPublicByOwner(ctx context.Context, ownerID uuid.UUID, params ListParams) ([]*model.Repository, int64, error) {
 	limit, offset := normalizePagination(params)
 
@@ -120,6 +161,31 @@ func (r *repoRepository) ListPublicByOwner(ctx context.Context, ownerID uuid.UUI
 	var repos []*model.Repository
 	err := r.queryWithTag(ctx).
 		Where("owner_id = ? AND visibility = ?", ownerID, model.RepositoryVisibilityPublic).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&repos).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return repos, total, nil
+}
+
+func (r *repoRepository) ListPublicByOwnerUsername(ctx context.Context, ownerUsername string, params ListParams) ([]*model.Repository, int64, error) {
+	limit, offset := normalizePagination(params)
+
+	countQuery := r.baseQuery(ctx).
+		Where("owner_username = ? AND visibility = ?", ownerUsername, model.RepositoryVisibilityPublic)
+
+	var total int64
+	if err := countQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var repos []*model.Repository
+	err := r.queryWithTag(ctx).
+		Where("owner_username = ? AND visibility = ?", ownerUsername, model.RepositoryVisibilityPublic).
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).

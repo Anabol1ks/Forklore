@@ -1676,7 +1676,7 @@ paths:
     get:
       description: Возвращает список публичных репозиториев указанного пользователя
       parameters:
-      - description: ID владельца
+      - description: Nickname владельца или owner_id
         in: path
         name: owner_id
         required: true
@@ -1721,9 +1721,10 @@ paths:
       - repositories
   /users/{owner_id}/repositories/{slug}:
     get:
-      description: Возвращает информацию о репозитории по owner_id и slug
+      description: Возвращает информацию о репозитории по owner nickname (или owner_id)
+        и slug
       parameters:
-      - description: ID владельца
+      - description: Nickname владельца или owner_id
         in: path
         name: owner_id
         required: true

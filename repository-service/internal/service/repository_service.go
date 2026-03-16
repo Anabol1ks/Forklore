@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"repository-service/internal/domain"
 	"repository-service/internal/model"
@@ -25,6 +26,9 @@ func NewRepositoryService(repos *repository.Repository) RepositoryService {
 
 func (s *repositoryService) CreateRepository(ctx context.Context, input CreateRepositoryInput) (*model.Repository, error) {
 	if input.OwnerID == uuid.Nil {
+		return nil, domain.ErrUnauthorized
+	}
+	if strings.TrimSpace(input.OwnerUsername) == "" {
 		return nil, domain.ErrUnauthorized
 	}
 
@@ -50,28 +54,38 @@ func (s *repositoryService) CreateRepository(ctx context.Context, input CreateRe
 	name := strings.TrimSpace(input.Name)
 	description := nullableTrimmedString(input.Description)
 
+	userProvidedSlug := strings.TrimSpace(input.Slug) != ""
 	slug := normalizeSlug(input.Slug)
 	if slug == "" {
 		slug = slugify(name)
 	}
 	if slug == "" {
-		return nil, domain.ErrRepositorySlugTaken
+		slug = "repo"
 	}
 
-	if _, err := s.repos.Repo.GetByOwnerAndSlug(ctx, input.OwnerID, slug); err == nil {
-		return nil, domain.ErrRepositorySlugTaken
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
+	if userProvidedSlug {
+		if _, err := s.repos.Repo.GetByOwnerAndSlug(ctx, input.OwnerID, slug); err == nil {
+			return nil, domain.ErrRepositorySlugTaken
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	} else {
+		resolvedSlug, err := s.findAvailableSlug(ctx, input.OwnerID, slug)
+		if err != nil {
+			return nil, err
+		}
+		slug = resolvedSlug
 	}
 
 	repo := &model.Repository{
-		OwnerID:     input.OwnerID,
-		TagID:       tag.ID,
-		Name:        name,
-		Slug:        slug,
-		Description: description,
-		Visibility:  input.Visibility,
-		Type:        input.Type,
+		OwnerID:       input.OwnerID,
+		OwnerUsername: normalizeOwnerUsername(input.OwnerUsername),
+		TagID:         tag.ID,
+		Name:          name,
+		Slug:          slug,
+		Description:   description,
+		Visibility:    input.Visibility,
+		Type:          input.Type,
 	}
 
 	if err := s.repos.Repo.Create(ctx, repo); err != nil {
@@ -105,8 +119,22 @@ func (s *repositoryService) GetRepositoryByID(ctx context.Context, requesterID u
 	return repo, nil
 }
 
-func (s *repositoryService) GetRepositoryBySlug(ctx context.Context, requesterID uuid.UUID, ownerID uuid.UUID, slug string) (*model.Repository, error) {
-	repo, err := s.repos.Repo.GetByOwnerAndSlug(ctx, ownerID, normalizeSlug(slug))
+func (s *repositoryService) GetRepositoryBySlug(ctx context.Context, requesterID uuid.UUID, requesterUsername string, ownerKey string, slug string) (*model.Repository, error) {
+	ownerKey = strings.TrimSpace(ownerKey)
+	if ownerKey == "" {
+		return nil, domain.ErrRepositoryNotFound
+	}
+
+	var (
+		repo *model.Repository
+		err  error
+	)
+
+	if ownerUUID, parseErr := uuid.Parse(ownerKey); parseErr == nil {
+		repo, err = s.repos.Repo.GetByOwnerAndSlug(ctx, ownerUUID, normalizeSlug(slug))
+	} else {
+		repo, err = s.repos.Repo.GetByOwnerUsernameAndSlug(ctx, normalizeOwnerUsername(ownerKey), normalizeSlug(slug))
+	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrRepositoryNotFound
@@ -115,6 +143,9 @@ func (s *repositoryService) GetRepositoryBySlug(ctx context.Context, requesterID
 	}
 
 	if !canReadRepository(requesterID, repo) {
+		if normalizeOwnerUsername(requesterUsername) != "" && normalizeOwnerUsername(requesterUsername) == repo.OwnerUsername {
+			return repo, nil
+		}
 		return nil, domain.ErrRepositoryAccessDenied
 	}
 
@@ -225,6 +256,9 @@ func (s *repositoryService) ForkRepository(ctx context.Context, input ForkReposi
 	if input.RequesterID == uuid.Nil {
 		return nil, domain.ErrUnauthorized
 	}
+	if strings.TrimSpace(input.RequesterUsername) == "" {
+		return nil, domain.ErrUnauthorized
+	}
 
 	sourceRepo, err := s.repos.Repo.GetByID(ctx, input.SourceRepoID)
 	if err != nil {
@@ -252,29 +286,39 @@ func (s *repositoryService) ForkRepository(ctx context.Context, input ForkReposi
 		description = sourceRepo.Description
 	}
 
+	userProvidedSlug := strings.TrimSpace(input.Slug) != ""
 	slug := normalizeSlug(input.Slug)
 	if slug == "" {
 		slug = slugify(name)
 	}
 	if slug == "" {
-		return nil, domain.ErrRepositorySlugTaken
+		slug = "repo"
 	}
 
-	if _, err := s.repos.Repo.GetByOwnerAndSlug(ctx, input.RequesterID, slug); err == nil {
-		return nil, domain.ErrRepositorySlugTaken
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
+	if userProvidedSlug {
+		if _, err := s.repos.Repo.GetByOwnerAndSlug(ctx, input.RequesterID, slug); err == nil {
+			return nil, domain.ErrRepositorySlugTaken
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	} else {
+		resolvedSlug, err := s.findAvailableSlug(ctx, input.RequesterID, slug)
+		if err != nil {
+			return nil, err
+		}
+		slug = resolvedSlug
 	}
 
 	repo := &model.Repository{
-		OwnerID:      input.RequesterID,
-		TagID:        sourceRepo.TagID,
-		Name:         name,
-		Slug:         slug,
-		Description:  description,
-		Visibility:   model.RepositoryVisibilityPrivate,
-		Type:         sourceRepo.Type,
-		ParentRepoID: &sourceRepo.ID,
+		OwnerID:       input.RequesterID,
+		OwnerUsername: normalizeOwnerUsername(input.RequesterUsername),
+		TagID:         sourceRepo.TagID,
+		Name:          name,
+		Slug:          slug,
+		Description:   description,
+		Visibility:    model.RepositoryVisibilityPrivate,
+		Type:          sourceRepo.Type,
+		ParentRepoID:  &sourceRepo.ID,
 	}
 
 	if err := s.repos.Repo.Create(ctx, repo); err != nil {
@@ -300,16 +344,29 @@ func (s *repositoryService) ListMyRepositories(ctx context.Context, ownerID uuid
 	return s.repos.Repo.ListByOwner(ctx, ownerID, toRepoListParams(pagination))
 }
 
-func (s *repositoryService) ListUserRepositories(ctx context.Context, requesterID uuid.UUID, ownerID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error) {
-	if ownerID == uuid.Nil {
+func (s *repositoryService) ListUserRepositories(ctx context.Context, requesterID uuid.UUID, requesterUsername string, ownerKey string, pagination Pagination) ([]*model.Repository, int64, error) {
+	ownerKey = strings.TrimSpace(ownerKey)
+	if ownerKey == "" {
 		return nil, 0, domain.ErrUnauthorized
 	}
 
-	if requesterID == ownerID {
-		return s.repos.Repo.ListByOwner(ctx, ownerID, toRepoListParams(pagination))
+	if ownerUUID, parseErr := uuid.Parse(ownerKey); parseErr == nil {
+		if requesterID == ownerUUID {
+			return s.repos.Repo.ListByOwner(ctx, ownerUUID, toRepoListParams(pagination))
+		}
+		return s.repos.Repo.ListPublicByOwner(ctx, ownerUUID, toRepoListParams(pagination))
 	}
 
-	return s.repos.Repo.ListPublicByOwner(ctx, ownerID, toRepoListParams(pagination))
+	normalizedOwner := normalizeOwnerUsername(ownerKey)
+	if normalizedOwner == "" {
+		return nil, 0, domain.ErrUnauthorized
+	}
+
+	if normalizeOwnerUsername(requesterUsername) == normalizedOwner {
+		return s.repos.Repo.ListByOwnerUsername(ctx, normalizedOwner, toRepoListParams(pagination))
+	}
+
+	return s.repos.Repo.ListPublicByOwnerUsername(ctx, normalizedOwner, toRepoListParams(pagination))
 }
 
 func (s *repositoryService) ListForks(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error) {
@@ -379,9 +436,17 @@ func nullableTrimmedString(v string) *string {
 
 var slugCleanupRegex = regexp.MustCompile(`[^a-z0-9-]+`)
 var multiDashRegex = regexp.MustCompile(`-+`)
+var cyrillicToLatinReplacer = strings.NewReplacer(
+	"а", "a", "б", "b", "в", "v", "г", "g", "д", "d", "е", "e", "ё", "e",
+	"ж", "zh", "з", "z", "и", "i", "й", "y", "к", "k", "л", "l", "м", "m",
+	"н", "n", "о", "o", "п", "p", "р", "r", "с", "s", "т", "t", "у", "u",
+	"ф", "f", "х", "h", "ц", "ts", "ч", "ch", "ш", "sh", "щ", "sch", "ъ", "",
+	"ы", "y", "ь", "", "э", "e", "ю", "yu", "я", "ya",
+)
 
 func normalizeSlug(v string) string {
 	v = strings.TrimSpace(strings.ToLower(v))
+	v = cyrillicToLatinReplacer.Replace(v)
 	v = strings.ReplaceAll(v, " ", "-")
 	v = slugCleanupRegex.ReplaceAllString(v, "-")
 	v = multiDashRegex.ReplaceAllString(v, "-")
@@ -391,6 +456,35 @@ func normalizeSlug(v string) string {
 
 func slugify(name string) string {
 	return normalizeSlug(name)
+}
+
+func normalizeOwnerUsername(v string) string {
+	v = strings.TrimSpace(strings.ToLower(v))
+	return v
+}
+
+func (s *repositoryService) findAvailableSlug(ctx context.Context, ownerID uuid.UUID, baseSlug string) (string, error) {
+	baseSlug = normalizeSlug(baseSlug)
+	if baseSlug == "" {
+		baseSlug = "repo"
+	}
+
+	for i := 0; i < 10000; i++ {
+		candidate := baseSlug
+		if i > 0 {
+			candidate = fmt.Sprintf("%s-%d", baseSlug, i+1)
+		}
+
+		_, err := s.repos.Repo.GetByOwnerAndSlug(ctx, ownerID, candidate)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return candidate, nil
+		}
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return "", domain.ErrRepositorySlugTaken
 }
 
 func mapCreateOrUpdateRepoError(err error) error {

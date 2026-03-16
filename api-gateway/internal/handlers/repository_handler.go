@@ -123,10 +123,10 @@ func (h *RepositoryHandler) GetRepositoryByID(c *gin.Context) {
 // GetRepositoryBySlug godoc
 //
 //	@Summary		Получение репозитория по slug
-//	@Description	Возвращает информацию о репозитории по owner_id и slug
+//	@Description	Возвращает информацию о репозитории по owner nickname (или owner_id) и slug
 //	@Tags			repositories
 //	@Produce		json
-//	@Param			owner_id	path		string	true	"ID владельца"
+//	@Param			owner_id	path		string	true	"Nickname владельца или owner_id"
 //	@Param			slug		path		string	true	"Slug репозитория"
 //	@Success		200			{object}	models.GetRepositoryResponse
 //	@Failure		400			{object}	models.ErrorResponse	"Неверный формат данных"
@@ -136,14 +136,13 @@ func (h *RepositoryHandler) GetRepositoryByID(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Router			/users/{owner_id}/repositories/{slug} [get]
 func (h *RepositoryHandler) GetRepositoryBySlug(c *gin.Context) {
-	ownerID := c.Param("owner_id")
+	ownerKey := c.Param("owner_id")
 	slug := c.Param("slug")
 
-	uuid, err := uuidFromString(ownerID)
-	if err != nil {
+	if ownerKey == "" {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Code:    http.StatusBadRequest,
-			Message: "invalid owner_id format",
+			Message: "owner is required",
 		})
 		return
 	}
@@ -151,7 +150,7 @@ func (h *RepositoryHandler) GetRepositoryBySlug(c *gin.Context) {
 	ctx := forwardAuth(c)
 
 	resp, err := h.client.Client.GetRepositoryBySlug(ctx, &repositoryv1.GetRepositoryBySlugRequest{
-		OwnerId: uuid,
+		OwnerId: &commonv1.UUID{Value: ownerKey},
 		Slug:    slug,
 	})
 	if err != nil {
@@ -383,7 +382,7 @@ func (h *RepositoryHandler) ListMyRepositories(c *gin.Context) {
 //	@Description	Возвращает список публичных репозиториев указанного пользователя
 //	@Tags			repositories
 //	@Produce		json
-//	@Param			owner_id	path		string	true	"ID владельца"
+//	@Param			owner_id	path		string	true	"Nickname владельца или owner_id"
 //	@Param			limit		query		integer	false	"Лимит элементов"	default(10)
 //	@Param			offset		query		integer	false	"Смещение"			default(0)
 //	@Success		200			{object}	models.ListRepositoriesResponse
@@ -394,13 +393,11 @@ func (h *RepositoryHandler) ListMyRepositories(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Router			/users/{owner_id}/repositories [get]
 func (h *RepositoryHandler) ListUserRepositories(c *gin.Context) {
-	ownerID := c.Param("owner_id")
-
-	uuid, err := uuidFromString(ownerID)
-	if err != nil {
+	ownerKey := c.Param("owner_id")
+	if ownerKey == "" {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Code:    http.StatusBadRequest,
-			Message: "invalid owner_id format",
+			Message: "owner is required",
 		})
 		return
 	}
@@ -410,7 +407,7 @@ func (h *RepositoryHandler) ListUserRepositories(c *gin.Context) {
 	ctx := forwardAuth(c)
 
 	resp, err := h.client.Client.ListUserRepositories(ctx, &repositoryv1.ListUserRepositoriesRequest{
-		OwnerId: uuid,
+		OwnerId: &commonv1.UUID{Value: ownerKey},
 		Limit:   limit,
 		Offset:  offset,
 	})

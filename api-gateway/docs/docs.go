@@ -1628,7 +1628,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID владельца",
+                        "description": "Nickname владельца или owner_id",
                         "name": "owner_id",
                         "in": "path",
                         "required": true
@@ -1689,7 +1689,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Возвращает информацию о репозитории по owner_id и slug",
+                "description": "Возвращает информацию о репозитории по owner nickname (или owner_id) и slug",
                 "produces": [
                     "application/json"
                 ],
@@ -1700,7 +1700,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID владельца",
+                        "description": "Nickname владельца или owner_id",
                         "name": "owner_id",
                         "in": "path",
                         "required": true

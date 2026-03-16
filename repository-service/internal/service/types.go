@@ -16,7 +16,7 @@ type Pagination struct {
 type RepositoryService interface {
 	CreateRepository(ctx context.Context, input CreateRepositoryInput) (*model.Repository, error)
 	GetRepositoryByID(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID) (*model.Repository, error)
-	GetRepositoryBySlug(ctx context.Context, requesterID uuid.UUID, ownerID uuid.UUID, slug string) (*model.Repository, error)
+	GetRepositoryBySlug(ctx context.Context, requesterID uuid.UUID, requesterUsername string, ownerKey string, slug string) (*model.Repository, error)
 
 	UpdateRepository(ctx context.Context, input UpdateRepositoryInput) (*model.Repository, error)
 	DeleteRepository(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID) error
@@ -24,20 +24,21 @@ type RepositoryService interface {
 	ForkRepository(ctx context.Context, input ForkRepositoryInput) (*model.Repository, error)
 
 	ListMyRepositories(ctx context.Context, ownerID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error)
-	ListUserRepositories(ctx context.Context, requesterID uuid.UUID, ownerID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error)
+	ListUserRepositories(ctx context.Context, requesterID uuid.UUID, requesterUsername string, ownerKey string, pagination Pagination) ([]*model.Repository, int64, error)
 	ListForks(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error)
 
 	ListRepositoryTags(ctx context.Context) ([]*model.RepositoryTag, error)
 }
 
 type CreateRepositoryInput struct {
-	OwnerID     uuid.UUID
-	TagID       uuid.UUID
-	Name        string
-	Slug        string
-	Description string
-	Visibility  model.RepositoryVisibility
-	Type        model.RepositoryType
+	OwnerID       uuid.UUID
+	OwnerUsername string
+	TagID         uuid.UUID
+	Name          string
+	Slug          string
+	Description   string
+	Visibility    model.RepositoryVisibility
+	Type          model.RepositoryType
 }
 
 type UpdateRepositoryInput struct {
@@ -52,11 +53,12 @@ type UpdateRepositoryInput struct {
 }
 
 type ForkRepositoryInput struct {
-	RequesterID  uuid.UUID
-	SourceRepoID uuid.UUID
-	Name         string
-	Slug         string
-	Description  string
+	RequesterID       uuid.UUID
+	RequesterUsername string
+	SourceRepoID      uuid.UUID
+	Name              string
+	Slug              string
+	Description       string
 }
 
 type RepositoryTagOutput struct {
