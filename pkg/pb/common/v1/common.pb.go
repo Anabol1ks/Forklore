@@ -269,6 +269,119 @@ func (DocumentFormat) EnumDescriptor() ([]byte, []int) {
 	return file_common_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
+type SearchEntityType int32
+
+const (
+	SearchEntityType_SEARCH_ENTITY_TYPE_UNSPECIFIED SearchEntityType = 0
+	SearchEntityType_SEARCH_ENTITY_TYPE_REPOSITORY  SearchEntityType = 1
+	SearchEntityType_SEARCH_ENTITY_TYPE_DOCUMENT    SearchEntityType = 2
+	SearchEntityType_SEARCH_ENTITY_TYPE_FILE        SearchEntityType = 3
+)
+
+// Enum value maps for SearchEntityType.
+var (
+	SearchEntityType_name = map[int32]string{
+		0: "SEARCH_ENTITY_TYPE_UNSPECIFIED",
+		1: "SEARCH_ENTITY_TYPE_REPOSITORY",
+		2: "SEARCH_ENTITY_TYPE_DOCUMENT",
+		3: "SEARCH_ENTITY_TYPE_FILE",
+	}
+	SearchEntityType_value = map[string]int32{
+		"SEARCH_ENTITY_TYPE_UNSPECIFIED": 0,
+		"SEARCH_ENTITY_TYPE_REPOSITORY":  1,
+		"SEARCH_ENTITY_TYPE_DOCUMENT":    2,
+		"SEARCH_ENTITY_TYPE_FILE":        3,
+	}
+)
+
+func (x SearchEntityType) Enum() *SearchEntityType {
+	p := new(SearchEntityType)
+	*p = x
+	return p
+}
+
+func (x SearchEntityType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SearchEntityType) Descriptor() protoreflect.EnumDescriptor {
+	return file_common_v1_common_proto_enumTypes[5].Descriptor()
+}
+
+func (SearchEntityType) Type() protoreflect.EnumType {
+	return &file_common_v1_common_proto_enumTypes[5]
+}
+
+func (x SearchEntityType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SearchEntityType.Descriptor instead.
+func (SearchEntityType) EnumDescriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{5}
+}
+
+type SearchEventType int32
+
+const (
+	SearchEventType_SEARCH_EVENT_TYPE_UNSPECIFIED         SearchEventType = 0
+	SearchEventType_SEARCH_EVENT_TYPE_REPOSITORY_UPSERTED SearchEventType = 1
+	SearchEventType_SEARCH_EVENT_TYPE_REPOSITORY_DELETED  SearchEventType = 2
+	SearchEventType_SEARCH_EVENT_TYPE_DOCUMENT_UPSERTED   SearchEventType = 3
+	SearchEventType_SEARCH_EVENT_TYPE_DOCUMENT_DELETED    SearchEventType = 4
+	SearchEventType_SEARCH_EVENT_TYPE_FILE_UPSERTED       SearchEventType = 5
+	SearchEventType_SEARCH_EVENT_TYPE_FILE_DELETED        SearchEventType = 6
+)
+
+// Enum value maps for SearchEventType.
+var (
+	SearchEventType_name = map[int32]string{
+		0: "SEARCH_EVENT_TYPE_UNSPECIFIED",
+		1: "SEARCH_EVENT_TYPE_REPOSITORY_UPSERTED",
+		2: "SEARCH_EVENT_TYPE_REPOSITORY_DELETED",
+		3: "SEARCH_EVENT_TYPE_DOCUMENT_UPSERTED",
+		4: "SEARCH_EVENT_TYPE_DOCUMENT_DELETED",
+		5: "SEARCH_EVENT_TYPE_FILE_UPSERTED",
+		6: "SEARCH_EVENT_TYPE_FILE_DELETED",
+	}
+	SearchEventType_value = map[string]int32{
+		"SEARCH_EVENT_TYPE_UNSPECIFIED":         0,
+		"SEARCH_EVENT_TYPE_REPOSITORY_UPSERTED": 1,
+		"SEARCH_EVENT_TYPE_REPOSITORY_DELETED":  2,
+		"SEARCH_EVENT_TYPE_DOCUMENT_UPSERTED":   3,
+		"SEARCH_EVENT_TYPE_DOCUMENT_DELETED":    4,
+		"SEARCH_EVENT_TYPE_FILE_UPSERTED":       5,
+		"SEARCH_EVENT_TYPE_FILE_DELETED":        6,
+	}
+)
+
+func (x SearchEventType) Enum() *SearchEventType {
+	p := new(SearchEventType)
+	*p = x
+	return p
+}
+
+func (x SearchEventType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SearchEventType) Descriptor() protoreflect.EnumDescriptor {
+	return file_common_v1_common_proto_enumTypes[6].Descriptor()
+}
+
+func (SearchEventType) Type() protoreflect.EnumType {
+	return &file_common_v1_common_proto_enumTypes[6]
+}
+
+func (x SearchEventType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SearchEventType.Descriptor instead.
+func (SearchEventType) EnumDescriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{6}
+}
+
 type UUID struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -341,7 +454,20 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x15REPOSITORY_TYPE_MIXED\x10\x03*O\n" +
 	"\x0eDocumentFormat\x12\x1f\n" +
 	"\x1bDOCUMENT_FORMAT_UNSPECIFIED\x10\x00\x12\x1c\n" +
-	"\x18DOCUMENT_FORMAT_MARKDOWN\x10\x01B9Z7github.com/Anabol1ks/Forklore/pkg/pb/common/v1;commonv1b\x06proto3"
+	"\x18DOCUMENT_FORMAT_MARKDOWN\x10\x01*\x97\x01\n" +
+	"\x10SearchEntityType\x12\"\n" +
+	"\x1eSEARCH_ENTITY_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
+	"\x1dSEARCH_ENTITY_TYPE_REPOSITORY\x10\x01\x12\x1f\n" +
+	"\x1bSEARCH_ENTITY_TYPE_DOCUMENT\x10\x02\x12\x1b\n" +
+	"\x17SEARCH_ENTITY_TYPE_FILE\x10\x03*\xa3\x02\n" +
+	"\x0fSearchEventType\x12!\n" +
+	"\x1dSEARCH_EVENT_TYPE_UNSPECIFIED\x10\x00\x12)\n" +
+	"%SEARCH_EVENT_TYPE_REPOSITORY_UPSERTED\x10\x01\x12(\n" +
+	"$SEARCH_EVENT_TYPE_REPOSITORY_DELETED\x10\x02\x12'\n" +
+	"#SEARCH_EVENT_TYPE_DOCUMENT_UPSERTED\x10\x03\x12&\n" +
+	"\"SEARCH_EVENT_TYPE_DOCUMENT_DELETED\x10\x04\x12#\n" +
+	"\x1fSEARCH_EVENT_TYPE_FILE_UPSERTED\x10\x05\x12\"\n" +
+	"\x1eSEARCH_EVENT_TYPE_FILE_DELETED\x10\x06B9Z7github.com/Anabol1ks/Forklore/pkg/pb/common/v1;commonv1b\x06proto3"
 
 var (
 	file_common_v1_common_proto_rawDescOnce sync.Once
@@ -355,7 +481,7 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_common_v1_common_proto_rawDescData
 }
 
-var file_common_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_common_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
 var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_common_v1_common_proto_goTypes = []any{
 	(UserRole)(0),             // 0: forklore.common.v1.UserRole
@@ -363,7 +489,9 @@ var file_common_v1_common_proto_goTypes = []any{
 	(RepositoryVisibility)(0), // 2: forklore.common.v1.RepositoryVisibility
 	(RepositoryType)(0),       // 3: forklore.common.v1.RepositoryType
 	(DocumentFormat)(0),       // 4: forklore.common.v1.DocumentFormat
-	(*UUID)(nil),              // 5: forklore.common.v1.UUID
+	(SearchEntityType)(0),     // 5: forklore.common.v1.SearchEntityType
+	(SearchEventType)(0),      // 6: forklore.common.v1.SearchEventType
+	(*UUID)(nil),              // 7: forklore.common.v1.UUID
 }
 var file_common_v1_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -383,7 +511,7 @@ func file_common_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_v1_common_proto_rawDesc), len(file_common_v1_common_proto_rawDesc)),
-			NumEnums:      5,
+			NumEnums:      7,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,

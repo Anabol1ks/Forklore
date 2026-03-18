@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package forklore.search.events.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/search/events/v1;searcheventsv1";
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "common/v1/common.proto";
+
+message SearchEventEnvelope {
+  string event_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  common.v1.SearchEventType event_type = 2;
+  google.protobuf.Timestamp occurred_at = 3 [(validate.rules).timestamp = {required: true}];
+
+  oneof payload {
+    RepositoryUpserted repository_upserted = 10;
+    RepositoryDeleted repository_deleted = 11;
+    DocumentUpserted document_upserted = 12;
+    DocumentDeleted document_deleted = 13;
+    FileUpserted file_upserted = 14;
+    FileDeleted file_deleted = 15;
+  }
+}
+
+message RepositoryUpserted {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID owner_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+
+  string title = 4 [(validate.rules).string = {min_len: 1, max_len: 255}];
+  string description = 5 [(validate.rules).string = {max_len: 4000}];
+  string tag_name = 6 [(validate.rules).string = {max_len: 128}];
+
+  bool is_public = 7;
+  google.protobuf.Timestamp updated_at = 8 [(validate.rules).timestamp = {required: true}];
+}
+
+message RepositoryDeleted {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message DocumentUpserted {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID owner_id = 3 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 4 [(validate.rules).message = {required: true}];
+
+  string title = 5 [(validate.rules).string = {min_len: 1, max_len: 255}];
+  string content = 6;
+  string tag_name = 7 [(validate.rules).string = {max_len: 128}];
+
+  bool is_public = 8;
+  google.protobuf.Timestamp updated_at = 9 [(validate.rules).timestamp = {required: true}];
+}
+
+message DocumentDeleted {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message FileUpserted {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID owner_id = 3 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 4 [(validate.rules).message = {required: true}];
+
+  string file_name = 5 [(validate.rules).string = {min_len: 1, max_len: 255}];
+  string mime_type = 6 [(validate.rules).string = {max_len: 255}];
+  string tag_name = 7 [(validate.rules).string = {max_len: 128}];
+
+  bool is_public = 8;
+  google.protobuf.Timestamp updated_at = 9 [(validate.rules).timestamp = {required: true}];
+}
+
+message FileDeleted {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+}
