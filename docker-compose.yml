@@ -138,6 +138,54 @@ services:
       start_period: 10s
     networks:
       - forklore-network
+    
+  
+  search-service:
+    build:
+      context: .
+      dockerfile: search-service/Dockerfile
+    env_file: .env
+    environment:
+      # Внутри docker-сети хост БД должен быть именем сервиса, а не localhost.
+      DB_SEARCH_HOST: search-db
+      # Внутри docker-сети используется внутренний порт контейнера БД.
+      DB_SEARCH_PORT: "5432"
+      # Для межсервисного вызова в docker-сети нужен адрес сервиса, не localhost.
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      search-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8084:8084"
+    networks:
+      - forklore-network
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    env_file: .env
+    environment:
+      AUTH_SERVICE_ADDR: auth-service:8081
+      REPOSITORY_SERVICE_ADDR: repository-service:8082
+      CONTENT_SERVICE_ADDR: content-service:8083
+      SEARCH_SERVICE_ADDR: search-service:8084
+      GATEWAY_PORT: "8080"
+    depends_on:
+      auth-service:
+        condition: service_started
+      repository-service:
+        condition: service_started
+      content-service:
+        condition: service_started
+      search-service:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    networks:
+      - forklore-network
 
   kafka:
     image: apache/kafka:4.1.2
