@@ -41,7 +41,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_REPO_USER}
       POSTGRES_PASSWORD: ${DB_REPO_PASSWORD}
-      POSTGRES_DB: repo-db
+      POSTGRES_DB: ${DB_REPO_NAME} 
     volumes:
       - repo_db_data:/var/lib/postgresql/data
     ports:
@@ -62,6 +62,8 @@ services:
     environment:
       # Внутри docker-сети хост БД должен быть именем сервиса, а не localhost.
       DB_REPO_HOST: repo-db
+      # Внутри docker-сети используется внутренний порт контейнера БД.
+      DB_REPO_PORT: "5432"
     depends_on:
       repo-db:
         condition: service_healthy
@@ -75,7 +77,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_CONTENT_USER}
       POSTGRES_PASSWORD: ${DB_CONTENT_PASSWORD}
-      POSTGRES_DB: content-db
+      POSTGRES_DB: ${DB_CONTENT_NAME}
     volumes:
       - content_db_data:/var/lib/postgresql/data
     ports:
@@ -97,9 +99,15 @@ services:
     environment:
       # Внутри docker-сети хост БД должен быть именем сервиса, а не localhost.
       DB_CONTENT_HOST: content-db
+      # Внутри docker-сети используется внутренний порт контейнера БД.
+      DB_CONTENT_PORT: "5432"
+      # Для межсервисного вызова в docker-сети нужен адрес сервиса, не localhost.
+      REPOSITORY_SERVICE_ADDR: repository-service:8082
     depends_on:
       content-db:
         condition: service_healthy
+      repository-service:
+        condition: service_started
     ports:
       - "8083:8083"
     networks:
