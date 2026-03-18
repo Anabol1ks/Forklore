@@ -6,6 +6,7 @@ import (
 	"content-service/internal/repository"
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -57,13 +58,22 @@ func (s *contentService) CreateDocument(ctx context.Context, input CreateDocumen
 		slug = slugifyDocument(title)
 	}
 	if slug == "" {
-		return nil, domain.ErrInvalidDocumentSlug
+		slug = "document"
 	}
 
-	if _, err := s.repos.Document.GetByRepoAndSlug(ctx, input.RepoID, slug); err == nil {
-		return nil, domain.ErrDocumentSlugTaken
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
+	userProvidedSlug := strings.TrimSpace(input.Slug) != ""
+	if userProvidedSlug {
+		if _, err := s.repos.Document.GetByRepoAndSlug(ctx, input.RepoID, slug); err == nil {
+			return nil, domain.ErrDocumentSlugTaken
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	} else {
+		resolvedSlug, err := s.findAvailableDocumentSlug(ctx, input.RepoID, slug)
+		if err != nil {
+			return nil, err
+		}
+		slug = resolvedSlug
 	}
 
 	now := time.Now().UTC()
@@ -479,7 +489,10 @@ func (s *contentService) CreateFile(ctx context.Context, input CreateFileInput) 
 
 	fileName := strings.TrimSpace(input.FileName)
 	if fileName == "" {
-		return nil, domain.ErrInvalidFileName
+		fileName = fallbackFileNameFromStorageKey(input.StorageKey)
+	}
+	if fileName == "" {
+		fileName = "file"
 	}
 
 	now := time.Now().UTC()
@@ -822,9 +835,17 @@ func validateDocumentFormat(format model.DocumentFormat) error {
 
 var documentSlugCleanupRegex = regexp.MustCompile(`[^a-z0-9-]+`)
 var documentMultiDashRegex = regexp.MustCompile(`-+`)
+var cyrillicToLatinReplacer = strings.NewReplacer(
+	"а", "a", "б", "b", "в", "v", "г", "g", "д", "d", "е", "e", "ё", "e",
+	"ж", "zh", "з", "z", "и", "i", "й", "y", "к", "k", "л", "l", "м", "m",
+	"н", "n", "о", "o", "п", "p", "р", "r", "с", "s", "т", "t", "у", "u",
+	"ф", "f", "х", "h", "ц", "ts", "ч", "ch", "ш", "sh", "щ", "sch", "ъ", "",
+	"ы", "y", "ь", "", "э", "e", "ю", "yu", "я", "ya",
+)
 
 func normalizeDocumentSlug(v string) string {
 	v = strings.TrimSpace(strings.ToLower(v))
+	v = cyrillicToLatinReplacer.Replace(v)
 	v = strings.ReplaceAll(v, " ", "-")
 	v = documentSlugCleanupRegex.ReplaceAllString(v, "-")
 	v = documentMultiDashRegex.ReplaceAllString(v, "-")
@@ -840,6 +861,58 @@ func normalizeDocumentSlug(v string) string {
 
 func slugifyDocument(title string) string {
 	return normalizeDocumentSlug(title)
+}
+
+func (s *contentService) findAvailableDocumentSlug(ctx context.Context, repoID uuid.UUID, baseSlug string) (string, error) {
+	baseSlug = normalizeDocumentSlug(baseSlug)
+	if baseSlug == "" {
+		baseSlug = "document"
+	}
+
+	for i := 0; i < 10000; i++ {
+		candidate := baseSlug
+		if i > 0 {
+			suffix := fmt.Sprintf("-%d", i+1)
+			trimmedBase := baseSlug
+			if len(trimmedBase)+len(suffix) > 100 {
+				trimmedBase = strings.Trim(trimmedBase[:100-len(suffix)], "-")
+				if trimmedBase == "" {
+					trimmedBase = "document"
+				}
+			}
+			candidate = trimmedBase + suffix
+		}
+
+		_, err := s.repos.Document.GetByRepoAndSlug(ctx, repoID, candidate)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return candidate, nil
+		}
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return "", domain.ErrDocumentSlugTaken
+}
+
+func fallbackFileNameFromStorageKey(storageKey string) string {
+	storageKey = strings.TrimSpace(storageKey)
+	if storageKey == "" {
+		return ""
+	}
+
+	storageKey = strings.ReplaceAll(storageKey, "\\", "/")
+	parts := strings.Split(storageKey, "/")
+	if len(parts) == 0 {
+		return ""
+	}
+
+	name := strings.TrimSpace(parts[len(parts)-1])
+	if name == "" {
+		return ""
+	}
+
+	return name
 }
 
 func nullableTrimmedString(v string) *string {

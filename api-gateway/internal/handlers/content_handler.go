@@ -1,12 +1,17 @@
 package handlers
 
 import (
+	"mime"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"api-gateway/internal/clients"
 	"api-gateway/internal/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	commonv1 "github.com/Anabol1ks/Forklore/pkg/pb/common/v1"
 	contentv1 "github.com/Anabol1ks/Forklore/pkg/pb/content/v1"
@@ -429,6 +434,93 @@ func (h *ContentHandler) CreateFile(c *gin.Context) {
 	})
 }
 
+// UploadFile godoc
+//
+//	@Summary		Загрузить файл
+//	@Description	Загружает бинарный файл и создает запись файла в репозитории
+//	@Tags			content
+//	@Security		BearerAuth
+//	@Accept			multipart/form-data
+//	@Param			repo_id	path	string	true	"ID репозитория"
+//	@Param			file	formData	file	true	"Бинарный файл"
+//	@Param			change_summary	formData	string	false	"Описание изменений"
+//	@Success		201	{object}	models.FileResponse
+//	@Failure		400	{object}	models.ErrorResponse
+//	@Failure		401	{object}	models.ErrorResponse
+//	@Failure		404	{object}	models.ErrorResponse
+//	@Router			/repositories/{repo_id}/files/upload [post]
+func (h *ContentHandler) UploadFile(c *gin.Context) {
+	repoID := c.Param("repo_id")
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "file is required",
+		})
+		return
+	}
+
+	if fileHeader.Size <= 0 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "file must not be empty",
+		})
+		return
+	}
+
+	if err := os.MkdirAll("uploads", 0o755); err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "failed to prepare upload storage",
+		})
+		return
+	}
+
+	baseName := filepath.Base(fileHeader.Filename)
+	ext := strings.ToLower(filepath.Ext(baseName))
+	storedName := uuid.NewString() + ext
+	storageKey := filepath.ToSlash(filepath.Join("uploads", storedName))
+	storedPath := filepath.Join("uploads", storedName)
+
+	if err := c.SaveUploadedFile(fileHeader, storedPath); err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "failed to save uploaded file",
+		})
+		return
+	}
+
+	mimeType := strings.TrimSpace(fileHeader.Header.Get("Content-Type"))
+	if mimeType == "" {
+		mimeType = mime.TypeByExtension(ext)
+	}
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+
+	changeSummary := c.PostForm("change_summary")
+	ctx := forwardAuth(c)
+	resp, err := h.client.Client.CreateFile(ctx, &contentv1.CreateFileRequest{
+		RepoId:        &commonv1.UUID{Value: repoID},
+		FileName:      baseName,
+		StorageKey:    storageKey,
+		MimeType:      mimeType,
+		SizeBytes:     uint64(fileHeader.Size),
+		ChangeSummary: changeSummary,
+	})
+	if err != nil {
+		_ = os.Remove(storedPath)
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	c.JSON(http.StatusCreated, models.FileResponse{
+		File: mapFile(resp.File),
+	})
+}
+
 // GetFile godoc
 //
 //	@Summary		Получить файл
@@ -454,6 +546,98 @@ func (h *ContentHandler) GetFile(c *gin.Context) {
 	c.JSON(http.StatusOK, models.FileResponse{
 		File: mapFile(resp.File),
 	})
+}
+
+// GetFileContent godoc
+//
+//	@Summary		Получить содержимое файла
+//	@Description	Возвращает raw-контент текущей или указанной версии файла
+//	@Tags			content
+//	@Param			file_id	path	string	true	"ID файла"
+//	@Param			version_id	query	string	false	"ID версии файла"
+//	@Success		200	{file}	binary
+//	@Failure		404	{object}	models.ErrorResponse
+//	@Router			/files/{file_id}/content [get]
+func (h *ContentHandler) GetFileContent(c *gin.Context) {
+	fileID := c.Param("file_id")
+	ctx := forwardAuth(c)
+
+	fileResp, err := h.client.Client.GetFileById(ctx, &contentv1.GetFileByIdRequest{
+		FileId: &commonv1.UUID{Value: fileID},
+	})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	versionID := strings.TrimSpace(c.Query("version_id"))
+	if versionID == "" {
+		versionID = fileResp.GetFile().GetCurrentVersionId().GetValue()
+	}
+	if versionID == "" {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{Code: http.StatusNotFound, Message: "file version not found"})
+		return
+	}
+
+	versionResp, err := h.client.Client.GetFileVersionById(ctx, &contentv1.GetFileVersionByIdRequest{
+		VersionId: &commonv1.UUID{Value: versionID},
+	})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	version := versionResp.GetVersion()
+	if version.GetFileId().GetValue() != fileID {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Code: http.StatusBadRequest, Message: "version does not belong to file"})
+		return
+	}
+
+	storageKey := strings.TrimSpace(version.GetStorageKey())
+	if storageKey == "" {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{Code: http.StatusNotFound, Message: "storage key is empty"})
+		return
+	}
+
+	if strings.HasPrefix(storageKey, "http://") || strings.HasPrefix(storageKey, "https://") || strings.HasPrefix(storageKey, "data:") {
+		c.Redirect(http.StatusTemporaryRedirect, storageKey)
+		return
+	}
+
+	cleanKey := filepath.Clean(storageKey)
+	if filepath.IsAbs(cleanKey) || strings.HasPrefix(cleanKey, "..") {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Code: http.StatusBadRequest, Message: "invalid storage key"})
+		return
+	}
+
+	fullPath := filepath.Join(cleanKey)
+	if _, err := os.Stat(fullPath); err != nil {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{Code: http.StatusNotFound, Message: "file content not found"})
+		return
+	}
+
+	contentType := strings.TrimSpace(version.GetMimeType())
+	if contentType == "" {
+		contentType = mime.TypeByExtension(strings.ToLower(filepath.Ext(fullPath)))
+	}
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	if strings.HasPrefix(contentType, "text/") && !strings.Contains(contentType, "charset=") {
+		contentType = contentType + "; charset=utf-8"
+	}
+
+	fileName := fileResp.GetFile().GetFileName()
+	if fileName == "" {
+		fileName = filepath.Base(fullPath)
+	}
+
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", "inline; filename=\""+fileName+"\"")
+	c.File(fullPath)
 }
 
 // ListRepositoryFiles godoc

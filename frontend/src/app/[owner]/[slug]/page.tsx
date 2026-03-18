@@ -1,15 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Book, FileText, GitFork, Settings, Star, Files } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Repository {
   id?: string;
@@ -43,6 +47,8 @@ interface FileItem {
 interface VersionItem {
   id?: string;
   version_id?: string;
+  version_number?: number;
+  content?: string;
   change_summary?: string;
   created_at?: string;
 }
@@ -65,6 +71,53 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function SectionState({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="p-6 text-center text-muted-foreground border rounded-md">
+      <p className="font-medium">{title}</p>
+      <p className="text-sm mt-1">{description}</p>
+    </div>
+  );
+}
+
+function Modal({
+  open,
+  title,
+  onClose,
+  children,
+  footer,
+}: {
+  open: boolean;
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-2xl rounded-lg border bg-background shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b p-4">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <Button variant="ghost" size="sm" onClick={onClose}>Закрыть</Button>
+        </div>
+        <div className="p-4 space-y-4">{children}</div>
+        {footer ? <div className="border-t p-4 flex justify-end gap-2">{footer}</div> : null}
+      </div>
+    </div>
+  );
+}
+
 export default function RepositoryPage() {
   const params = useParams();
   const router = useRouter();
@@ -84,7 +137,45 @@ export default function RepositoryPage() {
   const [selectedFile, setSelectedFile] = useState<Record<string, unknown> | null>(null);
   const [documentVersions, setDocumentVersions] = useState<VersionItem[]>([]);
   const [fileVersions, setFileVersions] = useState<VersionItem[]>([]);
+  const [newDocTitle, setNewDocTitle] = useState("");
+  const [newDocContent, setNewDocContent] = useState("");
+  const [newFileName, setNewFileName] = useState("");
+  const [selectedUploadFile, setSelectedUploadFile] = useState<File | null>(null);
+  const [documentEditorContent, setDocumentEditorContent] = useState("");
+  const [currentVersionContent, setCurrentVersionContent] = useState("");
+  const [documentViewMode, setDocumentViewMode] = useState<"preview" | "edit">("preview");
+  const [documentChangeSummary, setDocumentChangeSummary] = useState("");
+  const [fileVersionStorageKey, setFileVersionStorageKey] = useState("");
+  const [fileVersionMimeType, setFileVersionMimeType] = useState("application/octet-stream");
+  const [fileVersionSize, setFileVersionSize] = useState("1024");
+  const [fileVersionChangeSummary, setFileVersionChangeSummary] = useState("");
+  const [editRepoName, setEditRepoName] = useState("");
+  const [editRepoDescription, setEditRepoDescription] = useState("");
+  const [documentPanelError, setDocumentPanelError] = useState("");
+  const [filePanelError, setFilePanelError] = useState("");
+  const [isCreateDocumentModalOpen, setCreateDocumentModalOpen] = useState(false);
+  const [isCreateFileModalOpen, setCreateFileModalOpen] = useState(false);
+  const [isEditRepoModalOpen, setEditRepoModalOpen] = useState(false);
   const isOwner = !!user?.id && !!repo?.owner_id && user.id === repo.owner_id;
+  const hasDocumentChanges = documentEditorContent !== currentVersionContent;
+
+  const documentDiffStats = useMemo(() => {
+    const oldLines = currentVersionContent.split("\n");
+    const newLines = documentEditorContent.split("\n");
+
+    const oldSet = new Set(oldLines);
+    const newSet = new Set(newLines);
+
+    const added = newLines.filter((line) => !oldSet.has(line)).length;
+    const removed = oldLines.filter((line) => !newSet.has(line)).length;
+
+    return {
+      added,
+      removed,
+      oldCount: oldLines.length,
+      newCount: newLines.length,
+    };
+  }, [currentVersionContent, documentEditorContent]);
 
   const fetchRepo = useCallback(async () => {
     try {
@@ -131,18 +222,21 @@ export default function RepositoryPage() {
     }
   }, [owner, slug, fetchRepo]);
 
+  useEffect(() => {
+    if (!repo) return;
+    setEditRepoName(repo.name || "");
+    setEditRepoDescription(repo.description || "");
+  }, [repo]);
+
   const handleFork = async () => {
     if (!repo) return;
     const repoId = getId(repo as unknown as Record<string, unknown>, ["id", "repo_id"]);
     if (!repoId) return;
 
-    const newName = prompt("Имя форка (можно оставить пустым):") || "";
-    const newSlug = prompt("Slug форка (можно оставить пустым):") || "";
-
     try {
       const response = await api.post(`/repositories/${repoId}/fork`, {
-        name: newName,
-        slug: newSlug,
+        name: "",
+        slug: "",
       });
       toast.success("Репозиторий успешно форкнут!");
       const newRepo = (response.data.repository || response.data) as Repository;
@@ -160,22 +254,36 @@ export default function RepositoryPage() {
     const repoId = getId(repo as unknown as Record<string, unknown>, ["id", "repo_id"]);
     if (!repoId) return;
 
-    const name = prompt("Введите имя файла (тестовое добавление):");
-    if (!name) return;
-    const mimeType = prompt("MIME type файла:", "application/octet-stream") || "application/octet-stream";
+    if (!selectedUploadFile) {
+      toast.error("Выберите файл для загрузки");
+      return;
+    }
 
     try {
-      await api.post(`/repositories/${repoId}/files`, {
-        file_name: name,
-        storage_key: `files/${Date.now()}_${name}`,
-        size_bytes: 1024,
-        mime_type: mimeType,
+      const formData = new FormData();
+      formData.append("file", selectedUploadFile);
+
+      await api.post(`/repositories/${repoId}/files/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
+
       toast.success("Файл добавлен!");
+      setNewFileName("");
+      setSelectedUploadFile(null);
+      setCreateFileModalOpen(false);
       await fetchRepo();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Ошибка добавления файла"));
     }
+  };
+
+  const handleSelectUploadFile = (file: File | null) => {
+    setSelectedUploadFile(file);
+    if (!file) return;
+
+    setNewFileName(file.name || "");
   };
 
   const handleEditRepo = async () => {
@@ -183,13 +291,17 @@ export default function RepositoryPage() {
     const repoId = getId(repo as unknown as Record<string, unknown>, ["id", "repo_id"]);
     if (!repoId) return;
 
-    const newName = prompt("Новое имя репозитория:", repo.name);
-    if (!newName) return;
-    const newDesc = prompt("Новое описание:", repo.description || "") || "";
+    const newName = editRepoName.trim();
+    if (!newName) {
+      toast.error("Название репозитория не может быть пустым");
+      return;
+    }
+    const newDesc = editRepoDescription;
 
     try {
       await api.patch(`/repositories/${repoId}`, { name: newName, description: newDesc });
       toast.success("Репозиторий обновлен!");
+      setEditRepoModalOpen(false);
       await fetchRepo();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Ошибка обновления"));
@@ -217,16 +329,21 @@ export default function RepositoryPage() {
     const repoId = getId(repo as unknown as Record<string, unknown>, ["id", "repo_id"]);
     if (!repoId) return;
 
-    const title = prompt("Введите название документа:");
-    if (!title) return;
-    const content = prompt("Первичное содержимое (необязательно):") || "";
+    const title = newDocTitle.trim();
+    if (!title) {
+      toast.error("Введите название документа");
+      return;
+    }
 
     try {
       await api.post(`/repositories/${repoId}/documents`, {
         title,
-        initial_content: content,
+        initial_content: newDocContent,
       });
       toast.success("Документ создан!");
+      setNewDocTitle("");
+      setNewDocContent("");
+      setCreateDocumentModalOpen(false);
       await fetchRepo();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Ошибка при создании документа"));
@@ -242,9 +359,21 @@ export default function RepositoryPage() {
         api.get(`/documents/${documentId}`),
         api.get(`/documents/${documentId}/versions`),
       ]);
-      setSelectedDocument((detailRes.data.document || detailRes.data) as Record<string, unknown>);
+      const detailPayload = detailRes.data as { document?: Record<string, unknown> };
+      const documentState = (detailPayload.document || detailRes.data) as Record<string, unknown>;
+      const draft = documentState.draft as { content?: string } | undefined;
+      const currentVersion = documentState.current_version as { content?: string } | undefined;
+
+      setSelectedDocument(documentState);
       setDocumentVersions((versionsRes.data.versions || []) as VersionItem[]);
+      const baseline = currentVersion?.content || "";
+      const editable = draft?.content || baseline;
+      setCurrentVersionContent(baseline);
+      setDocumentEditorContent(editable);
+      setDocumentViewMode("preview");
+      setDocumentPanelError("");
     } catch (error) {
+      setDocumentPanelError(getErrorMessage(error, "Не удалось загрузить документ"));
       toast.error(getErrorMessage(error, "Не удалось загрузить документ"));
     }
   };
@@ -268,11 +397,10 @@ export default function RepositoryPage() {
   const handleSaveDraft = async () => {
     const documentId = getId(selectedDocument, ["id", "document_id"]);
     if (!documentId) return;
-    const content = prompt("Текст черновика:");
-    if (content === null) return;
+    if (!isOwner) return;
 
     try {
-      await api.patch(`/documents/${documentId}/draft`, { content });
+      await api.patch(`/documents/${documentId}/draft`, { content: documentEditorContent });
       toast.success("Черновик сохранен");
       await handleDocumentDetails({ id: documentId });
     } catch (error) {
@@ -283,27 +411,33 @@ export default function RepositoryPage() {
   const handleCreateDocumentVersion = async () => {
     const documentId = getId(selectedDocument, ["id", "document_id"]);
     if (!documentId) return;
-    const content = prompt("Содержимое новой версии:");
-    if (!content) return;
-    const changeSummary = prompt("Описание изменений:") || "";
+    if (!isOwner) return;
+    if (!documentEditorContent.trim()) {
+      toast.error("Нельзя создать версию с пустым содержимым");
+      return;
+    }
+    if (!hasDocumentChanges) {
+      toast.error("Нет изменений относительно текущей версии");
+      return;
+    }
 
     try {
       await api.post(`/documents/${documentId}/versions`, {
-        content,
-        change_summary: changeSummary,
+        content: documentEditorContent,
+        change_summary: documentChangeSummary,
       });
       toast.success("Версия документа создана");
+      setDocumentChangeSummary("");
       await handleDocumentDetails({ id: documentId });
     } catch (error) {
       toast.error(getErrorMessage(error, "Ошибка создания версии документа"));
     }
   };
 
-  const handleRestoreDocumentVersion = async () => {
+  const handleRestoreDocumentVersion = async (versionId: string) => {
     const documentId = getId(selectedDocument, ["id", "document_id"]);
     if (!documentId) return;
-    const versionId = prompt("ID версии для восстановления:");
-    if (!versionId) return;
+    if (!isOwner) return;
 
     try {
       await api.get(`/document-versions/${versionId}`);
@@ -327,7 +461,9 @@ export default function RepositoryPage() {
       ]);
       setSelectedFile((detailRes.data.file || detailRes.data) as Record<string, unknown>);
       setFileVersions((versionsRes.data.versions || []) as VersionItem[]);
+      setFilePanelError("");
     } catch (error) {
+      setFilePanelError(getErrorMessage(error, "Не удалось загрузить файл"));
       toast.error(getErrorMessage(error, "Не удалось загрузить файл"));
     }
   };
@@ -351,29 +487,36 @@ export default function RepositoryPage() {
   const handleAddFileVersion = async () => {
     const fileId = getId(selectedFile, ["id", "file_id"]);
     if (!fileId) return;
+    if (!isOwner) return;
 
-    const changeSummary = prompt("Описание изменений версии файла:") || "";
-    const mimeType = prompt("MIME type версии:", "application/octet-stream") || "application/octet-stream";
+    const size = Number.parseInt(fileVersionSize, 10);
+    if (!Number.isFinite(size) || size <= 0) {
+      toast.error("Размер версии файла должен быть положительным числом");
+      return;
+    }
+
+    const storageKey = fileVersionStorageKey.trim() || `files/version_${Date.now()}`;
 
     try {
       await api.post(`/files/${fileId}/versions`, {
-        change_summary: changeSummary,
-        mime_type: mimeType,
-        size_bytes: 1024,
-        storage_key: `files/version_${Date.now()}`,
+        change_summary: fileVersionChangeSummary,
+        mime_type: fileVersionMimeType || "application/octet-stream",
+        size_bytes: size,
+        storage_key: storageKey,
       });
       toast.success("Версия файла добавлена");
+      setFileVersionStorageKey("");
+      setFileVersionChangeSummary("");
       await handleFileDetails({ id: fileId });
     } catch (error) {
       toast.error(getErrorMessage(error, "Ошибка добавления версии файла"));
     }
   };
 
-  const handleRestoreFileVersion = async () => {
+  const handleRestoreFileVersion = async (versionId: string) => {
     const fileId = getId(selectedFile, ["id", "file_id"]);
     if (!fileId) return;
-    const versionId = prompt("ID версии файла для восстановления:");
-    if (!versionId) return;
+    if (!isOwner) return;
 
     try {
       await api.get(`/file-versions/${versionId}`);
@@ -448,64 +591,98 @@ export default function RepositoryPage() {
           <div className="border rounded-md overflow-hidden">
             <div className="bg-muted px-4 py-3 border-b flex justify-between items-center">
               <span className="font-medium text-sm">Документы в репозитории</span>
-              {isOwner ? <Button size="sm" onClick={handleCreateDocument}>Создать документ</Button> : null}
+              {isOwner ? <Button size="sm" onClick={() => setCreateDocumentModalOpen(true)}>Создать документ</Button> : null}
             </div>
             {documents.length > 0 ? (
-               <div className="divide-y">
-                 {documents.map((doc) => (
-                   <div key={doc.id || doc.document_id || doc.title} className="p-4 flex items-center justify-between hover:bg-muted/50 transition">
-                     <div className="flex items-center gap-3">
-                       <FileText className="h-5 w-5 text-primary" />
-                       <span className="font-medium cursor-pointer hover:underline" onClick={() => void handleDocumentDetails(doc)}>{doc.title || "Без названия"}</span>
-                     </div>
-                     <div className="text-sm text-muted-foreground flex gap-3 items-center">
-                       <span className="capitalize">{doc.status || "draft"}</span>
-                       <span>{doc.updated_at ? new Date(doc.updated_at).toLocaleDateString("ru-RU") : "-"}</span>
-                       <Button variant="outline" size="sm" onClick={() => void handleDocumentDetails(doc)}>Детали</Button>
-                       {isOwner ? <Button variant="destructive" size="sm" onClick={() => void handleDeleteDocument(doc)}>Удалить</Button> : null}
-                     </div>
-                   </div>
-                 ))}
-               </div>
+              <div className="divide-y">
+                {documents.map((doc) => (
+                  <div key={doc.id || doc.document_id || doc.title} className="p-4 flex items-center justify-between hover:bg-muted/50 transition">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-primary" />
+                      <span
+                        className="font-medium cursor-pointer hover:underline"
+                        onClick={() => {
+                          const documentId = getId(doc as unknown as Record<string, unknown>, ["id", "document_id"]);
+                          if (!documentId) return;
+                          router.push(`/${owner}/${slug}/blob/document/${documentId}`);
+                        }}
+                      >
+                        {doc.title || "Без названия"}
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground flex gap-3 items-center">
+                      <span className="capitalize">{doc.status || "draft"}</span>
+                      <span>{doc.updated_at ? new Date(doc.updated_at).toLocaleDateString("ru-RU") : "-"}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const documentId = getId(doc as unknown as Record<string, unknown>, ["id", "document_id"]);
+                          if (!documentId) return;
+                          router.push(`/${owner}/${slug}/blob/document/${documentId}`);
+                        }}
+                      >
+                        Открыть
+                      </Button>
+                      {isOwner ? <Button variant="destructive" size="sm" onClick={() => void handleDeleteDocument(doc)}>Удалить</Button> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-                <div className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                <FileText className="h-10 w-10 mb-2 opacity-20" />
-                <p>Пока нет документов.</p>
-                </div>
+              <SectionState title="Пока нет документов" description="Создайте первый документ, чтобы начать вести материалы." />
             )}
           </div>
+          <SectionState title="Просмотр на отдельной странице" description="Откройте документ, чтобы перейти на отдельную страницу просмотра и редактирования как в GitHub." />
         </TabsContent>
 
         <TabsContent value="files">
           <div className="border rounded-md overflow-hidden">
             <div className="bg-muted px-4 py-3 border-b flex justify-between items-center">
               <span className="font-medium text-sm">Файлы (бинарные архивы, PDF и пр.)</span>
-              {isOwner ? <Button size="sm" onClick={handleAddFile}>Загрузить файл</Button> : null}
+              {isOwner ? <Button size="sm" onClick={() => setCreateFileModalOpen(true)}>Загрузить файл</Button> : null}
             </div>
             {files.length > 0 ? (
-               <div className="divide-y">
-                 {files.map((file) => (
-                   <div key={file.id || file.file_id || file.file_name} className="p-4 flex items-center justify-between hover:bg-muted/50 transition">
-                     <div className="flex items-center gap-3">
-                       <Files className="h-5 w-5 text-primary" />
-                       <span className="font-medium cursor-pointer hover:underline" onClick={() => void handleFileDetails(file)}>{file.file_name || "Без имени"}</span>
-                     </div>
-                     <div className="text-sm text-muted-foreground flex gap-3 items-center">
-                       <span>{file.mime_type || "application/octet-stream"}</span>
-                       <span>{Math.round(((file.size_bytes || file.size || 0) as number) / 1024)} KB</span>
-                       <Button variant="outline" size="sm" onClick={() => void handleFileDetails(file)}>Детали</Button>
-                       {isOwner ? <Button variant="destructive" size="sm" onClick={() => void handleDeleteFile(file)}>Удалить</Button> : null}
-                     </div>
-                   </div>
-                 ))}
-               </div>
+              <div className="divide-y">
+                {files.map((file) => (
+                  <div key={file.id || file.file_id || file.file_name} className="p-4 flex items-center justify-between hover:bg-muted/50 transition">
+                    <div className="flex items-center gap-3">
+                      <Files className="h-5 w-5 text-primary" />
+                      <span
+                        className="font-medium cursor-pointer hover:underline"
+                        onClick={() => {
+                          const fileId = getId(file as unknown as Record<string, unknown>, ["id", "file_id"]);
+                          if (!fileId) return;
+                          router.push(`/${owner}/${slug}/blob/file/${fileId}`);
+                        }}
+                      >
+                        {file.file_name || "Без имени"}
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground flex gap-3 items-center">
+                      <span>{file.mime_type || "application/octet-stream"}</span>
+                      <span>{Math.round(((file.size_bytes || file.size || 0) as number) / 1024)} KB</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const fileId = getId(file as unknown as Record<string, unknown>, ["id", "file_id"]);
+                          if (!fileId) return;
+                          router.push(`/${owner}/${slug}/blob/file/${fileId}`);
+                        }}
+                      >
+                        Открыть
+                      </Button>
+                      {isOwner ? <Button variant="destructive" size="sm" onClick={() => void handleDeleteFile(file)}>Удалить</Button> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-                <div className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                <Files className="h-10 w-10 mb-2 opacity-20" />
-                <p>Файлы отсутствуют.</p>
-                </div>
+              <SectionState title="Файлы отсутствуют" description="Добавьте первый файл в репозиторий." />
             )}
           </div>
+          <SectionState title="Просмотр на отдельной странице" description="Откройте файл, чтобы перейти на отдельную страницу с версионностью и метаданными." />
         </TabsContent>
 
         {isOwner && (
@@ -514,7 +691,7 @@ export default function RepositoryPage() {
               <h3 className="font-bold text-lg mb-2">Настройки репозитория</h3>
               <p className="text-muted-foreground mb-4">Настройки видимости, переименование, удаление.</p>
               <div className="flex gap-4">
-                <Button variant="outline" onClick={handleEditRepo}>Редактировать репозиторий</Button>
+                <Button variant="outline" onClick={() => setEditRepoModalOpen(true)}>Редактировать репозиторий</Button>
                 <Button variant="destructive" onClick={handleDelete}>Удалить репозиторий</Button>
               </div>
 
@@ -533,36 +710,103 @@ export default function RepositoryPage() {
                 )}
               </div>
 
-              {selectedDocument && (
-                <div className="border-t pt-4 space-y-3">
-                  <h4 className="font-medium">Документ: {String(selectedDocument.title || selectedDocument.slug || "-")}</h4>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleSaveDraft}>Сохранить черновик</Button>
-                    <Button variant="outline" size="sm" onClick={handleCreateDocumentVersion}>Создать версию</Button>
-                    <Button variant="outline" size="sm" onClick={handleRestoreDocumentVersion}>Восстановить версию</Button>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Версий документа: {documentVersions.length}
-                  </div>
-                </div>
-              )}
-
-              {selectedFile && (
-                <div className="border-t pt-4 space-y-3">
-                  <h4 className="font-medium">Файл: {String(selectedFile.file_name || "-")}</h4>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleAddFileVersion}>Добавить версию файла</Button>
-                    <Button variant="outline" size="sm" onClick={handleRestoreFileVersion}>Восстановить версию файла</Button>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Версий файла: {fileVersions.length}
-                  </div>
-                </div>
-              )}
             </div>
           </TabsContent>
         )}
       </Tabs>
+
+      {isOwner && (
+        <>
+          <Modal
+            open={isCreateDocumentModalOpen}
+            title="Создать документ"
+            onClose={() => setCreateDocumentModalOpen(false)}
+            footer={
+              <>
+                <Button variant="outline" onClick={() => setCreateDocumentModalOpen(false)}>Отмена</Button>
+                <Button onClick={handleCreateDocument}>Создать</Button>
+              </>
+            }
+          >
+            <Input
+              value={newDocTitle}
+              onChange={(e) => setNewDocTitle(e.target.value)}
+              placeholder="Название документа"
+            />
+            <Textarea
+              value={newDocContent}
+              onChange={(e) => setNewDocContent(e.target.value)}
+              placeholder="Первичное содержимое"
+              rows={8}
+            />
+          </Modal>
+
+          <Modal
+            open={isCreateFileModalOpen}
+            title="Загрузить файл"
+            onClose={() => {
+              setCreateFileModalOpen(false);
+              setSelectedUploadFile(null);
+            }}
+            footer={
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCreateFileModalOpen(false);
+                    setSelectedUploadFile(null);
+                  }}
+                >
+                  Отмена
+                </Button>
+                <Button onClick={handleAddFile}>Добавить</Button>
+              </>
+            }
+          >
+            <Input
+              type="file"
+              onChange={(e) => handleSelectUploadFile(e.target.files?.[0] || null)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Выберите локальный файл для автозаполнения полей. На текущем backend выполняется регистрация файла по метаданным.
+            </p>
+            <Input
+              value={newFileName}
+              onChange={(e) => setNewFileName(e.target.value)}
+              placeholder="Имя файла"
+            />
+            {selectedUploadFile ? (
+              <p className="text-xs text-muted-foreground">
+                Выбран файл: {selectedUploadFile.name} ({Math.round(selectedUploadFile.size / 1024)} KB)
+              </p>
+            ) : null}
+          </Modal>
+
+          <Modal
+            open={isEditRepoModalOpen}
+            title="Редактировать репозиторий"
+            onClose={() => setEditRepoModalOpen(false)}
+            footer={
+              <>
+                <Button variant="outline" onClick={() => setEditRepoModalOpen(false)}>Отмена</Button>
+                <Button onClick={handleEditRepo}>Сохранить</Button>
+              </>
+            }
+          >
+            <Input
+              value={editRepoName}
+              onChange={(e) => setEditRepoName(e.target.value)}
+              placeholder="Название репозитория"
+            />
+            <Textarea
+              value={editRepoDescription}
+              onChange={(e) => setEditRepoDescription(e.target.value)}
+              placeholder="Описание репозитория"
+              rows={5}
+            />
+          </Modal>
+        </>
+      )}
     </div>
   );
 }

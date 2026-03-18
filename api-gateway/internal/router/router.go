@@ -30,6 +30,7 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 		v1.GET("/documents/:document_id/versions", contentHandler.ListDocumentVersions)
 
 		v1.GET("/files/:file_id", contentHandler.GetFile)
+		v1.GET("/files/:file_id/content", contentHandler.GetFileContent)
 		v1.GET("/files/:file_id/versions", contentHandler.ListFileVersions)
 
 		v1.GET("/document-versions/:version_id", contentHandler.GetDocumentVersion)
@@ -74,6 +75,7 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 
 			// ── Files ──
 			repositories.POST("/:repo_id/files", contentHandler.CreateFile)
+			repositories.POST("/:repo_id/files/upload", contentHandler.UploadFile)
 		}
 
 		// ── Documents ──

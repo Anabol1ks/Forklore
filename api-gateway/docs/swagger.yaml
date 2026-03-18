@@ -1095,6 +1095,31 @@ paths:
       summary: Получить файл
       tags:
       - content
+  /files/{file_id}/content:
+    get:
+      description: Возвращает raw-контент текущей или указанной версии файла
+      parameters:
+      - description: ID файла
+        in: path
+        name: file_id
+        required: true
+        type: string
+      - description: ID версии файла
+        in: query
+        name: version_id
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить содержимое файла
+      tags:
+      - content
   /files/{file_id}/versions:
     get:
       description: Получает список всех версий файла с пагинацией
@@ -1505,6 +1530,48 @@ paths:
       security:
       - BearerAuth: []
       summary: Создать файл
+      tags:
+      - content
+  /repositories/{repo_id}/files/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загружает бинарный файл и создает запись файла в репозитории
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      - description: Бинарный файл
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Описание изменений
+        in: formData
+        name: change_summary
+        type: string
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.FileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Загрузить файл
       tags:
       - content
   /repositories/{repo_id}/fork:

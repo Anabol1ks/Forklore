@@ -720,6 +720,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/files/{file_id}/content": {
+            "get": {
+                "description": "Возвращает raw-контент текущей или указанной версии файла",
+                "tags": [
+                    "content"
+                ],
+                "summary": "Получить содержимое файла",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID файла",
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID версии файла",
+                        "name": "version_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/files/{file_id}/versions": {
             "get": {
                 "description": "Получает список всех версий файла с пагинацией",
@@ -1420,6 +1458,71 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.CreateFileRequest"
                         }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.FileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/repositories/{repo_id}/files/upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Загружает бинарный файл и создает запись файла в репозитории",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "tags": [
+                    "content"
+                ],
+                "summary": "Загрузить файл",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID репозитория",
+                        "name": "repo_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Бинарный файл",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Описание изменений",
+                        "name": "change_summary",
+                        "in": "formData"
                     }
                 ],
                 "responses": {

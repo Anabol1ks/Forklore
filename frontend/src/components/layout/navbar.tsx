@@ -43,11 +43,9 @@ export function Navbar() {
                 </Button>
               </Link>
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button variant="ghost" size="sm" className="space-x-2">
+                <DropdownMenuTrigger className="inline-flex h-7 items-center gap-2 rounded-md px-2.5 text-[0.8rem] font-medium hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
                     <UserCircle className="h-5 w-5" />
                     <span>{user.username}</span>
-                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => router.push(`/user/${user.username}`)}>Профиль</DropdownMenuItem>
