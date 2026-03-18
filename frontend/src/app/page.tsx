@@ -94,8 +94,8 @@ export default function Home() {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              repos.map((repo) => (
-                <Card key={repo.id} className="hover:border-primary/50 transition-colors">
+              repos.map((repo, index) => (
+                <Card key={repo.id || `${repo.slug}-${index}`} className="hover:border-primary/50 transition-colors">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">

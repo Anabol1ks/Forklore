@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"repository-service/internal/model"
+	"strings"
 	"time"
 
 	commonv1 "github.com/Anabol1ks/Forklore/pkg/pb/common/v1"
@@ -51,6 +52,25 @@ func (p *Producer) PublishRepositoryUpserted(ctx context.Context, repo *model.Re
 		tagName = repo.Tag.Name
 	}
 
+	ownerUsername := strings.TrimSpace(repo.OwnerUsername)
+	repoSlug := strings.TrimSpace(repo.Slug)
+	searchTitle := repo.Name
+	if ownerUsername != "" && repoSlug != "" {
+		searchTitle = ownerUsername + "/" + repoSlug
+	}
+
+	searchDescription := strings.TrimSpace(derefString(repo.Description))
+	if repo.Name != "" {
+		if searchDescription != "" {
+			searchDescription = repo.Name + "\n" + searchDescription
+		} else {
+			searchDescription = repo.Name
+		}
+	}
+	if repoSlug != "" {
+		searchDescription = strings.TrimSpace(searchDescription + "\nslug:" + repoSlug)
+	}
+
 	envelope := &searcheventsv1.SearchEventEnvelope{
 		EventId:    uuid.NewString(),
 		EventType:  commonv1.SearchEventType_SEARCH_EVENT_TYPE_REPOSITORY_UPSERTED,
@@ -60,8 +80,8 @@ func (p *Producer) PublishRepositoryUpserted(ctx context.Context, repo *model.Re
 				RepoId:      toProtoUUID(repo.ID),
 				OwnerId:     toProtoUUID(repo.OwnerID),
 				TagId:       toProtoUUID(repo.TagID),
-				Title:       repo.Name,
-				Description: derefString(repo.Description),
+				Title:       searchTitle,
+				Description: searchDescription,
 				TagName:     tagName,
 				IsPublic:    repo.Visibility == model.RepositoryVisibilityPublic,
 				UpdatedAt:   timestamppb.New(repo.UpdatedAt.UTC()),

@@ -522,6 +522,69 @@ definitions:
       content:
         type: string
     type: object
+  models.SearchHitResponse:
+    properties:
+      description:
+        type: string
+      entity_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      entity_type:
+        example: repository
+        type: string
+      owner_id:
+        example: 550e8400-e29b-41d4-a716-446655440002
+        type: string
+      rank:
+        example: 0.93
+        type: number
+      repo_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+      snippet:
+        type: string
+      tag_id:
+        example: 550e8400-e29b-41d4-a716-446655440003
+        type: string
+      title:
+        type: string
+      updated_at:
+        example: "2026-01-01T00:00:00Z"
+        type: string
+    type: object
+  models.SearchRequest:
+    properties:
+      entity_types:
+        items:
+          type: string
+        type: array
+      limit:
+        maximum: 100
+        minimum: 1
+        type: integer
+      offset:
+        minimum: 0
+        type: integer
+      owner_id:
+        type: string
+      query:
+        maxLength: 500
+        type: string
+      repo_id:
+        type: string
+      tag_id:
+        type: string
+    type: object
+  models.SearchResponse:
+    properties:
+      hits:
+        items:
+          $ref: '#/definitions/models.SearchHitResponse'
+        type: array
+      total:
+        example: 42
+        type: integer
+    type: object
   models.TokenPairResponse:
     properties:
       access_expires_at:
@@ -582,6 +645,98 @@ definitions:
     properties:
       repository:
         $ref: '#/definitions/models.RepositoryResponse'
+    type: object
+  models.UpsertDocumentIndexRequest:
+    properties:
+      content:
+        type: string
+      document_id:
+        type: string
+      is_public:
+        type: boolean
+      owner_id:
+        type: string
+      repo_id:
+        type: string
+      tag_id:
+        type: string
+      tag_name:
+        maxLength: 128
+        type: string
+      title:
+        maxLength: 255
+        minLength: 1
+        type: string
+      updated_at:
+        type: string
+    required:
+    - document_id
+    - owner_id
+    - repo_id
+    - tag_id
+    - title
+    - updated_at
+    type: object
+  models.UpsertFileIndexRequest:
+    properties:
+      file_id:
+        type: string
+      file_name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      is_public:
+        type: boolean
+      mime_type:
+        maxLength: 255
+        type: string
+      owner_id:
+        type: string
+      repo_id:
+        type: string
+      tag_id:
+        type: string
+      tag_name:
+        maxLength: 128
+        type: string
+      updated_at:
+        type: string
+    required:
+    - file_id
+    - file_name
+    - owner_id
+    - repo_id
+    - tag_id
+    - updated_at
+    type: object
+  models.UpsertRepositoryIndexRequest:
+    properties:
+      description:
+        maxLength: 4000
+        type: string
+      is_public:
+        type: boolean
+      owner_id:
+        type: string
+      repo_id:
+        type: string
+      tag_id:
+        type: string
+      tag_name:
+        maxLength: 128
+        type: string
+      title:
+        maxLength: 255
+        minLength: 1
+        type: string
+      updated_at:
+        type: string
+    required:
+    - owner_id
+    - repo_id
+    - tag_id
+    - title
+    - updated_at
     type: object
   models.UserResponse:
     properties:
@@ -1739,6 +1894,225 @@ paths:
       summary: Получение всех тегов репозиториев
       tags:
       - repositories
+  /search:
+    post:
+      consumes:
+      - application/json
+      description: Выполняет полнотекстовый поиск по репозиториям, документам и файлам
+      parameters:
+      - description: Параметры поиска
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.SearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SearchResponse'
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Поиск по индексам
+      tags:
+      - search
+  /search/index/documents:
+    post:
+      consumes:
+      - application/json
+      description: Добавляет или обновляет индексную запись документа
+      parameters:
+      - description: Данные индекса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpsertDocumentIndexRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить индекс документа
+      tags:
+      - search
+  /search/index/documents/{document_id}:
+    delete:
+      description: Удаляет индексную запись документа
+      parameters:
+      - description: ID документа
+        in: path
+        name: document_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить индекс документа
+      tags:
+      - search
+  /search/index/files:
+    post:
+      consumes:
+      - application/json
+      description: Добавляет или обновляет индексную запись файла
+      parameters:
+      - description: Данные индекса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpsertFileIndexRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить индекс файла
+      tags:
+      - search
+  /search/index/files/{file_id}:
+    delete:
+      description: Удаляет индексную запись файла
+      parameters:
+      - description: ID файла
+        in: path
+        name: file_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить индекс файла
+      tags:
+      - search
+  /search/index/repositories:
+    post:
+      consumes:
+      - application/json
+      description: Добавляет или обновляет индексную запись репозитория
+      parameters:
+      - description: Данные индекса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpsertRepositoryIndexRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить индекс репозитория
+      tags:
+      - search
+  /search/index/repositories/{repo_id}:
+    delete:
+      description: Удаляет индексную запись репозитория
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить индекс репозитория
+      tags:
+      - search
   /users/{owner_id}/repositories:
     get:
       description: Возвращает список публичных репозиториев указанного пользователя

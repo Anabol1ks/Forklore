@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler) *gin.Engine {
+func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler, searchHandler *handlers.SearchHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.CORS())
@@ -35,6 +35,7 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 
 		v1.GET("/document-versions/:version_id", contentHandler.GetDocumentVersion)
 		v1.GET("/file-versions/:version_id", contentHandler.GetFileVersion)
+		v1.POST("/search", searchHandler.Search)
 
 		v1.GET("/users/:owner_id/repositories", repositoryHandler.ListUserRepositories)
 		v1.GET("/users/:owner_id/repositories/:slug", repositoryHandler.GetRepositoryBySlug)
@@ -99,6 +100,19 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 			// ── File Versions ──
 			files.POST("/:file_id/versions", contentHandler.AddFileVersion)
 			files.POST("/:file_id/versions/:version_id/restore", contentHandler.RestoreFileVersion)
+		}
+
+		search := v1.Group("/search")
+		search.Use(middleware.AuthRequired())
+		{
+			search.POST("/index/repositories", searchHandler.UpsertRepositoryIndex)
+			search.DELETE("/index/repositories/:repo_id", searchHandler.DeleteRepositoryIndex)
+
+			search.POST("/index/documents", searchHandler.UpsertDocumentIndex)
+			search.DELETE("/index/documents/:document_id", searchHandler.DeleteDocumentIndex)
+
+			search.POST("/index/files", searchHandler.UpsertFileIndex)
+			search.DELETE("/index/files/:file_id", searchHandler.DeleteFileIndex)
 		}
 	}
 

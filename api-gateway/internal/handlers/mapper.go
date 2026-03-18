@@ -8,6 +8,7 @@ import (
 	commonv1 "github.com/Anabol1ks/Forklore/pkg/pb/common/v1"
 	contentv1 "github.com/Anabol1ks/Forklore/pkg/pb/content/v1"
 	repositoryv1 "github.com/Anabol1ks/Forklore/pkg/pb/repository/v1"
+	searchv1 "github.com/Anabol1ks/Forklore/pkg/pb/search/v1"
 )
 
 func mapAuthResponse(resp *authv1.AuthResponse) models.AuthResponse {
@@ -352,5 +353,60 @@ func mapFileVersion(v *contentv1.FileVersion) models.FileVersionDetail {
 		ChecksumSHA256: v.GetChecksumSha256(),
 		ChangeSummary:  v.GetChangeSummary(),
 		CreatedAt:      createdAt,
+	}
+}
+
+func mapSearchHit(hit *searchv1.SearchHit) models.SearchHitResponse {
+	if hit == nil {
+		return models.SearchHitResponse{}
+	}
+
+	var repoID *string
+	if hit.GetRepoId() != nil && hit.GetRepoId().GetValue() != "" {
+		value := hit.GetRepoId().GetValue()
+		repoID = &value
+	}
+
+	var ownerID *string
+	if hit.GetOwnerId() != nil && hit.GetOwnerId().GetValue() != "" {
+		value := hit.GetOwnerId().GetValue()
+		ownerID = &value
+	}
+
+	var tagID *string
+	if hit.GetTagId() != nil && hit.GetTagId().GetValue() != "" {
+		value := hit.GetTagId().GetValue()
+		tagID = &value
+	}
+
+	var updatedAt string
+	if hit.GetUpdatedAt() != nil {
+		updatedAt = hit.GetUpdatedAt().AsTime().Format(time.RFC3339)
+	}
+
+	return models.SearchHitResponse{
+		EntityType:  mapSearchEntityType(hit.GetEntityType()),
+		EntityID:    hit.GetEntityId().GetValue(),
+		RepoID:      repoID,
+		OwnerID:     ownerID,
+		TagID:       tagID,
+		Title:       hit.GetTitle(),
+		Description: toPointerString(hit.GetDescription()),
+		Snippet:     toPointerString(hit.GetSnippet()),
+		Rank:        hit.GetRank(),
+		UpdatedAt:   updatedAt,
+	}
+}
+
+func mapSearchEntityType(entityType commonv1.SearchEntityType) string {
+	switch entityType {
+	case commonv1.SearchEntityType_SEARCH_ENTITY_TYPE_REPOSITORY:
+		return "repository"
+	case commonv1.SearchEntityType_SEARCH_ENTITY_TYPE_DOCUMENT:
+		return "document"
+	case commonv1.SearchEntityType_SEARCH_ENTITY_TYPE_FILE:
+		return "file"
+	default:
+		return "unspecified"
 	}
 }

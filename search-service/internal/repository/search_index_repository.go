@@ -133,13 +133,15 @@ WHERE repo_id = ?
 
 func (r *searchIndexRepository) Search(ctx context.Context, params SearchParams) ([]*SearchHit, int64, error) {
 	limit, offset := normalizePagination(params.Limit, params.Offset)
+	normalizedQuery := strings.TrimSpace(params.Query)
+	ilikeQuery := "%" + normalizedQuery + "%"
 
 	baseWhere := []string{"is_public = TRUE"}
 	args := make([]any, 0)
 
-	if params.Query != "" {
-		baseWhere = append(baseWhere, "search_vector @@ plainto_tsquery('simple', ?)")
-		args = append(args, params.Query)
+	if normalizedQuery != "" {
+		baseWhere = append(baseWhere, `(search_vector @@ plainto_tsquery('simple', ?) OR title ILIKE ? OR coalesce(description, '') ILIKE ? OR coalesce(content, '') ILIKE ?)`)
+		args = append(args, normalizedQuery, ilikeQuery, ilikeQuery, ilikeQuery)
 	}
 
 	if len(params.EntityTypes) > 0 {
@@ -191,12 +193,14 @@ SELECT
             plainto_tsquery('simple', ?),
             'MaxWords=20, MinWords=8'
         )
-        ELSE NULL
+		ELSE NULL
     END AS snippet,
-    CASE
-        WHEN ? <> '' THEN ts_rank(search_vector, plainto_tsquery('simple', ?))
-        ELSE 0
-    END AS rank,
+	CASE WHEN ? <> '' THEN
+		ts_rank(search_vector, plainto_tsquery('simple', ?))
+		+ CASE WHEN title ILIKE ? THEN 0.3 ELSE 0 END
+		+ CASE WHEN coalesce(description, '') ILIKE ? THEN 0.1 ELSE 0 END
+		+ CASE WHEN coalesce(content, '') ILIKE ? THEN 0.05 ELSE 0 END
+	ELSE 0 END AS rank,
     updated_at
 FROM search_index_items
 WHERE %s
@@ -204,8 +208,16 @@ ORDER BY rank DESC, updated_at DESC
 LIMIT ? OFFSET ?
 `, whereClause)
 
-	queryArgs := make([]any, 0, len(args)+6)
-	queryArgs = append(queryArgs, params.Query, params.Query, params.Query, params.Query)
+	queryArgs := make([]any, 0, len(args)+9)
+	queryArgs = append(queryArgs,
+		normalizedQuery,
+		normalizedQuery,
+		normalizedQuery,
+		normalizedQuery,
+		ilikeQuery,
+		ilikeQuery,
+		ilikeQuery,
+	)
 	queryArgs = append(queryArgs, args...)
 	queryArgs = append(queryArgs, limit, offset)
 

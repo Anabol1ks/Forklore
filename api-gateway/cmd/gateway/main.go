@@ -61,13 +61,20 @@ func main() {
 	}
 	defer contentClient.Close()
 
+	searchClient, err := clients.NewSearchClient(cfg.SearchServiceAddr)
+	if err != nil {
+		log.Fatal("failed to connect to search-service", zap.Error(err))
+	}
+	defer searchClient.Close()
+
 	// ── Handlers ──
 	authHandler := handlers.NewAuthHandler(authClient)
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryClient)
 	contentHandler := handlers.NewContentHandler(contentClient)
+	searchHandler := handlers.NewSearchHandler(searchClient)
 
 	// ── Router ──
-	r := router.Setup(log, authHandler, repositoryHandler, contentHandler)
+	r := router.Setup(log, authHandler, repositoryHandler, contentHandler, searchHandler)
 
 	// ── HTTP server ──
 	srv := &http.Server{
