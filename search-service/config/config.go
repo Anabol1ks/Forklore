@@ -12,9 +12,10 @@ import (
 )
 
 type Config struct {
-	Port string
-	DB   DB
-	Auth Auth
+	Port  string
+	DB    DB
+	Auth  Auth
+	Kafka Kafka
 }
 
 type DB struct {
@@ -25,9 +26,15 @@ type Auth struct {
 	JWTSecret string
 }
 
+type Kafka struct {
+	Brokers          []string
+	SearchIndexTopic string
+	GroupID          string
+}
+
 func Load(log *zap.Logger) *Config {
 	return &Config{
-		Port: getEnv("CONTENT_PORT", log),
+		Port: getEnv("SEARCH_PORT", log),
 		DB: DB{
 			Config: database.Config{
 				Host:     getEnv("DB_SEARCH_HOST", log),
@@ -40,6 +47,11 @@ func Load(log *zap.Logger) *Config {
 		},
 		Auth: Auth{
 			JWTSecret: getEnv("JWTSecret", log),
+		},
+		Kafka: Kafka{
+			Brokers:          splitAndTrim(getEnv("KAFKA_BROKERS", log)),
+			SearchIndexTopic: getEnv("KAFKA_SEARCH_TOPIC", log),
+			GroupID:          getEnv("KAFKA_SEARCH_GROUP_ID", log),
 		},
 	}
 }
