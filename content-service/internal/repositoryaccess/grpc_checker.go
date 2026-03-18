@@ -4,6 +4,7 @@ import (
 	"content-service/internal/domain"
 	"content-service/internal/service"
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -45,20 +46,14 @@ func NewGRPCChecker(
 }
 
 func (c *GRPCChecker) EnsureCanRead(ctx context.Context, repoID, requesterID uuid.UUID) error {
-	callCtx, cancel := context.WithTimeout(withForwardedAuthorization(ctx), c.requestTimeout)
-	defer cancel()
-
-	_, err := c.client.GetRepositoryById(callCtx, &repositoryv1.GetRepositoryByIdRequest{
-		RepoId: toProtoUUID(repoID),
-	})
+	_, err := c.GetRepositoryMetadata(ctx, repoID)
 	if err != nil {
-		mapped := mapRepositoryGRPCError(err)
 		c.logger.Warn("repository read access check failed",
 			zap.String("repo_id", repoID.String()),
 			zap.String("requester_id", requesterID.String()),
 			zap.Error(err),
 		)
-		return mapped
+		return err
 	}
 
 	return nil
@@ -69,6 +64,24 @@ func (c *GRPCChecker) EnsureCanWrite(ctx context.Context, repoID, requesterID uu
 		return domain.ErrUnauthorized
 	}
 
+	metadata, err := c.GetRepositoryMetadata(ctx, repoID)
+	if err != nil {
+		c.logger.Warn("repository write access precheck failed",
+			zap.String("repo_id", repoID.String()),
+			zap.String("requester_id", requesterID.String()),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	if metadata.OwnerID != requesterID {
+		return domain.ErrContentAccessDenied
+	}
+
+	return nil
+}
+
+func (c *GRPCChecker) GetRepositoryMetadata(ctx context.Context, repoID uuid.UUID) (*service.RepositoryMetadata, error) {
 	callCtx, cancel := context.WithTimeout(withForwardedAuthorization(ctx), c.requestTimeout)
 	defer cancel()
 
@@ -76,39 +89,42 @@ func (c *GRPCChecker) EnsureCanWrite(ctx context.Context, repoID, requesterID uu
 		RepoId: toProtoUUID(repoID),
 	})
 	if err != nil {
-		mapped := mapRepositoryGRPCError(err)
-		c.logger.Warn("repository write access precheck failed",
-			zap.String("repo_id", repoID.String()),
-			zap.String("requester_id", requesterID.String()),
-			zap.Error(err),
-		)
-		return mapped
+		return nil, mapRepositoryGRPCError(err)
 	}
 
-	if resp.GetRepository() == nil || resp.GetRepository().GetOwnerId() == nil {
+	repo := resp.GetRepository()
+	if repo == nil || repo.GetOwnerId() == nil {
 		c.logger.Error("repository service returned empty owner",
 			zap.String("repo_id", repoID.String()),
-			zap.String("requester_id", requesterID.String()),
 		)
-		return domain.ErrRepositoryNotFound
+		return nil, domain.ErrRepositoryNotFound
 	}
 
-	ownerID, err := uuid.Parse(strings.TrimSpace(resp.GetRepository().GetOwnerId().GetValue()))
+	ownerID, err := parseProtoUUID(repo.GetOwnerId())
 	if err != nil {
-		c.logger.Error("failed to parse repository owner id",
-			zap.String("repo_id", repoID.String()),
-			zap.String("requester_id", requesterID.String()),
-			zap.String("owner_id", resp.GetRepository().GetOwnerId().GetValue()),
-			zap.Error(err),
-		)
-		return domain.ErrRepositoryNotFound
+		return nil, domain.ErrRepositoryNotFound
 	}
 
-	if ownerID != requesterID {
-		return domain.ErrContentAccessDenied
+	tagID := uuid.Nil
+	if repo.GetTagId() != nil {
+		parsedTagID, err := parseProtoUUID(repo.GetTagId())
+		if err == nil {
+			tagID = parsedTagID
+		}
 	}
 
-	return nil
+	tagName := ""
+	if repo.GetTag() != nil {
+		tagName = strings.TrimSpace(repo.GetTag().GetName())
+	}
+
+	return &service.RepositoryMetadata{
+		RepoID:   repoID,
+		OwnerID:  ownerID,
+		TagID:    tagID,
+		TagName:  tagName,
+		IsPublic: repo.GetVisibility() == commonv1.RepositoryVisibility_REPOSITORY_VISIBILITY_PUBLIC,
+	}, nil
 }
 
 func withForwardedAuthorization(ctx context.Context) context.Context {
@@ -147,4 +163,17 @@ func toProtoUUID(id uuid.UUID) *commonv1.UUID {
 	return &commonv1.UUID{
 		Value: id.String(),
 	}
+}
+
+func parseProtoUUID(v *commonv1.UUID) (uuid.UUID, error) {
+	if v == nil {
+		return uuid.Nil, errors.New("uuid is nil")
+	}
+
+	value := strings.TrimSpace(v.GetValue())
+	if value == "" {
+		return uuid.Nil, errors.New("uuid is empty")
+	}
+
+	return uuid.Parse(value)
 }

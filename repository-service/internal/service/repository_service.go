@@ -11,16 +11,28 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type repositoryService struct {
-	repos *repository.Repository
+	repos     *repository.Repository
+	publisher SearchEventPublisher
+	logger    *zap.Logger
 }
 
-func NewRepositoryService(repos *repository.Repository) RepositoryService {
+func NewRepositoryService(repos *repository.Repository, publisher SearchEventPublisher, logger *zap.Logger) RepositoryService {
+	if publisher == nil {
+		publisher = NewNoopSearchEventPublisher()
+	}
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+
 	return &repositoryService{
-		repos: repos,
+		repos:     repos,
+		publisher: publisher,
+		logger:    logger,
 	}
 }
 
@@ -98,6 +110,13 @@ func (s *repositoryService) CreateRepository(ctx context.Context, input CreateRe
 	created, err := s.repos.Repo.GetByID(ctx, repo.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	if err := s.publisher.PublishRepositoryUpserted(ctx, created); err != nil {
+		s.logger.Warn("failed to publish repository upsert event",
+			zap.String("repo_id", created.ID.String()),
+			zap.Error(err),
+		)
 	}
 
 	return created, nil
@@ -229,6 +248,13 @@ func (s *repositoryService) UpdateRepository(ctx context.Context, input UpdateRe
 		return nil, err
 	}
 
+	if err := s.publisher.PublishRepositoryUpserted(ctx, updated); err != nil {
+		s.logger.Warn("failed to publish repository upsert event",
+			zap.String("repo_id", updated.ID.String()),
+			zap.Error(err),
+		)
+	}
+
 	return updated, nil
 }
 
@@ -249,7 +275,18 @@ func (s *repositoryService) DeleteRepository(ctx context.Context, requesterID uu
 		return domain.ErrRepositoryAccessDenied
 	}
 
-	return s.repos.Repo.DeleteByID(ctx, repoID)
+	if err := s.repos.Repo.DeleteByID(ctx, repoID); err != nil {
+		return err
+	}
+
+	if err := s.publisher.PublishRepositoryDeleted(ctx, repoID); err != nil {
+		s.logger.Warn("failed to publish repository deleted event",
+			zap.String("repo_id", repoID.String()),
+			zap.Error(err),
+		)
+	}
+
+	return nil
 }
 
 func (s *repositoryService) ForkRepository(ctx context.Context, input ForkRepositoryInput) (*model.Repository, error) {
@@ -331,6 +368,13 @@ func (s *repositoryService) ForkRepository(ctx context.Context, input ForkReposi
 	created, err := s.repos.Repo.GetByID(ctx, repo.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	if err := s.publisher.PublishRepositoryUpserted(ctx, created); err != nil {
+		s.logger.Warn("failed to publish repository upsert event",
+			zap.String("repo_id", created.ID.String()),
+			zap.Error(err),
+		)
 	}
 
 	return created, nil

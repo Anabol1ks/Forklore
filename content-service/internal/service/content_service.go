@@ -13,21 +13,42 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type contentService struct {
 	repos      *repository.Repository
 	repoAccess RepositoryAccessChecker
+	publisher  SearchEventPublisher
+	logger     *zap.Logger
 }
 
 func NewContentService(
 	repos *repository.Repository,
 	repoAccess RepositoryAccessChecker,
 ) ContentService {
+	return NewContentServiceWithPublisher(repos, repoAccess, nil, nil)
+}
+
+func NewContentServiceWithPublisher(
+	repos *repository.Repository,
+	repoAccess RepositoryAccessChecker,
+	publisher SearchEventPublisher,
+	logger *zap.Logger,
+) ContentService {
+	if publisher == nil {
+		publisher = NewNoopSearchEventPublisher()
+	}
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+
 	return &contentService{
 		repos:      repos,
 		repoAccess: repoAccess,
+		publisher:  publisher,
+		logger:     logger,
 	}
 }
 
@@ -137,7 +158,14 @@ func (s *contentService) CreateDocument(ctx context.Context, input CreateDocumen
 		return nil, err
 	}
 
-	return s.GetDocumentByID(ctx, input.RequesterID, createdDocumentID)
+	state, err := s.GetDocumentByID(ctx, input.RequesterID, createdDocumentID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.publishDocumentUpserted(ctx, state.Document, state.CurrentVersion)
+
+	return state, nil
 }
 
 func (s *contentService) GetDocumentByID(ctx context.Context, requesterID, documentID uuid.UUID) (*DocumentState, error) {
@@ -305,10 +333,14 @@ func (s *contentService) CreateDocumentVersion(ctx context.Context, input Create
 		return nil, err
 	}
 
-	return &DocumentVersionResult{
+	result := &DocumentVersionResult{
 		Document: freshDocument,
 		Version:  createdVersion,
-	}, nil
+	}
+
+	s.publishDocumentUpserted(ctx, result.Document, result.Version)
+
+	return result, nil
 }
 
 func (s *contentService) GetDocumentVersionByID(ctx context.Context, requesterID, versionID uuid.UUID) (*model.DocumentVersion, error) {
@@ -449,10 +481,14 @@ func (s *contentService) RestoreDocumentVersion(ctx context.Context, input Resto
 		return nil, err
 	}
 
-	return &DocumentVersionResult{
+	result := &DocumentVersionResult{
 		Document: freshDocument,
 		Version:  createdVersion,
-	}, nil
+	}
+
+	s.publishDocumentUpserted(ctx, result.Document, result.Version)
+
+	return result, nil
 }
 
 func (s *contentService) DeleteDocument(ctx context.Context, requesterID, documentID uuid.UUID) error {
@@ -472,7 +508,18 @@ func (s *contentService) DeleteDocument(ctx context.Context, requesterID, docume
 		return err
 	}
 
-	return s.repos.Document.DeleteByID(ctx, documentID)
+	if err := s.repos.Document.DeleteByID(ctx, documentID); err != nil {
+		return err
+	}
+
+	if err := s.publisher.PublishDocumentDeleted(ctx, documentID); err != nil {
+		s.logger.Warn("failed to publish document deleted event",
+			zap.String("document_id", documentID.String()),
+			zap.Error(err),
+		)
+	}
+
+	return nil
 }
 
 func (s *contentService) CreateFile(ctx context.Context, input CreateFileInput) (*FileState, error) {
@@ -542,7 +589,14 @@ func (s *contentService) CreateFile(ctx context.Context, input CreateFileInput) 
 		return nil, err
 	}
 
-	return s.GetFileByID(ctx, input.RequesterID, createdFileID)
+	state, err := s.GetFileByID(ctx, input.RequesterID, createdFileID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.publishFileUpserted(ctx, state.File, state.CurrentVersion)
+
+	return state, nil
 }
 
 func (s *contentService) GetFileByID(ctx context.Context, requesterID, fileID uuid.UUID) (*FileState, error) {
@@ -655,10 +709,14 @@ func (s *contentService) AddFileVersion(ctx context.Context, input AddFileVersio
 		return nil, err
 	}
 
-	return &FileVersionResult{
+	result := &FileVersionResult{
 		File:    freshFile,
 		Version: createdVersion,
-	}, nil
+	}
+
+	s.publishFileUpserted(ctx, result.File, result.Version)
+
+	return result, nil
 }
 
 func (s *contentService) GetFileVersionByID(ctx context.Context, requesterID, versionID uuid.UUID) (*model.FileVersion, error) {
@@ -791,10 +849,14 @@ func (s *contentService) RestoreFileVersion(ctx context.Context, input RestoreFi
 		return nil, err
 	}
 
-	return &FileVersionResult{
+	result := &FileVersionResult{
 		File:    freshFile,
 		Version: createdVersion,
-	}, nil
+	}
+
+	s.publishFileUpserted(ctx, result.File, result.Version)
+
+	return result, nil
 }
 
 func (s *contentService) DeleteFile(ctx context.Context, requesterID, fileID uuid.UUID) error {
@@ -814,7 +876,74 @@ func (s *contentService) DeleteFile(ctx context.Context, requesterID, fileID uui
 		return err
 	}
 
-	return s.repos.File.DeleteByID(ctx, fileID)
+	if err := s.repos.File.DeleteByID(ctx, fileID); err != nil {
+		return err
+	}
+
+	if err := s.publisher.PublishFileDeleted(ctx, fileID); err != nil {
+		s.logger.Warn("failed to publish file deleted event",
+			zap.String("file_id", fileID.String()),
+			zap.Error(err),
+		)
+	}
+
+	return nil
+}
+
+func (s *contentService) publishDocumentUpserted(ctx context.Context, document *model.Document, version *model.DocumentVersion) {
+	if document == nil {
+		return
+	}
+
+	metadata, err := s.repoAccess.GetRepositoryMetadata(ctx, document.RepoID)
+	if err != nil {
+		s.logger.Warn("failed to load repository metadata for document event",
+			zap.String("document_id", document.ID.String()),
+			zap.String("repo_id", document.RepoID.String()),
+			zap.Error(err),
+		)
+		return
+	}
+
+	content := ""
+	if version != nil {
+		content = version.Content
+	}
+
+	if err := s.publisher.PublishDocumentUpserted(ctx, document, content, metadata); err != nil {
+		s.logger.Warn("failed to publish document upsert event",
+			zap.String("document_id", document.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *contentService) publishFileUpserted(ctx context.Context, file *model.File, version *model.FileVersion) {
+	if file == nil {
+		return
+	}
+
+	metadata, err := s.repoAccess.GetRepositoryMetadata(ctx, file.RepoID)
+	if err != nil {
+		s.logger.Warn("failed to load repository metadata for file event",
+			zap.String("file_id", file.ID.String()),
+			zap.String("repo_id", file.RepoID.String()),
+			zap.Error(err),
+		)
+		return
+	}
+
+	mimeType := ""
+	if version != nil {
+		mimeType = version.MimeType
+	}
+
+	if err := s.publisher.PublishFileUpserted(ctx, file, mimeType, metadata); err != nil {
+		s.logger.Warn("failed to publish file upsert event",
+			zap.String("file_id", file.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func normalizeDocumentFormat(format model.DocumentFormat) model.DocumentFormat {

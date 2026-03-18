@@ -16,6 +16,7 @@ type Config struct {
 	DB             DB
 	Auth           Auth
 	RepoistoryGRPC RepoistoryGRPC
+	Kafka          Kafka
 }
 
 type DB struct {
@@ -30,6 +31,11 @@ type RepoistoryGRPC struct {
 	Addres         string
 	DialTimeout    time.Duration
 	RequestTimeout time.Duration
+}
+
+type Kafka struct {
+	Brokers          []string
+	SearchIndexTopic string
 }
 
 func Load(log *zap.Logger) *Config {
@@ -52,6 +58,10 @@ func Load(log *zap.Logger) *Config {
 			Addres:         getEnv("REPOSITORY_SERVICE_ADDR", log),
 			DialTimeout:    parseSecondsDuration(getEnv("REPOSITORY_GRPC_DIAL_TIMEOUT", log)),
 			RequestTimeout: parseSecondsDuration(getEnv("REPOSITORY_GRPC_REQUEST_TIMEOUT", log)),
+		},
+		Kafka: Kafka{
+			Brokers:          splitAndTrim(getEnv("KAFKA_BROKERS", log)),
+			SearchIndexTopic: getEnv("KAFKA_SEARCH_TOPIC", log),
 		},
 	}
 }

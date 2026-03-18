@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"repository-service/internal/kafka"
 	migrations "repository-service/internal/migration"
 	"syscall"
 
@@ -45,7 +46,17 @@ func main() {
 	}
 
 	repos := repository.New(db)
-	repoService := service.NewRepositoryService(repos)
+	searchEventsProducer := kafka.NewProducer(kafka.ProducerConfig{
+		Brokers: cfg.Kafka.Brokers,
+		Topic:   cfg.Kafka.SearchIndexTopic,
+	})
+	defer func() {
+		if err := searchEventsProducer.Close(); err != nil {
+			log.Warn("failed to close search events producer", zap.Error(err))
+		}
+	}()
+
+	repoService := service.NewRepositoryService(repos, searchEventsProducer, log)
 	repoHandler := grpcserver.NewRepositoryHandler(repoService, log)
 
 	tokenManager := authjwt.NewJWTVerifier(cfg.Auth.JWTSecret)

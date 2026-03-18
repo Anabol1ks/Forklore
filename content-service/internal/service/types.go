@@ -15,6 +15,7 @@ type Pagination struct {
 type RepositoryAccessChecker interface {
 	EnsureCanRead(ctx context.Context, repoID, requesterID uuid.UUID) error
 	EnsureCanWrite(ctx context.Context, repoID, requesterID uuid.UUID) error
+	GetRepositoryMetadata(ctx context.Context, repoID uuid.UUID) (*RepositoryMetadata, error)
 }
 
 type DocumentState struct {

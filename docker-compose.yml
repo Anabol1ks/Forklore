@@ -64,8 +64,11 @@ services:
       DB_REPO_HOST: repo-db
       # Внутри docker-сети используется внутренний порт контейнера БД.
       DB_REPO_PORT: "5432"
+      KAFKA_BROKERS: kafka:9092
     depends_on:
       repo-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     ports:
       - "8082:8082"
@@ -103,11 +106,14 @@ services:
       DB_CONTENT_PORT: "5432"
       # Для межсервисного вызова в docker-сети нужен адрес сервиса, не localhost.
       REPOSITORY_SERVICE_ADDR: repository-service:8082
+      KAFKA_BROKERS: kafka:9092
     depends_on:
       content-db:
         condition: service_healthy
       repository-service:
         condition: service_started
+      kafka:
+        condition: service_healthy
     ports:
       - "8083:8083"
     networks:

@@ -2,6 +2,7 @@ package main
 
 import (
 	"content-service/config"
+	"content-service/internal/kafka"
 	"content-service/internal/repository"
 	"content-service/internal/repositoryaccess"
 	"content-service/internal/service"
@@ -61,9 +62,21 @@ func main() {
 		cfg.RepoistoryGRPC.RequestTimeout,
 	)
 
-	contentService := service.NewContentService(
+	searchEventsProducer := kafka.NewProducer(kafka.ProducerConfig{
+		Brokers: cfg.Kafka.Brokers,
+		Topic:   cfg.Kafka.SearchIndexTopic,
+	})
+	defer func() {
+		if err := searchEventsProducer.Close(); err != nil {
+			log.Warn("failed to close search events producer", zap.Error(err))
+		}
+	}()
+
+	contentService := service.NewContentServiceWithPublisher(
 		repos,
 		repoAccess,
+		searchEventsProducer,
+		log,
 	)
 
 	tokenManager := authjwt.NewJWTVerifier(cfg.Auth.JWTSecret)
