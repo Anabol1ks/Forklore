@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_AUTH_USER}
       POSTGRES_PASSWORD: ${DB_AUTH_PASSWORD}
-      POSTGRES_DB: auth-db
+      POSTGRES_DB: ${DB_AUTH_NAME}
     volumes:
       - auth_db_data:/var/lib/postgresql/data
     ports:
@@ -16,6 +16,22 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    networks:
+      - forklore-network
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    env_file: .env
+    environment:
+      # Внутри docker-сети хост БД должен быть именем сервиса, а не localhost.
+      DB_AUTH_HOST: auth-db
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
     networks:
       - forklore-network
 
@@ -38,7 +54,21 @@ services:
       start_period: 10s
     networks:
       - forklore-network
-
+  repository-service:
+    build:
+      context: .
+      dockerfile: repository-service/Dockerfile
+    env_file: .env
+    environment:
+      # Внутри docker-сети хост БД должен быть именем сервиса, а не localhost.
+      DB_REPO_HOST: repo-db
+    depends_on:
+      repo-db:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    networks:
+      - forklore-network
   content-db:
     image: postgres:17
     env_file: .env
@@ -59,6 +89,21 @@ services:
     networks:
       - forklore-network
 
+  content-service:
+    build:
+      context: .
+      dockerfile: content-service/Dockerfile
+    env_file: .env
+    environment:
+      # Внутри docker-сети хост БД должен быть именем сервиса, а не localhost.
+      DB_CONTENT_HOST: content-db
+    depends_on:
+      content-db:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    networks:
+      - forklore-network
 
 volumes:
   auth_db_data:
