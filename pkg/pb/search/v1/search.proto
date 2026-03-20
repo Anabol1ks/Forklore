@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package forklore.search.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/search/v1;searchv1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "common/v1/common.proto";
+
+service SearchService {
+  rpc Search(SearchRequest) returns (SearchResponse);
+
+  rpc UpsertRepositoryIndex(UpsertRepositoryIndexRequest) returns (google.protobuf.Empty);
+  rpc DeleteRepositoryIndex(DeleteRepositoryIndexRequest) returns (google.protobuf.Empty);
+
+  rpc UpsertDocumentIndex(UpsertDocumentIndexRequest) returns (google.protobuf.Empty);
+  rpc DeleteDocumentIndex(DeleteDocumentIndexRequest) returns (google.protobuf.Empty);
+
+  rpc UpsertFileIndex(UpsertFileIndexRequest) returns (google.protobuf.Empty);
+  rpc DeleteFileIndex(DeleteFileIndexRequest) returns (google.protobuf.Empty);
+}
+
+message SearchHit {
+  common.v1.SearchEntityType entity_type = 1;
+
+  common.v1.UUID entity_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 3;
+  common.v1.UUID owner_id = 4;
+  common.v1.UUID tag_id = 5;
+
+  string title = 6 [(validate.rules).string = {max_len: 255}];
+  string description = 7 [(validate.rules).string = {max_len: 4000}];
+  string snippet = 8 [(validate.rules).string = {max_len: 2000}];
+
+  double rank = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message SearchRequest {
+  string query = 1 [(validate.rules).string = {max_len: 500}];
+
+  repeated common.v1.SearchEntityType entity_types = 2;
+  common.v1.UUID tag_id = 3;
+  common.v1.UUID owner_id = 4;
+  common.v1.UUID repo_id = 5;
+
+  uint32 limit = 6 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 7;
+}
+
+message SearchResponse {
+  repeated SearchHit hits = 1;
+  uint64 total = 2;
+}
+
+message UpsertRepositoryIndexRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID owner_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+
+  string title = 4 [(validate.rules).string = {min_len: 1, max_len: 255}];
+  string description = 5 [(validate.rules).string = {max_len: 4000}];
+  string tag_name = 6 [(validate.rules).string = {max_len: 128}];
+
+  bool is_public = 7;
+  google.protobuf.Timestamp updated_at = 8 [(validate.rules).timestamp = {required: true}];
+}
+
+message DeleteRepositoryIndexRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpsertDocumentIndexRequest {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID owner_id = 3 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 4 [(validate.rules).message = {required: true}];
+
+  string title = 5 [(validate.rules).string = {min_len: 1, max_len: 255}];
+  string content = 6;
+  string tag_name = 7 [(validate.rules).string = {max_len: 128}];
+
+  bool is_public = 8;
+  google.protobuf.Timestamp updated_at = 9 [(validate.rules).timestamp = {required: true}];
+}
+
+message DeleteDocumentIndexRequest {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message UpsertFileIndexRequest {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID owner_id = 3 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 4 [(validate.rules).message = {required: true}];
+
+  string file_name = 5 [(validate.rules).string = {min_len: 1, max_len: 255}];
+  string mime_type = 6 [(validate.rules).string = {max_len: 255}];
+  string tag_name = 7 [(validate.rules).string = {max_len: 128}];
+
+  bool is_public = 8;
+  google.protobuf.Timestamp updated_at = 9 [(validate.rules).timestamp = {required: true}];
+}
+
+message DeleteFileIndexRequest {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+}

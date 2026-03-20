@@ -1,0 +1,296 @@
+syntax = "proto3";
+
+package forklore.content.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/content/v1;contentv1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "common/v1/common.proto";
+
+service ContentService {
+  // Documents
+  rpc CreateDocument(CreateDocumentRequest) returns (CreateDocumentResponse);
+  rpc GetDocumentById(GetDocumentByIdRequest) returns (GetDocumentResponse);
+  rpc ListRepositoryDocuments(ListRepositoryDocumentsRequest) returns (ListDocumentsResponse);
+
+  rpc SaveDocumentDraft(SaveDocumentDraftRequest) returns (SaveDocumentDraftResponse);
+  rpc CreateDocumentVersion(CreateDocumentVersionRequest) returns (CreateDocumentVersionResponse);
+  rpc GetDocumentVersionById(GetDocumentVersionByIdRequest) returns (GetDocumentVersionResponse);
+  rpc ListDocumentVersions(ListDocumentVersionsRequest) returns (ListDocumentVersionsResponse);
+  rpc RestoreDocumentVersion(RestoreDocumentVersionRequest) returns (CreateDocumentVersionResponse);
+
+  rpc DeleteDocument(DeleteDocumentRequest) returns (google.protobuf.Empty);
+
+  // Files
+  rpc CreateFile(CreateFileRequest) returns (CreateFileResponse);
+  rpc GetFileById(GetFileByIdRequest) returns (GetFileResponse);
+  rpc ListRepositoryFiles(ListRepositoryFilesRequest) returns (ListFilesResponse);
+
+  rpc AddFileVersion(AddFileVersionRequest) returns (AddFileVersionResponse);
+  rpc GetFileVersionById(GetFileVersionByIdRequest) returns (GetFileVersionResponse);
+  rpc ListFileVersions(ListFileVersionsRequest) returns (ListFileVersionsResponse);
+  rpc RestoreFileVersion(RestoreFileVersionRequest) returns (AddFileVersionResponse);
+
+  rpc DeleteFile(DeleteFileRequest) returns (google.protobuf.Empty);
+}
+
+
+message Document {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID author_id = 3 [(validate.rules).message = {required: true}];
+
+  string title = 4 [
+    (validate.rules).string = {
+      min_len: 1,
+      max_len: 200
+    }
+  ];
+
+  string slug = 5 [
+    (validate.rules).string = {
+      min_len: 1,
+      max_len: 100,
+      pattern: "^[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?$"
+    }
+  ];
+
+  common.v1.DocumentFormat format = 6;
+
+  common.v1.UUID current_version_id = 7;
+  google.protobuf.Timestamp latest_draft_updated_at = 8;
+  google.protobuf.Timestamp created_at = 9 [(validate.rules).timestamp = {required: true}];
+  google.protobuf.Timestamp updated_at = 10;
+  google.protobuf.Timestamp deleted_at = 11;
+}
+
+message DocumentDraft {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+  string content = 2;
+  common.v1.UUID updated_by = 3 [(validate.rules).message = {required: true}];
+  google.protobuf.Timestamp updated_at = 4 [(validate.rules).timestamp = {required: true}];
+}
+
+message DocumentVersion {
+  common.v1.UUID version_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID document_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID author_id = 3 [(validate.rules).message = {required: true}];
+
+  uint32 version_number = 4 [(validate.rules).uint32 = {gte: 1}];
+  string content = 5;
+  string change_summary = 6 [(validate.rules).string = {max_len: 255}];
+  google.protobuf.Timestamp created_at = 7 [(validate.rules).timestamp = {required: true}];
+}
+
+message File {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID uploaded_by = 3 [(validate.rules).message = {required: true}];
+
+  string file_name = 4 [
+    (validate.rules).string = {
+      min_len: 1,
+      max_len: 255
+    }
+  ];
+
+  common.v1.UUID current_version_id = 5;
+  google.protobuf.Timestamp created_at = 6 [(validate.rules).timestamp = {required: true}];
+  google.protobuf.Timestamp updated_at = 7;
+  google.protobuf.Timestamp deleted_at = 8;
+}
+
+message FileVersion {
+  common.v1.UUID version_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID file_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID uploaded_by = 3 [(validate.rules).message = {required: true}];
+
+  uint32 version_number = 4 [(validate.rules).uint32 = {gte: 1}];
+
+  string storage_key = 5 [(validate.rules).string = {min_len: 1, max_len: 2048}];
+  string mime_type = 6 [(validate.rules).string = {min_len: 1, max_len: 255}];
+  uint64 size_bytes = 7;
+  string checksum_sha256 = 8 [(validate.rules).string = {max_len: 64}];
+  string change_summary = 9 [(validate.rules).string = {max_len: 255}];
+  google.protobuf.Timestamp created_at = 10 [(validate.rules).timestamp = {required: true}];
+}
+
+message CreateDocumentRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+
+  string title = 2 [
+    (validate.rules).string = {
+      min_len: 1,
+      max_len: 200
+    }
+  ];
+
+  string slug = 3 [(validate.rules).string = {max_len: 100}];
+  common.v1.DocumentFormat format = 4;
+  string initial_content = 5;
+  string change_summary = 6 [(validate.rules).string = {max_len: 255}];
+}
+
+message CreateDocumentResponse {
+  Document document = 1;
+  DocumentDraft draft = 2;
+  DocumentVersion current_version = 3;
+}
+
+message GetDocumentByIdRequest {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message GetDocumentResponse {
+  Document document = 1;
+  DocumentDraft draft = 2;
+  DocumentVersion current_version = 3;
+}
+
+message ListRepositoryDocumentsRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+  uint32 limit = 2 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 3;
+}
+
+message ListDocumentsResponse {
+  repeated Document documents = 1;
+  uint64 total = 2;
+}
+
+message SaveDocumentDraftRequest {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+  string content = 2;
+}
+
+message SaveDocumentDraftResponse {
+  Document document = 1;
+  DocumentDraft draft = 2;
+}
+
+message CreateDocumentVersionRequest {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+  string content = 2;
+  string change_summary = 3 [(validate.rules).string = {max_len: 255}];
+}
+
+message CreateDocumentVersionResponse {
+  Document document = 1;
+  DocumentVersion version = 2;
+}
+
+message GetDocumentVersionByIdRequest {
+  common.v1.UUID version_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message GetDocumentVersionResponse {
+  DocumentVersion version = 1;
+}
+
+message ListDocumentVersionsRequest {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+  uint32 limit = 2 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 3;
+}
+
+message ListDocumentVersionsResponse {
+  repeated DocumentVersion versions = 1;
+  uint64 total = 2;
+}
+
+message RestoreDocumentVersionRequest {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID version_id = 2 [(validate.rules).message = {required: true}];
+  string change_summary = 3 [(validate.rules).string = {max_len: 255}];
+}
+
+message DeleteDocumentRequest {
+  common.v1.UUID document_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message CreateFileRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+
+  string file_name = 2 [
+    (validate.rules).string = {
+      min_len: 1,
+      max_len: 255
+    }
+  ];
+
+  string storage_key = 3 [(validate.rules).string = {min_len: 1, max_len: 2048}];
+  string mime_type = 4 [(validate.rules).string = {min_len: 1, max_len: 255}];
+  uint64 size_bytes = 5;
+  string checksum_sha256 = 6 [(validate.rules).string = {max_len: 64}];
+  string change_summary = 7 [(validate.rules).string = {max_len: 255}];
+}
+
+message CreateFileResponse {
+  File file = 1;
+  FileVersion current_version = 2;
+}
+
+message GetFileByIdRequest {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message GetFileResponse {
+  File file = 1;
+  FileVersion current_version = 2;
+}
+
+message ListRepositoryFilesRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+  uint32 limit = 2 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 3;
+}
+
+message ListFilesResponse {
+  repeated File files = 1;
+  uint64 total = 2;
+}
+
+message AddFileVersionRequest {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+  string storage_key = 2 [(validate.rules).string = {min_len: 1, max_len: 2048}];
+  string mime_type = 3 [(validate.rules).string = {min_len: 1, max_len: 255}];
+  uint64 size_bytes = 4;
+  string checksum_sha256 = 5 [(validate.rules).string = {max_len: 64}];
+  string change_summary = 6 [(validate.rules).string = {max_len: 255}];
+}
+
+message AddFileVersionResponse {
+  File file = 1;
+  FileVersion version = 2;
+}
+
+message GetFileVersionByIdRequest {
+  common.v1.UUID version_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message GetFileVersionResponse {
+  FileVersion version = 1;
+}
+
+message ListFileVersionsRequest {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+  uint32 limit = 2 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 3;
+}
+
+message ListFileVersionsResponse {
+  repeated FileVersion versions = 1;
+  uint64 total = 2;
+}
+
+message RestoreFileVersionRequest {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID version_id = 2 [(validate.rules).message = {required: true}];
+  string change_summary = 3 [(validate.rules).string = {max_len: 255}];
+}
+
+message DeleteFileRequest {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+}
