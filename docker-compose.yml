@@ -162,6 +162,27 @@ services:
     networks:
       - forklore-network
 
+
+  profile-db:
+    image: postgres:17
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DB_PROFILE_USER}
+      POSTGRES_PASSWORD: ${DB_PROFILE_PASSWORD}
+      POSTGRES_DB: ${DB_PROFILE_NAME}
+    volumes:
+      - profile_db_data:/var/lib/postgresql/data
+    ports:
+      - "5448:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_PROFILE_USER} -d ${DB_PROFILE_NAME} -h localhost -p 5432 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - forklore-network
+
   # api-gateway:
   #   build:
   #     context: .
@@ -224,6 +245,7 @@ volumes:
   repo_db_data:
   content_db_data:
   search_db_data:
+  profile_db_data:
   kafka_data:
 
 networks:

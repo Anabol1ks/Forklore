@@ -1,0 +1,30 @@
+module profile-service
+
+go 1.25.1
+
+require (
+	github.com/Anabol1ks/Forklore/pkg/utils v0.0.0-00010101000000-000000000000
+	github.com/google/uuid v1.6.0
+	github.com/jcmturner/gokrb5/v8 v8.4.4
+	github.com/joho/godotenv v1.5.1
+	go.uber.org/zap v1.27.1
+)
+
+require (
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
+	github.com/jackc/pgx/v5 v5.6.0 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
+	github.com/jcmturner/gofork v1.7.6 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
+	gorm.io/driver/postgres v1.6.0 // indirect
+	gorm.io/gorm v1.25.10 // indirect
+)
+
+replace github.com/Anabol1ks/Forklore/pkg/utils => ../pkg/utils
