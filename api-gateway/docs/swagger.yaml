@@ -475,6 +475,18 @@ definitions:
         example: public
         type: string
     type: object
+  models.RepositoryStarStateResponse:
+    properties:
+      repo_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      starred:
+        example: true
+        type: boolean
+      stars_count:
+        example: 12
+        type: integer
+    type: object
   models.RepositoryTagResponse:
     properties:
       created_at:
@@ -1845,6 +1857,83 @@ paths:
       summary: Получение форков репозитория
       tags:
       - repositories
+  /repositories/{repo_id}/star:
+    get:
+      description: Возвращает текущий статус star и общее число stars
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RepositoryStarStateResponse'
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение состояния star репозитория
+      tags:
+      - repositories
+    post:
+      description: Ставит или снимает star для текущего пользователя
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RepositoryStarStateResponse'
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Переключение star у репозитория
+      tags:
+      - repositories
   /repositories/me:
     get:
       description: Возвращает список всех репозиториев текущего пользователя
@@ -1881,6 +1970,41 @@ paths:
       security:
       - BearerAuth: []
       summary: Получение моих репозиториев
+      tags:
+      - repositories
+  /repositories/me/starred:
+    get:
+      description: Возвращает список репозиториев, которые текущий пользователь отметил
+        star
+      parameters:
+      - default: 10
+        description: Лимит элементов
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListRepositoriesResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение списка избранных репозиториев
       tags:
       - repositories
   /repositories/tags:

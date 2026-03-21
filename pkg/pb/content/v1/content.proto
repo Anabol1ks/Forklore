@@ -34,6 +34,7 @@ service ContentService {
   rpc RestoreFileVersion(RestoreFileVersionRequest) returns (AddFileVersionResponse);
 
   rpc DeleteFile(DeleteFileRequest) returns (google.protobuf.Empty);
+  rpc GetFileStorageInfo(GetFileStorageInfoRequest) returns (GetFileStorageInfoResponse);
 }
 
 
@@ -293,4 +294,13 @@ message RestoreFileVersionRequest {
 
 message DeleteFileRequest {
   common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message GetFileStorageInfoRequest {
+  common.v1.UUID file_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message GetFileStorageInfoResponse {
+  string storage_key = 1;
+  uint64 other_references_count = 2;
 }

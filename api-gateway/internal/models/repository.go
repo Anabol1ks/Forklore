@@ -113,3 +113,10 @@ type ListRepositoryTagsResponse struct {
 type GetRepositoryResponse struct {
 	Repository RepositoryResponse `json:"repository"`
 }
+
+// RepositoryStarStateResponse represents star state for a repository.
+type RepositoryStarStateResponse struct {
+	RepoID     string `json:"repo_id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Starred    bool   `json:"starred" example:"true"`
+	StarsCount uint64 `json:"stars_count" example:"12"`
+}

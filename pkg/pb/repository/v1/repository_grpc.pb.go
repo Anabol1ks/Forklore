@@ -20,16 +20,19 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RepositoryService_CreateRepository_FullMethodName     = "/forklore.repository.v1.RepositoryService/CreateRepository"
-	RepositoryService_GetRepositoryById_FullMethodName    = "/forklore.repository.v1.RepositoryService/GetRepositoryById"
-	RepositoryService_GetRepositoryBySlug_FullMethodName  = "/forklore.repository.v1.RepositoryService/GetRepositoryBySlug"
-	RepositoryService_UpdateRepository_FullMethodName     = "/forklore.repository.v1.RepositoryService/UpdateRepository"
-	RepositoryService_DeleteRepository_FullMethodName     = "/forklore.repository.v1.RepositoryService/DeleteRepository"
-	RepositoryService_ForkRepository_FullMethodName       = "/forklore.repository.v1.RepositoryService/ForkRepository"
-	RepositoryService_ListMyRepositories_FullMethodName   = "/forklore.repository.v1.RepositoryService/ListMyRepositories"
-	RepositoryService_ListUserRepositories_FullMethodName = "/forklore.repository.v1.RepositoryService/ListUserRepositories"
-	RepositoryService_ListForks_FullMethodName            = "/forklore.repository.v1.RepositoryService/ListForks"
-	RepositoryService_ListRepositoryTags_FullMethodName   = "/forklore.repository.v1.RepositoryService/ListRepositoryTags"
+	RepositoryService_CreateRepository_FullMethodName          = "/forklore.repository.v1.RepositoryService/CreateRepository"
+	RepositoryService_GetRepositoryById_FullMethodName         = "/forklore.repository.v1.RepositoryService/GetRepositoryById"
+	RepositoryService_GetRepositoryBySlug_FullMethodName       = "/forklore.repository.v1.RepositoryService/GetRepositoryBySlug"
+	RepositoryService_UpdateRepository_FullMethodName          = "/forklore.repository.v1.RepositoryService/UpdateRepository"
+	RepositoryService_DeleteRepository_FullMethodName          = "/forklore.repository.v1.RepositoryService/DeleteRepository"
+	RepositoryService_ForkRepository_FullMethodName            = "/forklore.repository.v1.RepositoryService/ForkRepository"
+	RepositoryService_ListMyRepositories_FullMethodName        = "/forklore.repository.v1.RepositoryService/ListMyRepositories"
+	RepositoryService_ListUserRepositories_FullMethodName      = "/forklore.repository.v1.RepositoryService/ListUserRepositories"
+	RepositoryService_ListForks_FullMethodName                 = "/forklore.repository.v1.RepositoryService/ListForks"
+	RepositoryService_GetRepositoryStarState_FullMethodName    = "/forklore.repository.v1.RepositoryService/GetRepositoryStarState"
+	RepositoryService_ToggleRepositoryStar_FullMethodName      = "/forklore.repository.v1.RepositoryService/ToggleRepositoryStar"
+	RepositoryService_ListMyStarredRepositories_FullMethodName = "/forklore.repository.v1.RepositoryService/ListMyStarredRepositories"
+	RepositoryService_ListRepositoryTags_FullMethodName        = "/forklore.repository.v1.RepositoryService/ListRepositoryTags"
 )
 
 // RepositoryServiceClient is the client API for RepositoryService service.
@@ -45,6 +48,9 @@ type RepositoryServiceClient interface {
 	ListMyRepositories(ctx context.Context, in *ListMyRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
 	ListUserRepositories(ctx context.Context, in *ListUserRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
 	ListForks(ctx context.Context, in *ListForksRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
+	GetRepositoryStarState(ctx context.Context, in *GetRepositoryStarStateRequest, opts ...grpc.CallOption) (*RepositoryStarStateResponse, error)
+	ToggleRepositoryStar(ctx context.Context, in *ToggleRepositoryStarRequest, opts ...grpc.CallOption) (*RepositoryStarStateResponse, error)
+	ListMyStarredRepositories(ctx context.Context, in *ListMyStarredRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
 	ListRepositoryTags(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListRepositoryTagsResponse, error)
 }
 
@@ -146,6 +152,36 @@ func (c *repositoryServiceClient) ListForks(ctx context.Context, in *ListForksRe
 	return out, nil
 }
 
+func (c *repositoryServiceClient) GetRepositoryStarState(ctx context.Context, in *GetRepositoryStarStateRequest, opts ...grpc.CallOption) (*RepositoryStarStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RepositoryStarStateResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_GetRepositoryStarState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *repositoryServiceClient) ToggleRepositoryStar(ctx context.Context, in *ToggleRepositoryStarRequest, opts ...grpc.CallOption) (*RepositoryStarStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RepositoryStarStateResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_ToggleRepositoryStar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *repositoryServiceClient) ListMyStarredRepositories(ctx context.Context, in *ListMyStarredRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRepositoriesResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_ListMyStarredRepositories_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *repositoryServiceClient) ListRepositoryTags(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListRepositoryTagsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListRepositoryTagsResponse)
@@ -169,6 +205,9 @@ type RepositoryServiceServer interface {
 	ListMyRepositories(context.Context, *ListMyRepositoriesRequest) (*ListRepositoriesResponse, error)
 	ListUserRepositories(context.Context, *ListUserRepositoriesRequest) (*ListRepositoriesResponse, error)
 	ListForks(context.Context, *ListForksRequest) (*ListRepositoriesResponse, error)
+	GetRepositoryStarState(context.Context, *GetRepositoryStarStateRequest) (*RepositoryStarStateResponse, error)
+	ToggleRepositoryStar(context.Context, *ToggleRepositoryStarRequest) (*RepositoryStarStateResponse, error)
+	ListMyStarredRepositories(context.Context, *ListMyStarredRepositoriesRequest) (*ListRepositoriesResponse, error)
 	ListRepositoryTags(context.Context, *emptypb.Empty) (*ListRepositoryTagsResponse, error)
 	mustEmbedUnimplementedRepositoryServiceServer()
 }
@@ -206,6 +245,15 @@ func (UnimplementedRepositoryServiceServer) ListUserRepositories(context.Context
 }
 func (UnimplementedRepositoryServiceServer) ListForks(context.Context, *ListForksRequest) (*ListRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListForks not implemented")
+}
+func (UnimplementedRepositoryServiceServer) GetRepositoryStarState(context.Context, *GetRepositoryStarStateRequest) (*RepositoryStarStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRepositoryStarState not implemented")
+}
+func (UnimplementedRepositoryServiceServer) ToggleRepositoryStar(context.Context, *ToggleRepositoryStarRequest) (*RepositoryStarStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ToggleRepositoryStar not implemented")
+}
+func (UnimplementedRepositoryServiceServer) ListMyStarredRepositories(context.Context, *ListMyStarredRepositoriesRequest) (*ListRepositoriesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListMyStarredRepositories not implemented")
 }
 func (UnimplementedRepositoryServiceServer) ListRepositoryTags(context.Context, *emptypb.Empty) (*ListRepositoryTagsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRepositoryTags not implemented")
@@ -393,6 +441,60 @@ func _RepositoryService_ListForks_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RepositoryService_GetRepositoryStarState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRepositoryStarStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).GetRepositoryStarState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_GetRepositoryStarState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).GetRepositoryStarState(ctx, req.(*GetRepositoryStarStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RepositoryService_ToggleRepositoryStar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ToggleRepositoryStarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).ToggleRepositoryStar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_ToggleRepositoryStar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).ToggleRepositoryStar(ctx, req.(*ToggleRepositoryStarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RepositoryService_ListMyStarredRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMyStarredRepositoriesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).ListMyStarredRepositories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_ListMyStarredRepositories_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).ListMyStarredRepositories(ctx, req.(*ListMyStarredRepositoriesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RepositoryService_ListRepositoryTags_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
@@ -453,6 +555,18 @@ var RepositoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListForks",
 			Handler:    _RepositoryService_ListForks_Handler,
+		},
+		{
+			MethodName: "GetRepositoryStarState",
+			Handler:    _RepositoryService_GetRepositoryStarState_Handler,
+		},
+		{
+			MethodName: "ToggleRepositoryStar",
+			Handler:    _RepositoryService_ToggleRepositoryStar_Handler,
+		},
+		{
+			MethodName: "ListMyStarredRepositories",
+			Handler:    _RepositoryService_ListMyStarredRepositories_Handler,
 		},
 		{
 			MethodName: "ListRepositoryTags",

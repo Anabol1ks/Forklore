@@ -39,6 +39,11 @@ type FileVersionResult struct {
 	Version *model.FileVersion
 }
 
+type FileStorageInfo struct {
+	StorageKey           string
+	OtherReferencesCount int64
+}
+
 type CreateDocumentInput struct {
 	RequesterID    uuid.UUID
 	RepoID         uuid.UUID
@@ -116,4 +121,5 @@ type ContentService interface {
 	ListFileVersions(ctx context.Context, requesterID, fileID uuid.UUID, pagination Pagination) ([]*model.FileVersion, int64, error)
 	RestoreFileVersion(ctx context.Context, input RestoreFileVersionInput) (*FileVersionResult, error)
 	DeleteFile(ctx context.Context, requesterID, fileID uuid.UUID) error
+	GetFileStorageInfo(ctx context.Context, requesterID, fileID uuid.UUID) (*FileStorageInfo, error)
 }

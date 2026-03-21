@@ -11,6 +11,7 @@ import { Book, Users, Star } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthStore } from "@/store/auth";
 
 interface UserProfile {
   id: string;
@@ -25,6 +26,7 @@ interface UserProfile {
 interface UserRepo {
   id?: string;
   repo_id?: string;
+  owner_username?: string;
   name: string;
   slug?: string;
   visibility?: string;
@@ -34,8 +36,10 @@ interface UserRepo {
 export default function UserProfilePage() {
   const params = useParams<{ ownerId: string }>();
   const ownerId = params.ownerId;
+  const { user } = useAuthStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [repos, setRepos] = useState<UserRepo[]>([]);
+  const [starredRepos, setStarredRepos] = useState<UserRepo[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,6 +57,18 @@ export default function UserProfilePage() {
         // Получаем репозитории
         const response = await api.get(`/users/${ownerId}/repositories`);
         setRepos(response.data.repositories || []);
+
+        const isSelf = !!user && (user.username === ownerId || user.id === ownerId);
+        if (isSelf) {
+          try {
+            const starsResponse = await api.get(`/repositories/me/starred`);
+            setStarredRepos(starsResponse.data.repositories || []);
+          } catch {
+            setStarredRepos([]);
+          }
+        } else {
+          setStarredRepos([]);
+        }
         
         setLoading(false);
       } catch (error) {
@@ -64,7 +80,7 @@ export default function UserProfilePage() {
     if (ownerId) {
       fetchUserRepos();
     }
-  }, [ownerId]);
+  }, [ownerId, user]);
 
   if (loading) {
     return <div className="space-y-4 animate-pulse"><Skeleton className="h-32 w-32 rounded-full" /></div>;
@@ -132,9 +148,26 @@ export default function UserProfilePage() {
           </TabsContent>
 
           <TabsContent value="stars">
-             <div className="p-10 text-center border rounded-md text-muted-foreground">
-               Пользователь пока ничего не добавил в избранное.
-             </div>
+            <div className="grid grid-cols-1 gap-4">
+              {starredRepos.length > 0 ? starredRepos.map((repo) => (
+                <Card key={repo.repo_id || repo.id || repo.name} className="pt-2 hover:border-primary/50 transition">
+                  <CardHeader className="py-4">
+                    <div className="flex justify-between">
+                      <Link href={`/${repo.owner_username || profile.username}/${repo.slug || repo.name}`} className="hover:underline">
+                        <CardTitle className="text-xl text-primary flex items-center gap-2">
+                          {repo.name} <span className="text-xs border rounded-full px-2 py-1 text-muted-foreground bg-background">{repo.visibility || "public"}</span>
+                        </CardTitle>
+                      </Link>
+                    </div>
+                    <CardDescription>{repo.description || "Без описания"}</CardDescription>
+                  </CardHeader>
+                </Card>
+              )) : (
+                <div className="p-10 text-center border rounded-md text-muted-foreground">
+                  Пользователь пока ничего не добавил в избранное.
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

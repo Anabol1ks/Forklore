@@ -6203,3 +6203,251 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = DeleteFileRequestValidationError{}
+
+// Validate checks the field values on GetFileStorageInfoRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetFileStorageInfoRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetFileStorageInfoRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetFileStorageInfoRequestMultiError, or nil if none found.
+func (m *GetFileStorageInfoRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetFileStorageInfoRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetFileId() == nil {
+		err := GetFileStorageInfoRequestValidationError{
+			field:  "FileId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetFileId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetFileStorageInfoRequestValidationError{
+					field:  "FileId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetFileStorageInfoRequestValidationError{
+					field:  "FileId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFileId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetFileStorageInfoRequestValidationError{
+				field:  "FileId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetFileStorageInfoRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetFileStorageInfoRequestMultiError is an error wrapping multiple validation
+// errors returned by GetFileStorageInfoRequest.ValidateAll() if the
+// designated constraints aren't met.
+type GetFileStorageInfoRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetFileStorageInfoRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetFileStorageInfoRequestMultiError) AllErrors() []error { return m }
+
+// GetFileStorageInfoRequestValidationError is the validation error returned by
+// GetFileStorageInfoRequest.Validate if the designated constraints aren't met.
+type GetFileStorageInfoRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetFileStorageInfoRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetFileStorageInfoRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetFileStorageInfoRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetFileStorageInfoRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetFileStorageInfoRequestValidationError) ErrorName() string {
+	return "GetFileStorageInfoRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetFileStorageInfoRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetFileStorageInfoRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetFileStorageInfoRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetFileStorageInfoRequestValidationError{}
+
+// Validate checks the field values on GetFileStorageInfoResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetFileStorageInfoResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetFileStorageInfoResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetFileStorageInfoResponseMultiError, or nil if none found.
+func (m *GetFileStorageInfoResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetFileStorageInfoResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for StorageKey
+
+	// no validation rules for OtherReferencesCount
+
+	if len(errors) > 0 {
+		return GetFileStorageInfoResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetFileStorageInfoResponseMultiError is an error wrapping multiple
+// validation errors returned by GetFileStorageInfoResponse.ValidateAll() if
+// the designated constraints aren't met.
+type GetFileStorageInfoResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetFileStorageInfoResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetFileStorageInfoResponseMultiError) AllErrors() []error { return m }
+
+// GetFileStorageInfoResponseValidationError is the validation error returned
+// by GetFileStorageInfoResponse.Validate if the designated constraints aren't met.
+type GetFileStorageInfoResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetFileStorageInfoResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetFileStorageInfoResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetFileStorageInfoResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetFileStorageInfoResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetFileStorageInfoResponseValidationError) ErrorName() string {
+	return "GetFileStorageInfoResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetFileStorageInfoResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetFileStorageInfoResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetFileStorageInfoResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetFileStorageInfoResponseValidationError{}

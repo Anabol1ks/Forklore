@@ -1101,6 +1101,206 @@ func (x *ListRepositoryTagsResponse) GetTags() []*RepositoryTag {
 	return nil
 }
 
+type GetRepositoryStarStateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RepoId        *v1.UUID               `protobuf:"bytes,1,opt,name=repo_id,json=repoId,proto3" json:"repo_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetRepositoryStarStateRequest) Reset() {
+	*x = GetRepositoryStarStateRequest{}
+	mi := &file_repository_v1_repository_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetRepositoryStarStateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRepositoryStarStateRequest) ProtoMessage() {}
+
+func (x *GetRepositoryStarStateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_repository_v1_repository_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRepositoryStarStateRequest.ProtoReflect.Descriptor instead.
+func (*GetRepositoryStarStateRequest) Descriptor() ([]byte, []int) {
+	return file_repository_v1_repository_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetRepositoryStarStateRequest) GetRepoId() *v1.UUID {
+	if x != nil {
+		return x.RepoId
+	}
+	return nil
+}
+
+type ToggleRepositoryStarRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RepoId        *v1.UUID               `protobuf:"bytes,1,opt,name=repo_id,json=repoId,proto3" json:"repo_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToggleRepositoryStarRequest) Reset() {
+	*x = ToggleRepositoryStarRequest{}
+	mi := &file_repository_v1_repository_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToggleRepositoryStarRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToggleRepositoryStarRequest) ProtoMessage() {}
+
+func (x *ToggleRepositoryStarRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_repository_v1_repository_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToggleRepositoryStarRequest.ProtoReflect.Descriptor instead.
+func (*ToggleRepositoryStarRequest) Descriptor() ([]byte, []int) {
+	return file_repository_v1_repository_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ToggleRepositoryStarRequest) GetRepoId() *v1.UUID {
+	if x != nil {
+		return x.RepoId
+	}
+	return nil
+}
+
+type ListMyStarredRepositoriesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         uint32                 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        uint32                 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMyStarredRepositoriesRequest) Reset() {
+	*x = ListMyStarredRepositoriesRequest{}
+	mi := &file_repository_v1_repository_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMyStarredRepositoriesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMyStarredRepositoriesRequest) ProtoMessage() {}
+
+func (x *ListMyStarredRepositoriesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_repository_v1_repository_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMyStarredRepositoriesRequest.ProtoReflect.Descriptor instead.
+func (*ListMyStarredRepositoriesRequest) Descriptor() ([]byte, []int) {
+	return file_repository_v1_repository_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListMyStarredRepositoriesRequest) GetLimit() uint32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *ListMyStarredRepositoriesRequest) GetOffset() uint32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type RepositoryStarStateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RepoId        *v1.UUID               `protobuf:"bytes,1,opt,name=repo_id,json=repoId,proto3" json:"repo_id,omitempty"`
+	Starred       bool                   `protobuf:"varint,2,opt,name=starred,proto3" json:"starred,omitempty"`
+	StarsCount    uint64                 `protobuf:"varint,3,opt,name=stars_count,json=starsCount,proto3" json:"stars_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RepositoryStarStateResponse) Reset() {
+	*x = RepositoryStarStateResponse{}
+	mi := &file_repository_v1_repository_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RepositoryStarStateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RepositoryStarStateResponse) ProtoMessage() {}
+
+func (x *RepositoryStarStateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_repository_v1_repository_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RepositoryStarStateResponse.ProtoReflect.Descriptor instead.
+func (*RepositoryStarStateResponse) Descriptor() ([]byte, []int) {
+	return file_repository_v1_repository_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RepositoryStarStateResponse) GetRepoId() *v1.UUID {
+	if x != nil {
+		return x.RepoId
+	}
+	return nil
+}
+
+func (x *RepositoryStarStateResponse) GetStarred() bool {
+	if x != nil {
+		return x.Starred
+	}
+	return false
+}
+
+func (x *RepositoryStarStateResponse) GetStarsCount() uint64 {
+	if x != nil {
+		return x.StarsCount
+	}
+	return 0
+}
+
 var File_repository_v1_repository_proto protoreflect.FileDescriptor
 
 const file_repository_v1_repository_proto_rawDesc = "" +
@@ -1203,7 +1403,19 @@ const file_repository_v1_repository_proto_rawDesc = "" +
 	"\frepositories\x18\x01 \x03(\v2\".forklore.repository.v1.RepositoryR\frepositories\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x04R\x05total\"W\n" +
 	"\x1aListRepositoryTagsResponse\x129\n" +
-	"\x04tags\x18\x01 \x03(\v2%.forklore.repository.v1.RepositoryTagR\x04tags2\x84\t\n" +
+	"\x04tags\x18\x01 \x03(\v2%.forklore.repository.v1.RepositoryTagR\x04tags\"\\\n" +
+	"\x1dGetRepositoryStarStateRequest\x12;\n" +
+	"\arepo_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06repoId\"Z\n" +
+	"\x1bToggleRepositoryStarRequest\x12;\n" +
+	"\arepo_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06repoId\"[\n" +
+	" ListMyStarredRepositoriesRequest\x12\x1f\n" +
+	"\x05limit\x18\x01 \x01(\rB\t\xfaB\x06*\x04\x18d(\x01R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\rR\x06offset\"\x8b\x01\n" +
+	"\x1bRepositoryStarStateResponse\x121\n" +
+	"\arepo_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDR\x06repoId\x12\x18\n" +
+	"\astarred\x18\x02 \x01(\bR\astarred\x12\x1f\n" +
+	"\vstars_count\x18\x03 \x01(\x04R\n" +
+	"starsCount2\x98\f\n" +
 	"\x11RepositoryService\x12u\n" +
 	"\x10CreateRepository\x12/.forklore.repository.v1.CreateRepositoryRequest\x1a0.forklore.repository.v1.CreateRepositoryResponse\x12t\n" +
 	"\x11GetRepositoryById\x120.forklore.repository.v1.GetRepositoryByIdRequest\x1a-.forklore.repository.v1.GetRepositoryResponse\x12x\n" +
@@ -1213,7 +1425,10 @@ const file_repository_v1_repository_proto_rawDesc = "" +
 	"\x0eForkRepository\x12-.forklore.repository.v1.ForkRepositoryRequest\x1a..forklore.repository.v1.ForkRepositoryResponse\x12y\n" +
 	"\x12ListMyRepositories\x121.forklore.repository.v1.ListMyRepositoriesRequest\x1a0.forklore.repository.v1.ListRepositoriesResponse\x12}\n" +
 	"\x14ListUserRepositories\x123.forklore.repository.v1.ListUserRepositoriesRequest\x1a0.forklore.repository.v1.ListRepositoriesResponse\x12g\n" +
-	"\tListForks\x12(.forklore.repository.v1.ListForksRequest\x1a0.forklore.repository.v1.ListRepositoriesResponse\x12`\n" +
+	"\tListForks\x12(.forklore.repository.v1.ListForksRequest\x1a0.forklore.repository.v1.ListRepositoriesResponse\x12\x84\x01\n" +
+	"\x16GetRepositoryStarState\x125.forklore.repository.v1.GetRepositoryStarStateRequest\x1a3.forklore.repository.v1.RepositoryStarStateResponse\x12\x80\x01\n" +
+	"\x14ToggleRepositoryStar\x123.forklore.repository.v1.ToggleRepositoryStarRequest\x1a3.forklore.repository.v1.RepositoryStarStateResponse\x12\x87\x01\n" +
+	"\x19ListMyStarredRepositories\x128.forklore.repository.v1.ListMyStarredRepositoriesRequest\x1a0.forklore.repository.v1.ListRepositoriesResponse\x12`\n" +
 	"\x12ListRepositoryTags\x12\x16.google.protobuf.Empty\x1a2.forklore.repository.v1.ListRepositoryTagsResponseBAZ?github.com/Anabol1ks/Forklore/pkg/pb/repository/v1;repositoryv1b\x06proto3"
 
 var (
@@ -1228,90 +1443,103 @@ func file_repository_v1_repository_proto_rawDescGZIP() []byte {
 	return file_repository_v1_repository_proto_rawDescData
 }
 
-var file_repository_v1_repository_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_repository_v1_repository_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_repository_v1_repository_proto_goTypes = []any{
-	(*RepositoryTag)(nil),               // 0: forklore.repository.v1.RepositoryTag
-	(*Repository)(nil),                  // 1: forklore.repository.v1.Repository
-	(*CreateRepositoryRequest)(nil),     // 2: forklore.repository.v1.CreateRepositoryRequest
-	(*CreateRepositoryResponse)(nil),    // 3: forklore.repository.v1.CreateRepositoryResponse
-	(*GetRepositoryByIdRequest)(nil),    // 4: forklore.repository.v1.GetRepositoryByIdRequest
-	(*GetRepositoryBySlugRequest)(nil),  // 5: forklore.repository.v1.GetRepositoryBySlugRequest
-	(*GetRepositoryResponse)(nil),       // 6: forklore.repository.v1.GetRepositoryResponse
-	(*UpdateRepositoryRequest)(nil),     // 7: forklore.repository.v1.UpdateRepositoryRequest
-	(*UpdateRepositoryResponse)(nil),    // 8: forklore.repository.v1.UpdateRepositoryResponse
-	(*DeleteRepositoryRequest)(nil),     // 9: forklore.repository.v1.DeleteRepositoryRequest
-	(*ForkRepositoryRequest)(nil),       // 10: forklore.repository.v1.ForkRepositoryRequest
-	(*ForkRepositoryResponse)(nil),      // 11: forklore.repository.v1.ForkRepositoryResponse
-	(*ListMyRepositoriesRequest)(nil),   // 12: forklore.repository.v1.ListMyRepositoriesRequest
-	(*ListUserRepositoriesRequest)(nil), // 13: forklore.repository.v1.ListUserRepositoriesRequest
-	(*ListForksRequest)(nil),            // 14: forklore.repository.v1.ListForksRequest
-	(*ListRepositoriesResponse)(nil),    // 15: forklore.repository.v1.ListRepositoriesResponse
-	(*ListRepositoryTagsResponse)(nil),  // 16: forklore.repository.v1.ListRepositoryTagsResponse
-	(*v1.UUID)(nil),                     // 17: forklore.common.v1.UUID
-	(*timestamppb.Timestamp)(nil),       // 18: google.protobuf.Timestamp
-	(v1.RepositoryVisibility)(0),        // 19: forklore.common.v1.RepositoryVisibility
-	(v1.RepositoryType)(0),              // 20: forklore.common.v1.RepositoryType
-	(*emptypb.Empty)(nil),               // 21: google.protobuf.Empty
+	(*RepositoryTag)(nil),                    // 0: forklore.repository.v1.RepositoryTag
+	(*Repository)(nil),                       // 1: forklore.repository.v1.Repository
+	(*CreateRepositoryRequest)(nil),          // 2: forklore.repository.v1.CreateRepositoryRequest
+	(*CreateRepositoryResponse)(nil),         // 3: forklore.repository.v1.CreateRepositoryResponse
+	(*GetRepositoryByIdRequest)(nil),         // 4: forklore.repository.v1.GetRepositoryByIdRequest
+	(*GetRepositoryBySlugRequest)(nil),       // 5: forklore.repository.v1.GetRepositoryBySlugRequest
+	(*GetRepositoryResponse)(nil),            // 6: forklore.repository.v1.GetRepositoryResponse
+	(*UpdateRepositoryRequest)(nil),          // 7: forklore.repository.v1.UpdateRepositoryRequest
+	(*UpdateRepositoryResponse)(nil),         // 8: forklore.repository.v1.UpdateRepositoryResponse
+	(*DeleteRepositoryRequest)(nil),          // 9: forklore.repository.v1.DeleteRepositoryRequest
+	(*ForkRepositoryRequest)(nil),            // 10: forklore.repository.v1.ForkRepositoryRequest
+	(*ForkRepositoryResponse)(nil),           // 11: forklore.repository.v1.ForkRepositoryResponse
+	(*ListMyRepositoriesRequest)(nil),        // 12: forklore.repository.v1.ListMyRepositoriesRequest
+	(*ListUserRepositoriesRequest)(nil),      // 13: forklore.repository.v1.ListUserRepositoriesRequest
+	(*ListForksRequest)(nil),                 // 14: forklore.repository.v1.ListForksRequest
+	(*ListRepositoriesResponse)(nil),         // 15: forklore.repository.v1.ListRepositoriesResponse
+	(*ListRepositoryTagsResponse)(nil),       // 16: forklore.repository.v1.ListRepositoryTagsResponse
+	(*GetRepositoryStarStateRequest)(nil),    // 17: forklore.repository.v1.GetRepositoryStarStateRequest
+	(*ToggleRepositoryStarRequest)(nil),      // 18: forklore.repository.v1.ToggleRepositoryStarRequest
+	(*ListMyStarredRepositoriesRequest)(nil), // 19: forklore.repository.v1.ListMyStarredRepositoriesRequest
+	(*RepositoryStarStateResponse)(nil),      // 20: forklore.repository.v1.RepositoryStarStateResponse
+	(*v1.UUID)(nil),                          // 21: forklore.common.v1.UUID
+	(*timestamppb.Timestamp)(nil),            // 22: google.protobuf.Timestamp
+	(v1.RepositoryVisibility)(0),             // 23: forklore.common.v1.RepositoryVisibility
+	(v1.RepositoryType)(0),                   // 24: forklore.common.v1.RepositoryType
+	(*emptypb.Empty)(nil),                    // 25: google.protobuf.Empty
 }
 var file_repository_v1_repository_proto_depIdxs = []int32{
-	17, // 0: forklore.repository.v1.RepositoryTag.tag_id:type_name -> forklore.common.v1.UUID
-	18, // 1: forklore.repository.v1.RepositoryTag.created_at:type_name -> google.protobuf.Timestamp
-	18, // 2: forklore.repository.v1.RepositoryTag.updated_at:type_name -> google.protobuf.Timestamp
-	17, // 3: forklore.repository.v1.Repository.repo_id:type_name -> forklore.common.v1.UUID
-	17, // 4: forklore.repository.v1.Repository.owner_id:type_name -> forklore.common.v1.UUID
-	17, // 5: forklore.repository.v1.Repository.tag_id:type_name -> forklore.common.v1.UUID
-	19, // 6: forklore.repository.v1.Repository.visibility:type_name -> forklore.common.v1.RepositoryVisibility
-	20, // 7: forklore.repository.v1.Repository.type:type_name -> forklore.common.v1.RepositoryType
+	21, // 0: forklore.repository.v1.RepositoryTag.tag_id:type_name -> forklore.common.v1.UUID
+	22, // 1: forklore.repository.v1.RepositoryTag.created_at:type_name -> google.protobuf.Timestamp
+	22, // 2: forklore.repository.v1.RepositoryTag.updated_at:type_name -> google.protobuf.Timestamp
+	21, // 3: forklore.repository.v1.Repository.repo_id:type_name -> forklore.common.v1.UUID
+	21, // 4: forklore.repository.v1.Repository.owner_id:type_name -> forklore.common.v1.UUID
+	21, // 5: forklore.repository.v1.Repository.tag_id:type_name -> forklore.common.v1.UUID
+	23, // 6: forklore.repository.v1.Repository.visibility:type_name -> forklore.common.v1.RepositoryVisibility
+	24, // 7: forklore.repository.v1.Repository.type:type_name -> forklore.common.v1.RepositoryType
 	0,  // 8: forklore.repository.v1.Repository.tag:type_name -> forklore.repository.v1.RepositoryTag
-	17, // 9: forklore.repository.v1.Repository.parent_repo_id:type_name -> forklore.common.v1.UUID
-	18, // 10: forklore.repository.v1.Repository.created_at:type_name -> google.protobuf.Timestamp
-	18, // 11: forklore.repository.v1.Repository.updated_at:type_name -> google.protobuf.Timestamp
-	18, // 12: forklore.repository.v1.Repository.deleted_at:type_name -> google.protobuf.Timestamp
-	17, // 13: forklore.repository.v1.CreateRepositoryRequest.tag_id:type_name -> forklore.common.v1.UUID
-	19, // 14: forklore.repository.v1.CreateRepositoryRequest.visibility:type_name -> forklore.common.v1.RepositoryVisibility
-	20, // 15: forklore.repository.v1.CreateRepositoryRequest.type:type_name -> forklore.common.v1.RepositoryType
+	21, // 9: forklore.repository.v1.Repository.parent_repo_id:type_name -> forklore.common.v1.UUID
+	22, // 10: forklore.repository.v1.Repository.created_at:type_name -> google.protobuf.Timestamp
+	22, // 11: forklore.repository.v1.Repository.updated_at:type_name -> google.protobuf.Timestamp
+	22, // 12: forklore.repository.v1.Repository.deleted_at:type_name -> google.protobuf.Timestamp
+	21, // 13: forklore.repository.v1.CreateRepositoryRequest.tag_id:type_name -> forklore.common.v1.UUID
+	23, // 14: forklore.repository.v1.CreateRepositoryRequest.visibility:type_name -> forklore.common.v1.RepositoryVisibility
+	24, // 15: forklore.repository.v1.CreateRepositoryRequest.type:type_name -> forklore.common.v1.RepositoryType
 	1,  // 16: forklore.repository.v1.CreateRepositoryResponse.repository:type_name -> forklore.repository.v1.Repository
-	17, // 17: forklore.repository.v1.GetRepositoryByIdRequest.repo_id:type_name -> forklore.common.v1.UUID
-	17, // 18: forklore.repository.v1.GetRepositoryBySlugRequest.owner_id:type_name -> forklore.common.v1.UUID
+	21, // 17: forklore.repository.v1.GetRepositoryByIdRequest.repo_id:type_name -> forklore.common.v1.UUID
+	21, // 18: forklore.repository.v1.GetRepositoryBySlugRequest.owner_id:type_name -> forklore.common.v1.UUID
 	1,  // 19: forklore.repository.v1.GetRepositoryResponse.repository:type_name -> forklore.repository.v1.Repository
-	17, // 20: forklore.repository.v1.UpdateRepositoryRequest.repo_id:type_name -> forklore.common.v1.UUID
-	17, // 21: forklore.repository.v1.UpdateRepositoryRequest.tag_id:type_name -> forklore.common.v1.UUID
-	19, // 22: forklore.repository.v1.UpdateRepositoryRequest.visibility:type_name -> forklore.common.v1.RepositoryVisibility
-	20, // 23: forklore.repository.v1.UpdateRepositoryRequest.type:type_name -> forklore.common.v1.RepositoryType
+	21, // 20: forklore.repository.v1.UpdateRepositoryRequest.repo_id:type_name -> forklore.common.v1.UUID
+	21, // 21: forklore.repository.v1.UpdateRepositoryRequest.tag_id:type_name -> forklore.common.v1.UUID
+	23, // 22: forklore.repository.v1.UpdateRepositoryRequest.visibility:type_name -> forklore.common.v1.RepositoryVisibility
+	24, // 23: forklore.repository.v1.UpdateRepositoryRequest.type:type_name -> forklore.common.v1.RepositoryType
 	1,  // 24: forklore.repository.v1.UpdateRepositoryResponse.repository:type_name -> forklore.repository.v1.Repository
-	17, // 25: forklore.repository.v1.DeleteRepositoryRequest.repo_id:type_name -> forklore.common.v1.UUID
-	17, // 26: forklore.repository.v1.ForkRepositoryRequest.source_repo_id:type_name -> forklore.common.v1.UUID
-	19, // 27: forklore.repository.v1.ForkRepositoryRequest.visibility:type_name -> forklore.common.v1.RepositoryVisibility
+	21, // 25: forklore.repository.v1.DeleteRepositoryRequest.repo_id:type_name -> forklore.common.v1.UUID
+	21, // 26: forklore.repository.v1.ForkRepositoryRequest.source_repo_id:type_name -> forklore.common.v1.UUID
+	23, // 27: forklore.repository.v1.ForkRepositoryRequest.visibility:type_name -> forklore.common.v1.RepositoryVisibility
 	1,  // 28: forklore.repository.v1.ForkRepositoryResponse.repository:type_name -> forklore.repository.v1.Repository
-	17, // 29: forklore.repository.v1.ListUserRepositoriesRequest.owner_id:type_name -> forklore.common.v1.UUID
-	17, // 30: forklore.repository.v1.ListForksRequest.repo_id:type_name -> forklore.common.v1.UUID
+	21, // 29: forklore.repository.v1.ListUserRepositoriesRequest.owner_id:type_name -> forklore.common.v1.UUID
+	21, // 30: forklore.repository.v1.ListForksRequest.repo_id:type_name -> forklore.common.v1.UUID
 	1,  // 31: forklore.repository.v1.ListRepositoriesResponse.repositories:type_name -> forklore.repository.v1.Repository
 	0,  // 32: forklore.repository.v1.ListRepositoryTagsResponse.tags:type_name -> forklore.repository.v1.RepositoryTag
-	2,  // 33: forklore.repository.v1.RepositoryService.CreateRepository:input_type -> forklore.repository.v1.CreateRepositoryRequest
-	4,  // 34: forklore.repository.v1.RepositoryService.GetRepositoryById:input_type -> forklore.repository.v1.GetRepositoryByIdRequest
-	5,  // 35: forklore.repository.v1.RepositoryService.GetRepositoryBySlug:input_type -> forklore.repository.v1.GetRepositoryBySlugRequest
-	7,  // 36: forklore.repository.v1.RepositoryService.UpdateRepository:input_type -> forklore.repository.v1.UpdateRepositoryRequest
-	9,  // 37: forklore.repository.v1.RepositoryService.DeleteRepository:input_type -> forklore.repository.v1.DeleteRepositoryRequest
-	10, // 38: forklore.repository.v1.RepositoryService.ForkRepository:input_type -> forklore.repository.v1.ForkRepositoryRequest
-	12, // 39: forklore.repository.v1.RepositoryService.ListMyRepositories:input_type -> forklore.repository.v1.ListMyRepositoriesRequest
-	13, // 40: forklore.repository.v1.RepositoryService.ListUserRepositories:input_type -> forklore.repository.v1.ListUserRepositoriesRequest
-	14, // 41: forklore.repository.v1.RepositoryService.ListForks:input_type -> forklore.repository.v1.ListForksRequest
-	21, // 42: forklore.repository.v1.RepositoryService.ListRepositoryTags:input_type -> google.protobuf.Empty
-	3,  // 43: forklore.repository.v1.RepositoryService.CreateRepository:output_type -> forklore.repository.v1.CreateRepositoryResponse
-	6,  // 44: forklore.repository.v1.RepositoryService.GetRepositoryById:output_type -> forklore.repository.v1.GetRepositoryResponse
-	6,  // 45: forklore.repository.v1.RepositoryService.GetRepositoryBySlug:output_type -> forklore.repository.v1.GetRepositoryResponse
-	8,  // 46: forklore.repository.v1.RepositoryService.UpdateRepository:output_type -> forklore.repository.v1.UpdateRepositoryResponse
-	21, // 47: forklore.repository.v1.RepositoryService.DeleteRepository:output_type -> google.protobuf.Empty
-	11, // 48: forklore.repository.v1.RepositoryService.ForkRepository:output_type -> forklore.repository.v1.ForkRepositoryResponse
-	15, // 49: forklore.repository.v1.RepositoryService.ListMyRepositories:output_type -> forklore.repository.v1.ListRepositoriesResponse
-	15, // 50: forklore.repository.v1.RepositoryService.ListUserRepositories:output_type -> forklore.repository.v1.ListRepositoriesResponse
-	15, // 51: forklore.repository.v1.RepositoryService.ListForks:output_type -> forklore.repository.v1.ListRepositoriesResponse
-	16, // 52: forklore.repository.v1.RepositoryService.ListRepositoryTags:output_type -> forklore.repository.v1.ListRepositoryTagsResponse
-	43, // [43:53] is the sub-list for method output_type
-	33, // [33:43] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	21, // 33: forklore.repository.v1.GetRepositoryStarStateRequest.repo_id:type_name -> forklore.common.v1.UUID
+	21, // 34: forklore.repository.v1.ToggleRepositoryStarRequest.repo_id:type_name -> forklore.common.v1.UUID
+	21, // 35: forklore.repository.v1.RepositoryStarStateResponse.repo_id:type_name -> forklore.common.v1.UUID
+	2,  // 36: forklore.repository.v1.RepositoryService.CreateRepository:input_type -> forklore.repository.v1.CreateRepositoryRequest
+	4,  // 37: forklore.repository.v1.RepositoryService.GetRepositoryById:input_type -> forklore.repository.v1.GetRepositoryByIdRequest
+	5,  // 38: forklore.repository.v1.RepositoryService.GetRepositoryBySlug:input_type -> forklore.repository.v1.GetRepositoryBySlugRequest
+	7,  // 39: forklore.repository.v1.RepositoryService.UpdateRepository:input_type -> forklore.repository.v1.UpdateRepositoryRequest
+	9,  // 40: forklore.repository.v1.RepositoryService.DeleteRepository:input_type -> forklore.repository.v1.DeleteRepositoryRequest
+	10, // 41: forklore.repository.v1.RepositoryService.ForkRepository:input_type -> forklore.repository.v1.ForkRepositoryRequest
+	12, // 42: forklore.repository.v1.RepositoryService.ListMyRepositories:input_type -> forklore.repository.v1.ListMyRepositoriesRequest
+	13, // 43: forklore.repository.v1.RepositoryService.ListUserRepositories:input_type -> forklore.repository.v1.ListUserRepositoriesRequest
+	14, // 44: forklore.repository.v1.RepositoryService.ListForks:input_type -> forklore.repository.v1.ListForksRequest
+	17, // 45: forklore.repository.v1.RepositoryService.GetRepositoryStarState:input_type -> forklore.repository.v1.GetRepositoryStarStateRequest
+	18, // 46: forklore.repository.v1.RepositoryService.ToggleRepositoryStar:input_type -> forklore.repository.v1.ToggleRepositoryStarRequest
+	19, // 47: forklore.repository.v1.RepositoryService.ListMyStarredRepositories:input_type -> forklore.repository.v1.ListMyStarredRepositoriesRequest
+	25, // 48: forklore.repository.v1.RepositoryService.ListRepositoryTags:input_type -> google.protobuf.Empty
+	3,  // 49: forklore.repository.v1.RepositoryService.CreateRepository:output_type -> forklore.repository.v1.CreateRepositoryResponse
+	6,  // 50: forklore.repository.v1.RepositoryService.GetRepositoryById:output_type -> forklore.repository.v1.GetRepositoryResponse
+	6,  // 51: forklore.repository.v1.RepositoryService.GetRepositoryBySlug:output_type -> forklore.repository.v1.GetRepositoryResponse
+	8,  // 52: forklore.repository.v1.RepositoryService.UpdateRepository:output_type -> forklore.repository.v1.UpdateRepositoryResponse
+	25, // 53: forklore.repository.v1.RepositoryService.DeleteRepository:output_type -> google.protobuf.Empty
+	11, // 54: forklore.repository.v1.RepositoryService.ForkRepository:output_type -> forklore.repository.v1.ForkRepositoryResponse
+	15, // 55: forklore.repository.v1.RepositoryService.ListMyRepositories:output_type -> forklore.repository.v1.ListRepositoriesResponse
+	15, // 56: forklore.repository.v1.RepositoryService.ListUserRepositories:output_type -> forklore.repository.v1.ListRepositoriesResponse
+	15, // 57: forklore.repository.v1.RepositoryService.ListForks:output_type -> forklore.repository.v1.ListRepositoriesResponse
+	20, // 58: forklore.repository.v1.RepositoryService.GetRepositoryStarState:output_type -> forklore.repository.v1.RepositoryStarStateResponse
+	20, // 59: forklore.repository.v1.RepositoryService.ToggleRepositoryStar:output_type -> forklore.repository.v1.RepositoryStarStateResponse
+	15, // 60: forklore.repository.v1.RepositoryService.ListMyStarredRepositories:output_type -> forklore.repository.v1.ListRepositoriesResponse
+	16, // 61: forklore.repository.v1.RepositoryService.ListRepositoryTags:output_type -> forklore.repository.v1.ListRepositoryTagsResponse
+	49, // [49:62] is the sub-list for method output_type
+	36, // [36:49] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_repository_v1_repository_proto_init() }
@@ -1325,7 +1553,7 @@ func file_repository_v1_repository_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_repository_v1_repository_proto_rawDesc), len(file_repository_v1_repository_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

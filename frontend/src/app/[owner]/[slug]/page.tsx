@@ -177,6 +177,9 @@ export default function RepositoryPage() {
   const [forkDescription, setForkDescription] = useState("");
   const [forkVisibility, setForkVisibility] = useState<ForkVisibility | "">("");
   const [isForking, setForking] = useState(false);
+  const [starsCount, setStarsCount] = useState(0);
+  const [isStarred, setIsStarred] = useState(false);
+  const [isStarLoading, setStarLoading] = useState(false);
   const isOwner = !!user?.id && !!repo?.owner_id && user.id === repo.owner_id;
   const hasDocumentChanges = documentEditorContent !== currentVersionContent;
   const effectiveForkSlug = normalizeForkSlug(forkName) || normalizeForkSlug(repo?.slug || "") || "repo";
@@ -237,6 +240,15 @@ export default function RepositoryPage() {
       setDocuments((docsRes.data.documents || []) as DocumentItem[]);
       setFiles((filesRes.data.files || []) as FileItem[]);
       setForks((forksRes.data.repositories || []) as Repository[]);
+
+      try {
+        const starRes = await api.get(`/repositories/${repoId}/star`);
+        setStarsCount(Number(starRes.data.stars_count || 0));
+        setIsStarred(Boolean(starRes.data.starred));
+      } catch {
+        setStarsCount(0);
+        setIsStarred(false);
+      }
     } catch (error) {
       console.error(error);
       if (axios.isAxiosError(error)) {
@@ -308,6 +320,29 @@ export default function RepositoryPage() {
       toast.error(getErrorMessage(error, "Ошибка при форке репозитория"));
     } finally {
       setForking(false);
+    }
+  };
+
+  const handleToggleStar = async () => {
+    if (!repo) return;
+    const repoId = getId(repo as unknown as Record<string, unknown>, ["id", "repo_id"]);
+    if (!repoId || isStarLoading) return;
+
+    if (!user?.id) {
+      toast.error("Для Star нужно войти в аккаунт");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      setStarLoading(true);
+      const res = await api.post(`/repositories/${repoId}/star`);
+      setIsStarred(Boolean(res.data.starred));
+      setStarsCount(Number(res.data.stars_count || 0));
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Не удалось обновить star"));
+    } finally {
+      setStarLoading(false);
     }
   };
 
@@ -622,8 +657,8 @@ export default function RepositoryPage() {
           </span>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Star className="mr-2 h-4 w-4" /> Star <span className="ml-2 text-muted-foreground">0</span>
+          <Button variant="outline" size="sm" onClick={handleToggleStar} disabled={isStarLoading}>
+            <Star className="mr-2 h-4 w-4" /> {isStarred ? "Starred" : "Star"} <span className="ml-2 text-muted-foreground">{starsCount}</span>
           </Button>
           <Button variant="outline" size="sm" onClick={openForkModal}>
             <GitFork className="mr-2 h-4 w-4" /> Fork <span className="ml-2 text-muted-foreground">{forks.length}</span>

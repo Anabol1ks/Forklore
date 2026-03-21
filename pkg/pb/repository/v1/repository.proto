@@ -23,6 +23,10 @@ service RepositoryService {
   rpc ListUserRepositories(ListUserRepositoriesRequest) returns (ListRepositoriesResponse);
   rpc ListForks(ListForksRequest) returns (ListRepositoriesResponse);
 
+  rpc GetRepositoryStarState(GetRepositoryStarStateRequest) returns (RepositoryStarStateResponse);
+  rpc ToggleRepositoryStar(ToggleRepositoryStarRequest) returns (RepositoryStarStateResponse);
+  rpc ListMyStarredRepositories(ListMyStarredRepositoriesRequest) returns (ListRepositoriesResponse);
+
   rpc ListRepositoryTags(google.protobuf.Empty) returns (ListRepositoryTagsResponse);
 }
 
@@ -227,4 +231,23 @@ message ListRepositoriesResponse {
 
 message ListRepositoryTagsResponse {
   repeated RepositoryTag tags = 1;
+}
+
+message GetRepositoryStarStateRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message ToggleRepositoryStarRequest {
+  common.v1.UUID repo_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message ListMyStarredRepositoriesRequest {
+  uint32 limit = 1 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 2;
+}
+
+message RepositoryStarStateResponse {
+  common.v1.UUID repo_id = 1;
+  bool starred = 2;
+  uint64 stars_count = 3;
 }

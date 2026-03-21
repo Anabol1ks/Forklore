@@ -636,6 +636,127 @@ func (h *RepositoryHandler) ListForks(c *gin.Context) {
 	})
 }
 
+// GetRepositoryStarState godoc
+//
+//	@Summary		Получение состояния star репозитория
+//	@Description	Возвращает текущий статус star и общее число stars
+//	@Tags			repositories
+//	@Produce		json
+//	@Param			repo_id	path		string	true	"ID репозитория"
+//	@Success		200		{object}	models.RepositoryStarStateResponse
+//	@Failure		400		{object}	models.ErrorResponse	"Неверный формат ID"
+//	@Failure		403		{object}	models.ErrorResponse	"Доступ запрещён"
+//	@Failure		404		{object}	models.ErrorResponse	"Репозиторий не найден"
+//	@Failure		500		{object}	models.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/repositories/{repo_id}/star [get]
+func (h *RepositoryHandler) GetRepositoryStarState(c *gin.Context) {
+	repoID := c.Param("repo_id")
+
+	uuid, err := uuidFromString(repoID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "invalid repo_id format",
+		})
+		return
+	}
+
+	ctx := forwardAuth(c)
+	resp, err := h.client.Client.GetRepositoryStarState(ctx, &repositoryv1.GetRepositoryStarStateRequest{RepoId: uuid})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	c.JSON(http.StatusOK, models.RepositoryStarStateResponse{
+		RepoID:     resp.GetRepoId().GetValue(),
+		Starred:    resp.GetStarred(),
+		StarsCount: resp.GetStarsCount(),
+	})
+}
+
+// ToggleRepositoryStar godoc
+//
+//	@Summary		Переключение star у репозитория
+//	@Description	Ставит или снимает star для текущего пользователя
+//	@Tags			repositories
+//	@Produce		json
+//	@Param			repo_id	path		string	true	"ID репозитория"
+//	@Success		200		{object}	models.RepositoryStarStateResponse
+//	@Failure		400		{object}	models.ErrorResponse	"Неверный формат ID"
+//	@Failure		401		{object}	models.ErrorResponse	"Не авторизован"
+//	@Failure		403		{object}	models.ErrorResponse	"Доступ запрещён"
+//	@Failure		404		{object}	models.ErrorResponse	"Репозиторий не найден"
+//	@Failure		500		{object}	models.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/repositories/{repo_id}/star [post]
+func (h *RepositoryHandler) ToggleRepositoryStar(c *gin.Context) {
+	repoID := c.Param("repo_id")
+
+	uuid, err := uuidFromString(repoID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "invalid repo_id format",
+		})
+		return
+	}
+
+	ctx := forwardAuth(c)
+	resp, err := h.client.Client.ToggleRepositoryStar(ctx, &repositoryv1.ToggleRepositoryStarRequest{RepoId: uuid})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	c.JSON(http.StatusOK, models.RepositoryStarStateResponse{
+		RepoID:     resp.GetRepoId().GetValue(),
+		Starred:    resp.GetStarred(),
+		StarsCount: resp.GetStarsCount(),
+	})
+}
+
+// ListMyStarredRepositories godoc
+//
+//	@Summary		Получение списка избранных репозиториев
+//	@Description	Возвращает список репозиториев, которые текущий пользователь отметил star
+//	@Tags			repositories
+//	@Produce		json
+//	@Param			limit	query		integer	false	"Лимит элементов"	default(10)
+//	@Param			offset	query		integer	false	"Смещение"			default(0)
+//	@Success		200		{object}	models.ListRepositoriesResponse
+//	@Failure		401		{object}	models.ErrorResponse	"Не авторизован"
+//	@Failure		500		{object}	models.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/repositories/me/starred [get]
+func (h *RepositoryHandler) ListMyStarredRepositories(c *gin.Context) {
+	limit, offset := parsePagination(c)
+
+	ctx := forwardAuth(c)
+	resp, err := h.client.Client.ListMyStarredRepositories(ctx, &repositoryv1.ListMyStarredRepositoriesRequest{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	repos := make([]models.RepositoryResponse, len(resp.GetRepositories()))
+	for i, r := range resp.GetRepositories() {
+		repos[i] = mapRepository(r)
+	}
+
+	c.JSON(http.StatusOK, models.ListRepositoriesResponse{
+		Repositories: repos,
+		Total:        resp.GetTotal(),
+	})
+}
+
 // ListRepositoryTags godoc
 //
 //	@Summary		Получение всех тегов репозиториев

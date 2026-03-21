@@ -23,6 +23,7 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 		v1.GET("/repositories/tags", repositoryHandler.ListRepositoryTags)
 		v1.GET("/repositories/:repo_id", repositoryHandler.GetRepositoryByID)
 		v1.GET("/repositories/:repo_id/forks", repositoryHandler.ListForks)
+		v1.GET("/repositories/:repo_id/star", repositoryHandler.GetRepositoryStarState)
 		v1.GET("/repositories/:repo_id/documents", contentHandler.ListRepositoryDocuments)
 		v1.GET("/repositories/:repo_id/files", contentHandler.ListRepositoryFiles)
 
@@ -65,11 +66,13 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 
 			// Special paths
 			repositories.GET("/me", repositoryHandler.ListMyRepositories)
+			repositories.GET("/me/starred", repositoryHandler.ListMyStarredRepositories)
 
 			// Repository write paths (by ID)
 			repositories.PATCH("/:repo_id", repositoryHandler.UpdateRepository)
 			repositories.DELETE("/:repo_id", repositoryHandler.DeleteRepository)
 			repositories.POST("/:repo_id/fork", repositoryHandler.ForkRepository)
+			repositories.POST("/:repo_id/star", repositoryHandler.ToggleRepositoryStar)
 
 			// ── Documents ──
 			repositories.POST("/:repo_id/documents", contentHandler.CreateDocument)

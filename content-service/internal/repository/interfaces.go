@@ -54,6 +54,7 @@ type FileVersionRepository interface {
 	GetByFileAndVersionID(ctx context.Context, fileID, versionID uuid.UUID) (*model.FileVersion, error)
 	GetLatestVersionNumber(ctx context.Context, fileID uuid.UUID) (uint32, error)
 	ListByFileID(ctx context.Context, fileID uuid.UUID, params ListParams) ([]*model.FileVersion, int64, error)
+	CountByStorageKeyExcludingFile(ctx context.Context, storageKey string, excludedFileID uuid.UUID) (int64, error)
 }
 
 type Repository struct {

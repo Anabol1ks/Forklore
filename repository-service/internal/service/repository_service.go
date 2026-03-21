@@ -432,6 +432,98 @@ func (s *repositoryService) ListForks(ctx context.Context, requesterID uuid.UUID
 	return s.repos.Repo.ListForks(ctx, requesterID, repoID, requesterID != uuid.Nil && repo.OwnerID == requesterID, toRepoListParams(pagination))
 }
 
+func (s *repositoryService) GetRepositoryStarState(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID) (*RepositoryStarState, error) {
+	repo, err := s.repos.Repo.GetByID(ctx, repoID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRepositoryNotFound
+		}
+		return nil, err
+	}
+
+	if !canReadRepository(requesterID, repo) {
+		return nil, domain.ErrRepositoryAccessDenied
+	}
+
+	starsCount, err := s.repos.Star.CountByRepoID(ctx, repoID)
+	if err != nil {
+		return nil, err
+	}
+
+	starred := false
+	if requesterID != uuid.Nil {
+		starred, err = s.repos.Star.Exists(ctx, requesterID, repoID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &RepositoryStarState{
+		RepoID:     repoID,
+		Starred:    starred,
+		StarsCount: starsCount,
+	}, nil
+}
+
+func (s *repositoryService) ToggleRepositoryStar(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID) (*RepositoryStarState, error) {
+	if requesterID == uuid.Nil {
+		return nil, domain.ErrUnauthorized
+	}
+
+	repo, err := s.repos.Repo.GetByID(ctx, repoID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRepositoryNotFound
+		}
+		return nil, err
+	}
+
+	if !canReadRepository(requesterID, repo) {
+		return nil, domain.ErrRepositoryAccessDenied
+	}
+
+	starred, err := s.repos.Star.Exists(ctx, requesterID, repoID)
+	if err != nil {
+		return nil, err
+	}
+
+	if starred {
+		if err := s.repos.Star.DeleteByUserAndRepo(ctx, requesterID, repoID); err != nil {
+			return nil, err
+		}
+		starred = false
+	} else {
+		if err := s.repos.Star.Create(ctx, &model.RepositoryStar{UserID: requesterID, RepoID: repoID}); err != nil {
+			if strings.Contains(strings.ToLower(err.Error()), "uq_repository_stars_user_repo") {
+				starred = true
+			} else {
+				return nil, err
+			}
+		} else {
+			starred = true
+		}
+	}
+
+	starsCount, err := s.repos.Star.CountByRepoID(ctx, repoID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RepositoryStarState{
+		RepoID:     repoID,
+		Starred:    starred,
+		StarsCount: starsCount,
+	}, nil
+}
+
+func (s *repositoryService) ListMyStarredRepositories(ctx context.Context, requesterID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error) {
+	if requesterID == uuid.Nil {
+		return nil, 0, domain.ErrUnauthorized
+	}
+
+	return s.repos.Star.ListStarredRepositoriesByUser(ctx, requesterID, toRepoListParams(pagination))
+}
+
 func (s *repositoryService) ReindexSearchIndex(ctx context.Context, batchSize int) error {
 	if batchSize <= 0 {
 		batchSize = 200

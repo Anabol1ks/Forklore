@@ -24,6 +24,7 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 	modelsAny := []any{
 		&model.RepositoryTag{},
 		&model.Repository{},
+		&model.RepositoryStar{},
 	}
 	if err := db.AutoMigrate(modelsAny...); err != nil {
 		log.Error("Не удалось создать базовые таблицы", zap.Error(err))
@@ -112,6 +113,12 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 			ON repositories(visibility) WHERE deleted_at IS NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_repositories_created_at_active
 			ON repositories(created_at DESC) WHERE deleted_at IS NULL`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS uq_repository_stars_user_repo
+			ON repository_stars(user_id, repo_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_repository_stars_user_created_at
+			ON repository_stars(user_id, created_at DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_repository_stars_repo_id
+			ON repository_stars(repo_id)`,
 	}
 	for _, idx := range indexes {
 		if err := db.Exec(idx).Error; err != nil {
