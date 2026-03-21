@@ -12,9 +12,10 @@ import (
 )
 
 type Config struct {
-	Port string
-	DB   DB
-	Auth Auth
+	Port  string
+	DB    DB
+	Auth  Auth
+	Kafka KafkaConfig
 }
 
 type DB struct {
@@ -23,6 +24,12 @@ type DB struct {
 
 type Auth struct {
 	JWTSecret string
+}
+
+type KafkaConfig struct {
+	Brokers   []string
+	AuthTopic string
+	GroupID   string
 }
 
 func Load(log *zap.Logger) *Config {
@@ -40,6 +47,11 @@ func Load(log *zap.Logger) *Config {
 		},
 		Auth: Auth{
 			JWTSecret: getEnv("JWTSecret", log),
+		},
+		Kafka: KafkaConfig{
+			Brokers:   splitAndTrim(getEnv("KAFKA_BROKERS", log)),
+			AuthTopic: getEnv("KAFKA_PROFILE_TOPIC", log),
+			GroupID:   getEnv("KAFKA_PROFILE_GROUP_ID", log),
 		},
 	}
 }

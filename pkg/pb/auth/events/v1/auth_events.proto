@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package forklore.auth.events.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/auth/events/v1;autheventsv1";
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "common/v1/common.proto";
+
+enum AuthEventType {
+  AUTH_EVENT_TYPE_UNSPECIFIED = 0;
+  AUTH_EVENT_TYPE_USER_REGISTERED = 1;
+}
+
+message AuthEventEnvelope {
+  string event_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  AuthEventType event_type = 2;
+  google.protobuf.Timestamp occurred_at = 3 [(validate.rules).timestamp = {required: true}];
+
+  oneof payload {
+    UserRegistered user_registered = 10;
+  }
+}
+
+message UserRegistered {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+  string username = 2 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 32
+    }
+  ];
+  string email = 3 [
+    (validate.rules).string = {
+      email: true,
+      max_len: 254
+    }
+  ];
+}
