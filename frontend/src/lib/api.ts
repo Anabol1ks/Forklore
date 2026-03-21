@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthTokens } from '@/lib/auth-cookies';
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
@@ -8,7 +9,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token = getAccessToken() || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -22,7 +23,7 @@ api.interceptors.response.use(
     const status = error?.response?.status;
 
     if (status === 401 && originalRequest && !originalRequest._retry) {
-      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+      const refreshToken = getRefreshToken() || (typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null);
       if (!refreshToken) {
         return Promise.reject(error);
       }
@@ -33,11 +34,10 @@ api.interceptors.response.use(
         const { access_token, refresh_token } = refreshResponse.data.tokens || {};
 
         if (typeof window !== 'undefined') {
-          if (access_token) {
-            localStorage.setItem('token', access_token);
-          }
-          if (refresh_token) {
-            localStorage.setItem('refresh_token', refresh_token);
+          if (access_token && refresh_token) {
+            setAuthTokens(access_token, refresh_token);
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
           }
         }
 
@@ -47,6 +47,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         if (typeof window !== 'undefined') {
+          clearAuthTokens();
           localStorage.removeItem('token');
           localStorage.removeItem('refresh_token');
         }

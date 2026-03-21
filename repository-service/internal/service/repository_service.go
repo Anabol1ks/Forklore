@@ -296,6 +296,9 @@ func (s *repositoryService) ForkRepository(ctx context.Context, input ForkReposi
 	if strings.TrimSpace(input.RequesterUsername) == "" {
 		return nil, domain.ErrUnauthorized
 	}
+	if err := validateVisibility(input.Visibility); err != nil {
+		return nil, err
+	}
 
 	sourceRepo, err := s.repos.Repo.GetByID(ctx, input.SourceRepoID)
 	if err != nil {
@@ -353,7 +356,7 @@ func (s *repositoryService) ForkRepository(ctx context.Context, input ForkReposi
 		Name:          name,
 		Slug:          slug,
 		Description:   description,
-		Visibility:    model.RepositoryVisibilityPrivate,
+		Visibility:    input.Visibility,
 		Type:          sourceRepo.Type,
 		ParentRepoID:  &sourceRepo.ID,
 	}
@@ -426,7 +429,7 @@ func (s *repositoryService) ListForks(ctx context.Context, requesterID uuid.UUID
 		return nil, 0, domain.ErrRepositoryAccessDenied
 	}
 
-	return s.repos.Repo.ListForks(ctx, repoID, toRepoListParams(pagination))
+	return s.repos.Repo.ListForks(ctx, requesterID, repoID, requesterID != uuid.Nil && repo.OwnerID == requesterID, toRepoListParams(pagination))
 }
 
 func (s *repositoryService) ReindexSearchIndex(ctx context.Context, batchSize int) error {

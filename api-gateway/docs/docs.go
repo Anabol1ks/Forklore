@@ -2650,6 +2650,9 @@ const docTemplate = `{
         },
         "models.ForkRepositoryRequest": {
             "type": "object",
+            "required": [
+                "visibility"
+            ],
             "properties": {
                 "description": {
                     "type": "string",
@@ -2665,6 +2668,18 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 64,
                     "example": "forked-article"
+                },
+                "visibility": {
+                    "enum": [
+                        "public",
+                        "private"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.RepositoryVisibility"
+                        }
+                    ],
+                    "example": "private"
                 }
             }
         },

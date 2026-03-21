@@ -714,11 +714,12 @@ func (x *DeleteRepositoryRequest) GetRepoId() *v1.UUID {
 }
 
 type ForkRepositoryRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SourceRepoId  *v1.UUID               `protobuf:"bytes,1,opt,name=source_repo_id,json=sourceRepoId,proto3" json:"source_repo_id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Slug          string                 `protobuf:"bytes,3,opt,name=slug,proto3" json:"slug,omitempty"`
-	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	SourceRepoId  *v1.UUID                `protobuf:"bytes,1,opt,name=source_repo_id,json=sourceRepoId,proto3" json:"source_repo_id,omitempty"`
+	Name          string                  `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Slug          string                  `protobuf:"bytes,3,opt,name=slug,proto3" json:"slug,omitempty"`
+	Description   string                  `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Visibility    v1.RepositoryVisibility `protobuf:"varint,5,opt,name=visibility,proto3,enum=forklore.common.v1.RepositoryVisibility" json:"visibility,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -779,6 +780,13 @@ func (x *ForkRepositoryRequest) GetDescription() string {
 		return x.Description
 	}
 	return ""
+}
+
+func (x *ForkRepositoryRequest) GetVisibility() v1.RepositoryVisibility {
+	if x != nil {
+		return x.Visibility
+	}
+	return v1.RepositoryVisibility(0)
 }
 
 type ForkRepositoryResponse struct {
@@ -1167,12 +1175,15 @@ const file_repository_v1_repository_proto_rawDesc = "" +
 	"repository\x18\x01 \x01(\v2\".forklore.repository.v1.RepositoryR\n" +
 	"repository\"V\n" +
 	"\x17DeleteRepositoryRequest\x12;\n" +
-	"\arepo_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06repoId\"\xc7\x01\n" +
+	"\arepo_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06repoId\"\x91\x02\n" +
 	"\x15ForkRepositoryRequest\x12H\n" +
 	"\x0esource_repo_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\fsourceRepoId\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18dR\x04name\x12\x1b\n" +
 	"\x04slug\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\x04slug\x12*\n" +
-	"\vdescription\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xd0\x0fR\vdescription\"\\\n" +
+	"\vdescription\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xd0\x0fR\vdescription\x12H\n" +
+	"\n" +
+	"visibility\x18\x05 \x01(\x0e2(.forklore.common.v1.RepositoryVisibilityR\n" +
+	"visibility\"\\\n" +
 	"\x16ForkRepositoryResponse\x12B\n" +
 	"\n" +
 	"repository\x18\x01 \x01(\v2\".forklore.repository.v1.RepositoryR\n" +
@@ -1270,36 +1281,37 @@ var file_repository_v1_repository_proto_depIdxs = []int32{
 	1,  // 24: forklore.repository.v1.UpdateRepositoryResponse.repository:type_name -> forklore.repository.v1.Repository
 	17, // 25: forklore.repository.v1.DeleteRepositoryRequest.repo_id:type_name -> forklore.common.v1.UUID
 	17, // 26: forklore.repository.v1.ForkRepositoryRequest.source_repo_id:type_name -> forklore.common.v1.UUID
-	1,  // 27: forklore.repository.v1.ForkRepositoryResponse.repository:type_name -> forklore.repository.v1.Repository
-	17, // 28: forklore.repository.v1.ListUserRepositoriesRequest.owner_id:type_name -> forklore.common.v1.UUID
-	17, // 29: forklore.repository.v1.ListForksRequest.repo_id:type_name -> forklore.common.v1.UUID
-	1,  // 30: forklore.repository.v1.ListRepositoriesResponse.repositories:type_name -> forklore.repository.v1.Repository
-	0,  // 31: forklore.repository.v1.ListRepositoryTagsResponse.tags:type_name -> forklore.repository.v1.RepositoryTag
-	2,  // 32: forklore.repository.v1.RepositoryService.CreateRepository:input_type -> forklore.repository.v1.CreateRepositoryRequest
-	4,  // 33: forklore.repository.v1.RepositoryService.GetRepositoryById:input_type -> forklore.repository.v1.GetRepositoryByIdRequest
-	5,  // 34: forklore.repository.v1.RepositoryService.GetRepositoryBySlug:input_type -> forklore.repository.v1.GetRepositoryBySlugRequest
-	7,  // 35: forklore.repository.v1.RepositoryService.UpdateRepository:input_type -> forklore.repository.v1.UpdateRepositoryRequest
-	9,  // 36: forklore.repository.v1.RepositoryService.DeleteRepository:input_type -> forklore.repository.v1.DeleteRepositoryRequest
-	10, // 37: forklore.repository.v1.RepositoryService.ForkRepository:input_type -> forklore.repository.v1.ForkRepositoryRequest
-	12, // 38: forklore.repository.v1.RepositoryService.ListMyRepositories:input_type -> forklore.repository.v1.ListMyRepositoriesRequest
-	13, // 39: forklore.repository.v1.RepositoryService.ListUserRepositories:input_type -> forklore.repository.v1.ListUserRepositoriesRequest
-	14, // 40: forklore.repository.v1.RepositoryService.ListForks:input_type -> forklore.repository.v1.ListForksRequest
-	21, // 41: forklore.repository.v1.RepositoryService.ListRepositoryTags:input_type -> google.protobuf.Empty
-	3,  // 42: forklore.repository.v1.RepositoryService.CreateRepository:output_type -> forklore.repository.v1.CreateRepositoryResponse
-	6,  // 43: forklore.repository.v1.RepositoryService.GetRepositoryById:output_type -> forklore.repository.v1.GetRepositoryResponse
-	6,  // 44: forklore.repository.v1.RepositoryService.GetRepositoryBySlug:output_type -> forklore.repository.v1.GetRepositoryResponse
-	8,  // 45: forklore.repository.v1.RepositoryService.UpdateRepository:output_type -> forklore.repository.v1.UpdateRepositoryResponse
-	21, // 46: forklore.repository.v1.RepositoryService.DeleteRepository:output_type -> google.protobuf.Empty
-	11, // 47: forklore.repository.v1.RepositoryService.ForkRepository:output_type -> forklore.repository.v1.ForkRepositoryResponse
-	15, // 48: forklore.repository.v1.RepositoryService.ListMyRepositories:output_type -> forklore.repository.v1.ListRepositoriesResponse
-	15, // 49: forklore.repository.v1.RepositoryService.ListUserRepositories:output_type -> forklore.repository.v1.ListRepositoriesResponse
-	15, // 50: forklore.repository.v1.RepositoryService.ListForks:output_type -> forklore.repository.v1.ListRepositoriesResponse
-	16, // 51: forklore.repository.v1.RepositoryService.ListRepositoryTags:output_type -> forklore.repository.v1.ListRepositoryTagsResponse
-	42, // [42:52] is the sub-list for method output_type
-	32, // [32:42] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	19, // 27: forklore.repository.v1.ForkRepositoryRequest.visibility:type_name -> forklore.common.v1.RepositoryVisibility
+	1,  // 28: forklore.repository.v1.ForkRepositoryResponse.repository:type_name -> forklore.repository.v1.Repository
+	17, // 29: forklore.repository.v1.ListUserRepositoriesRequest.owner_id:type_name -> forklore.common.v1.UUID
+	17, // 30: forklore.repository.v1.ListForksRequest.repo_id:type_name -> forklore.common.v1.UUID
+	1,  // 31: forklore.repository.v1.ListRepositoriesResponse.repositories:type_name -> forklore.repository.v1.Repository
+	0,  // 32: forklore.repository.v1.ListRepositoryTagsResponse.tags:type_name -> forklore.repository.v1.RepositoryTag
+	2,  // 33: forklore.repository.v1.RepositoryService.CreateRepository:input_type -> forklore.repository.v1.CreateRepositoryRequest
+	4,  // 34: forklore.repository.v1.RepositoryService.GetRepositoryById:input_type -> forklore.repository.v1.GetRepositoryByIdRequest
+	5,  // 35: forklore.repository.v1.RepositoryService.GetRepositoryBySlug:input_type -> forklore.repository.v1.GetRepositoryBySlugRequest
+	7,  // 36: forklore.repository.v1.RepositoryService.UpdateRepository:input_type -> forklore.repository.v1.UpdateRepositoryRequest
+	9,  // 37: forklore.repository.v1.RepositoryService.DeleteRepository:input_type -> forklore.repository.v1.DeleteRepositoryRequest
+	10, // 38: forklore.repository.v1.RepositoryService.ForkRepository:input_type -> forklore.repository.v1.ForkRepositoryRequest
+	12, // 39: forklore.repository.v1.RepositoryService.ListMyRepositories:input_type -> forklore.repository.v1.ListMyRepositoriesRequest
+	13, // 40: forklore.repository.v1.RepositoryService.ListUserRepositories:input_type -> forklore.repository.v1.ListUserRepositoriesRequest
+	14, // 41: forklore.repository.v1.RepositoryService.ListForks:input_type -> forklore.repository.v1.ListForksRequest
+	21, // 42: forklore.repository.v1.RepositoryService.ListRepositoryTags:input_type -> google.protobuf.Empty
+	3,  // 43: forklore.repository.v1.RepositoryService.CreateRepository:output_type -> forklore.repository.v1.CreateRepositoryResponse
+	6,  // 44: forklore.repository.v1.RepositoryService.GetRepositoryById:output_type -> forklore.repository.v1.GetRepositoryResponse
+	6,  // 45: forklore.repository.v1.RepositoryService.GetRepositoryBySlug:output_type -> forklore.repository.v1.GetRepositoryResponse
+	8,  // 46: forklore.repository.v1.RepositoryService.UpdateRepository:output_type -> forklore.repository.v1.UpdateRepositoryResponse
+	21, // 47: forklore.repository.v1.RepositoryService.DeleteRepository:output_type -> google.protobuf.Empty
+	11, // 48: forklore.repository.v1.RepositoryService.ForkRepository:output_type -> forklore.repository.v1.ForkRepositoryResponse
+	15, // 49: forklore.repository.v1.RepositoryService.ListMyRepositories:output_type -> forklore.repository.v1.ListRepositoriesResponse
+	15, // 50: forklore.repository.v1.RepositoryService.ListUserRepositories:output_type -> forklore.repository.v1.ListRepositoriesResponse
+	15, // 51: forklore.repository.v1.RepositoryService.ListForks:output_type -> forklore.repository.v1.ListRepositoriesResponse
+	16, // 52: forklore.repository.v1.RepositoryService.ListRepositoryTags:output_type -> forklore.repository.v1.ListRepositoryTagsResponse
+	43, // [43:53] is the sub-list for method output_type
+	33, // [33:43] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_repository_v1_repository_proto_init() }

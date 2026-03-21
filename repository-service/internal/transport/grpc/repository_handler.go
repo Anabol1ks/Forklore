@@ -240,6 +240,7 @@ func (h *RepositoryHandler) ForkRepository(ctx context.Context, req *repositoryv
 		Name:              req.GetName(),
 		Slug:              req.GetSlug(),
 		Description:       req.GetDescription(),
+		Visibility:        toModelRepositoryVisibility(req.GetVisibility()),
 	})
 	if err != nil {
 		return nil, LogAndMapError(h.logger, "fork repository failed", err,

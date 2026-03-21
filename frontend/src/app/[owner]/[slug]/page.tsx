@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth";
 import axios from "axios";
+import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -22,9 +23,13 @@ interface Repository {
   description?: string;
   visibility: string;
   owner_id?: string;
+  owner_username?: string;
   slug: string;
+  parent_repo_id?: string;
   created_at?: string;
 }
+
+type ForkVisibility = "public" | "private";
 
 interface DocumentItem {
   id?: string;
@@ -69,6 +74,16 @@ function getErrorMessage(error: unknown, fallback: string): string {
     return (error.response?.data as { message?: string } | undefined)?.message || fallback;
   }
   return fallback;
+}
+
+function normalizeForkSlug(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function SectionState({
@@ -126,6 +141,7 @@ export default function RepositoryPage() {
   const { user } = useAuthStore();
 
   const [repo, setRepo] = useState<Repository | null>(null);
+  const [parentRepo, setParentRepo] = useState<Repository | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorState, setErrorState] = useState<"not-found" | "forbidden" | null>(null);
 
@@ -156,8 +172,15 @@ export default function RepositoryPage() {
   const [isCreateDocumentModalOpen, setCreateDocumentModalOpen] = useState(false);
   const [isCreateFileModalOpen, setCreateFileModalOpen] = useState(false);
   const [isEditRepoModalOpen, setEditRepoModalOpen] = useState(false);
+  const [isForkModalOpen, setForkModalOpen] = useState(false);
+  const [forkName, setForkName] = useState("");
+  const [forkDescription, setForkDescription] = useState("");
+  const [forkVisibility, setForkVisibility] = useState<ForkVisibility | "">("");
+  const [isForking, setForking] = useState(false);
   const isOwner = !!user?.id && !!repo?.owner_id && user.id === repo.owner_id;
   const hasDocumentChanges = documentEditorContent !== currentVersionContent;
+  const effectiveForkSlug = normalizeForkSlug(forkName) || normalizeForkSlug(repo?.slug || "") || "repo";
+  const forkOwner = user?.username || "you";
 
   const documentDiffStats = useMemo(() => {
     const oldLines = currentVersionContent.split("\n");
@@ -196,7 +219,21 @@ export default function RepositoryPage() {
         api.get(`/repositories/${repoId}/forks`),
       ]);
 
-      setRepo((repoByIdResponse.data.repository || repoData) as Repository);
+      const resolvedRepo = (repoByIdResponse.data.repository || repoData) as Repository;
+      setRepo(resolvedRepo);
+
+      const parentRepoId = getId(resolvedRepo as unknown as Record<string, unknown>, ["parent_repo_id"]);
+      if (parentRepoId) {
+        try {
+          const parentRepoResponse = await api.get(`/repositories/${parentRepoId}`);
+          setParentRepo((parentRepoResponse.data.repository || parentRepoResponse.data) as Repository);
+        } catch {
+          setParentRepo(null);
+        }
+      } else {
+        setParentRepo(null);
+      }
+
       setDocuments((docsRes.data.documents || []) as DocumentItem[]);
       setFiles((filesRes.data.files || []) as FileItem[]);
       setForks((forksRes.data.repositories || []) as Repository[]);
@@ -228,24 +265,49 @@ export default function RepositoryPage() {
     setEditRepoDescription(repo.description || "");
   }, [repo]);
 
+  const openForkModal = () => {
+    if (!repo) return;
+
+    if (!user?.id) {
+      toast.error("Для форка нужно войти в аккаунт");
+      router.push("/login");
+      return;
+    }
+
+    setForkName("");
+    setForkDescription("");
+    setForkVisibility("");
+    setForkModalOpen(true);
+  };
+
   const handleFork = async () => {
     if (!repo) return;
     const repoId = getId(repo as unknown as Record<string, unknown>, ["id", "repo_id"]);
     if (!repoId) return;
+    if (!forkVisibility) {
+      toast.error("Выберите видимость форка");
+      return;
+    }
 
     try {
+      setForking(true);
       const response = await api.post(`/repositories/${repoId}/fork`, {
-        name: "",
+        name: forkName.trim(),
         slug: "",
+        description: forkDescription.trim(),
+        visibility: forkVisibility,
       });
       toast.success("Репозиторий успешно форкнут!");
       const newRepo = (response.data.repository || response.data) as Repository;
+      setForkModalOpen(false);
       if (user?.username && newRepo.slug) {
         router.push(`/${user.username}/${newRepo.slug}`);
       }
       await fetchRepo();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Ошибка при форке репозитория"));
+    } finally {
+      setForking(false);
     }
   };
 
@@ -563,13 +625,24 @@ export default function RepositoryPage() {
           <Button variant="outline" size="sm">
             <Star className="mr-2 h-4 w-4" /> Star <span className="ml-2 text-muted-foreground">0</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleFork}>
+          <Button variant="outline" size="sm" onClick={openForkModal}>
             <GitFork className="mr-2 h-4 w-4" /> Fork <span className="ml-2 text-muted-foreground">{forks.length}</span>
           </Button>
         </div>
       </div>
 
       <p className="text-lg text-muted-foreground">{repo.description || "Без описания"}</p>
+      {parentRepo ? (
+        <p className="text-sm text-muted-foreground">
+          Форк от{" "}
+          <Link
+            href={`/${parentRepo.owner_username || parentRepo.owner_id || "unknown"}/${parentRepo.slug}`}
+            className="text-primary hover:underline"
+          >
+            {parentRepo.owner_username || parentRepo.owner_id || "unknown"}/{parentRepo.slug}
+          </Link>
+        </p>
+      ) : null}
 
       {/* Tabs */}
       <Tabs defaultValue="documents" className="w-full">
@@ -703,7 +776,18 @@ export default function RepositoryPage() {
                   <div className="space-y-2">
                     {forks.map((fork) => (
                       <div key={fork.id || fork.repo_id || fork.slug} className="text-sm text-muted-foreground">
-                        {fork.name} ({fork.slug})
+                        <button
+                          type="button"
+                          className="text-primary hover:underline"
+                          onClick={() => {
+                            const forkOwner = fork.owner_username || fork.owner_id;
+                            if (!forkOwner || !fork.slug) return;
+                            router.push(`/${forkOwner}/${fork.slug}`);
+                          }}
+                        >
+                          {fork.owner_username || fork.owner_id || "unknown"}/{fork.slug}
+                        </button>{" "}
+                        - {fork.name}
                       </div>
                     ))}
                   </div>
@@ -714,6 +798,62 @@ export default function RepositoryPage() {
           </TabsContent>
         )}
       </Tabs>
+
+      <Modal
+        open={isForkModalOpen}
+        title="Создать форк"
+        onClose={() => {
+          if (!isForking) {
+            setForkModalOpen(false);
+          }
+        }}
+        footer={
+          <>
+            <Button variant="outline" disabled={isForking} onClick={() => setForkModalOpen(false)}>Отмена</Button>
+            <Button disabled={isForking || !forkVisibility} onClick={handleFork}>
+              {isForking ? "Создание..." : "Создать форк"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-muted-foreground">
+          Будет создан форк из {owner}/{repo.slug}. Slug создается автоматически на основе названия.
+        </p>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Видимость форка</p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={forkVisibility === "public" ? "default" : "outline"}
+              onClick={() => setForkVisibility("public")}
+            >
+              Public
+            </Button>
+            <Button
+              type="button"
+              variant={forkVisibility === "private" ? "default" : "outline"}
+              onClick={() => setForkVisibility("private")}
+            >
+              Private
+            </Button>
+          </div>
+        </div>
+        <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+          <p className="text-muted-foreground">Будущий путь</p>
+          <p className="font-medium text-primary">{forkOwner}/{effectiveForkSlug}</p>
+        </div>
+        <Input
+          value={forkName}
+          onChange={(e) => setForkName(e.target.value)}
+          placeholder="Название форка (опционально)"
+        />
+        <Textarea
+          value={forkDescription}
+          onChange={(e) => setForkDescription(e.target.value)}
+          placeholder="Описание форка (опционально)"
+          rows={4}
+        />
+      </Modal>
 
       {isOwner && (
         <>

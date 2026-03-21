@@ -60,6 +60,7 @@ type ForkRepositoryInput struct {
 	Name              string
 	Slug              string
 	Description       string
+	Visibility        model.RepositoryVisibility
 }
 
 type RepositoryTagOutput struct {

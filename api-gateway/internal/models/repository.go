@@ -41,9 +41,10 @@ type UpdateRepositoryRequest struct {
 
 // ForkRepositoryRequest represents fork request.
 type ForkRepositoryRequest struct {
-	Name        string `json:"name" binding:"max=100" example:"Forked Article"`
-	Slug        string `json:"slug" binding:"max=64" example:"forked-article"`
-	Description string `json:"description" binding:"max=2000" example:"My fork of the original"`
+	Name        string               `json:"name" binding:"max=100" example:"Forked Article"`
+	Slug        string               `json:"slug" binding:"max=64" example:"forked-article"`
+	Description string               `json:"description" binding:"max=2000" example:"My fork of the original"`
+	Visibility  RepositoryVisibility `json:"visibility" binding:"required" enums:"public,private" example:"private"`
 }
 
 // ListRepositoriesRequest represents pagination for list operations.

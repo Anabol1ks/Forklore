@@ -22,7 +22,7 @@ type RepoRepository interface {
 	ListByOwnerUsername(ctx context.Context, ownerUsername string, params ListParams) ([]*model.Repository, int64, error)
 	ListPublicByOwner(ctx context.Context, ownerID uuid.UUID, params ListParams) ([]*model.Repository, int64, error)
 	ListPublicByOwnerUsername(ctx context.Context, ownerUsername string, params ListParams) ([]*model.Repository, int64, error)
-	ListForks(ctx context.Context, parentRepoID uuid.UUID, params ListParams) ([]*model.Repository, int64, error)
+	ListForks(ctx context.Context, requesterID uuid.UUID, parentRepoID uuid.UUID, parentOwnerView bool, params ListParams) ([]*model.Repository, int64, error)
 }
 
 type repoRepository struct {
@@ -221,13 +221,21 @@ func (r *repoRepository) ListPublicByOwnerUsername(ctx context.Context, ownerUse
 	return repos, total, nil
 }
 
-func (r *repoRepository) ListForks(ctx context.Context, parentRepoID uuid.UUID, params ListParams) ([]*model.Repository, int64, error) {
+func (r *repoRepository) ListForks(ctx context.Context, requesterID uuid.UUID, parentRepoID uuid.UUID, parentOwnerView bool, params ListParams) ([]*model.Repository, int64, error) {
 	limit, offset := normalizePagination(params)
 
-	// Для MVP по умолчанию показываем только публичные fork'и,
-	// чтобы не светить приватные репозитории.
-	countQuery := r.baseQuery(ctx).
-		Where("parent_repo_id = ? AND visibility = ?", parentRepoID, model.RepositoryVisibilityPublic)
+	countQuery := r.baseQuery(ctx).Where("parent_repo_id = ?", parentRepoID)
+	listQuery := r.queryWithTag(ctx).Where("parent_repo_id = ?", parentRepoID)
+
+	if parentOwnerView {
+		// Owner of source repository can see all forks, including private ones.
+	} else if requesterID == uuid.Nil {
+		countQuery = countQuery.Where("visibility = ?", model.RepositoryVisibilityPublic)
+		listQuery = listQuery.Where("visibility = ?", model.RepositoryVisibilityPublic)
+	} else {
+		countQuery = countQuery.Where("visibility = ? OR owner_id = ?", model.RepositoryVisibilityPublic, requesterID)
+		listQuery = listQuery.Where("visibility = ? OR owner_id = ?", model.RepositoryVisibilityPublic, requesterID)
+	}
 
 	var total int64
 	if err := countQuery.Count(&total).Error; err != nil {
@@ -235,8 +243,7 @@ func (r *repoRepository) ListForks(ctx context.Context, parentRepoID uuid.UUID, 
 	}
 
 	var repos []*model.Repository
-	err := r.queryWithTag(ctx).
-		Where("parent_repo_id = ? AND visibility = ?", parentRepoID, model.RepositoryVisibilityPublic).
+	err := listQuery.
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).

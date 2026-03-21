@@ -332,6 +332,15 @@ definitions:
         example: forked-article
         maxLength: 64
         type: string
+      visibility:
+        allOf:
+        - $ref: '#/definitions/models.RepositoryVisibility'
+        enum:
+        - public
+        - private
+        example: private
+    required:
+    - visibility
     type: object
   models.ForkRepositoryResponse:
     properties:

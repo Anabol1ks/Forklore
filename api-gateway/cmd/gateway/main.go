@@ -69,7 +69,7 @@ func main() {
 
 	// ── Handlers ──
 	authHandler := handlers.NewAuthHandler(authClient)
-	repositoryHandler := handlers.NewRepositoryHandler(repositoryClient)
+	repositoryHandler := handlers.NewRepositoryHandler(repositoryClient, contentClient)
 	contentHandler := handlers.NewContentHandler(contentClient)
 	searchHandler := handlers.NewSearchHandler(searchClient)
 
