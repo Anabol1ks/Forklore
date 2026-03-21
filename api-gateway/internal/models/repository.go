@@ -67,18 +67,19 @@ type RepositoryTagResponse struct {
 
 // RepositoryResponse represents repository information.
 type RepositoryResponse struct {
-	RepoID       string                `json:"repo_id" example:"550e8400-e29b-41d4-a716-446655440000"`
-	OwnerID      string                `json:"owner_id" example:"550e8400-e29b-41d4-a716-446655440001"`
-	Name         string                `json:"name" example:"My Article"`
-	Slug         string                `json:"slug" example:"my-article"`
-	Description  *string               `json:"description,omitempty" example:"An interesting article"`
-	Visibility   string                `json:"visibility" example:"public" enums:"public,private"`
-	Type         string                `json:"type" example:"article" enums:"article,notes,mixed"`
-	Tag          RepositoryTagResponse `json:"tag"`
-	ParentRepoID *string               `json:"parent_repo_id,omitempty" example:"550e8400-e29b-41d4-a716-446655440002"`
-	CreatedAt    string                `json:"created_at" example:"2026-01-01T00:00:00Z"`
-	UpdatedAt    string                `json:"updated_at" example:"2026-01-01T00:00:00Z"`
-	DeletedAt    *string               `json:"deleted_at,omitempty" example:"2026-01-02T00:00:00Z"`
+	RepoID        string                `json:"repo_id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	OwnerID       string                `json:"owner_id" example:"550e8400-e29b-41d4-a716-446655440001"`
+	OwnerUsername string                `json:"owner_username,omitempty" example:"anabol1ks"`
+	Name          string                `json:"name" example:"My Article"`
+	Slug          string                `json:"slug" example:"my-article"`
+	Description   *string               `json:"description,omitempty" example:"An interesting article"`
+	Visibility    string                `json:"visibility" example:"public" enums:"public,private"`
+	Type          string                `json:"type" example:"article" enums:"article,notes,mixed"`
+	Tag           RepositoryTagResponse `json:"tag"`
+	ParentRepoID  *string               `json:"parent_repo_id,omitempty" example:"550e8400-e29b-41d4-a716-446655440002"`
+	CreatedAt     string                `json:"created_at" example:"2026-01-01T00:00:00Z"`
+	UpdatedAt     string                `json:"updated_at" example:"2026-01-01T00:00:00Z"`
+	DeletedAt     *string               `json:"deleted_at,omitempty" example:"2026-01-02T00:00:00Z"`
 }
 
 // CreateRepositoryResponse represents the response after creating a repository.

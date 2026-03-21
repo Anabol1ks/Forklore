@@ -34,6 +34,7 @@ interface SearchResponse {
 
 interface RepositoryResolve {
   owner_id?: string;
+  owner_username?: string;
   slug?: string;
 }
 
@@ -94,6 +95,19 @@ function stripKnownTags(value: string): string {
   return value.replace(/<\/?b>/gi, "").trim();
 }
 
+function formatHitTitle(hit: SearchHit, resolvedRepo?: RepositoryResolve | null): string {
+  const fallback = hit.title || "Без названия";
+  const parsed = parseOwnerAndSlugFromTitle(fallback);
+
+  if (!parsed) {
+    return fallback;
+  }
+
+  const owner = isUUID(parsed.owner) ? (resolvedRepo?.owner_username || parsed.owner) : parsed.owner;
+  const slug = resolvedRepo?.slug || parsed.slug;
+  return `${owner}/${slug}`;
+}
+
 function renderSnippet(snippet: string | null | undefined): ReactNode {
   const source = (snippet || "").trim();
   if (!source) {
@@ -131,6 +145,7 @@ function SearchPageContent() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [, setRepoLookupTick] = useState(0);
 
   const repoCacheRef = useRef<Map<string, RepositoryResolve>>(new Map());
 
@@ -219,7 +234,7 @@ function SearchPageContent() {
     updateUrl(queryInput, activeType);
   };
 
-  const resolveRepository = async (repoId: string): Promise<RepositoryResolve | null> => {
+  const resolveRepository = useCallback(async (repoId: string): Promise<RepositoryResolve | null> => {
     const cached = repoCacheRef.current.get(repoId);
     if (cached) return cached;
 
@@ -228,14 +243,40 @@ function SearchPageContent() {
       const repo = (response.data.repository || response.data) as RepositoryResolve;
       const resolved = {
         owner_id: repo.owner_id,
+        owner_username: repo.owner_username,
         slug: repo.slug,
       };
       repoCacheRef.current.set(repoId, resolved);
+      setRepoLookupTick((value) => value + 1);
       return resolved;
     } catch {
       return null;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const preloadRepositories = async () => {
+      for (const hit of hits) {
+        const repoId = hit.entity_type === "repository" ? hit.entity_id : hit.repo_id || "";
+        if (!repoId || repoCacheRef.current.has(repoId)) {
+          continue;
+        }
+
+        await resolveRepository(repoId);
+        if (cancelled) {
+          return;
+        }
+      }
+    };
+
+    void preloadRepositories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hits, resolveRepository]);
 
   const openHit = async (hit: SearchHit) => {
     const entityType = hit.entity_type;
@@ -253,7 +294,7 @@ function SearchPageContent() {
     const repo = await resolveRepository(repoId);
     const parsedRepoPath = parseOwnerAndSlugFromTitle(hit.title || "");
 
-    let owner = parsedRepoPath?.owner || repo?.owner_id || hit.owner_id || "";
+    let owner = parsedRepoPath?.owner || repo?.owner_username || repo?.owner_id || hit.owner_id || "";
     const slug = parsedRepoPath?.slug || repo?.slug || "";
 
     if (user?.id && owner === user.id && user.username) {
@@ -351,32 +392,37 @@ function SearchPageContent() {
               </CardContent>
             </Card>
           ) : (
-            hits.map((hit) => (
-              <Card key={`${hit.entity_type}-${hit.entity_id}`} className="hover:border-primary/40 transition-colors">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-2">
-                      {iconByType(hit.entity_type)}
-                      {hit.title || "Без названия"}
-                    </span>
-                    <span className="text-xs font-normal text-muted-foreground capitalize">
-                      {hit.entity_type}
-                    </span>
-                  </CardTitle>
-                  <CardDescription className="line-clamp-2">
-                    {renderSnippet(hit.snippet || hit.description)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0 flex items-center justify-between gap-4">
-                  <div className="text-xs text-muted-foreground">
-                    {hit.updated_at ? new Date(hit.updated_at).toLocaleString("ru-RU") : ""}
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => void openHit(hit)}>
-                    Открыть <ArrowUpRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))
+            hits.map((hit) => {
+              const repoId = hit.entity_type === "repository" ? hit.entity_id : hit.repo_id || "";
+              const resolvedRepo = repoId ? repoCacheRef.current.get(repoId) : null;
+
+              return (
+                <Card key={`${hit.entity_type}-${hit.entity_id}`} className="hover:border-primary/40 transition-colors">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        {iconByType(hit.entity_type)}
+                        {formatHitTitle(hit, resolvedRepo)}
+                      </span>
+                      <span className="text-xs font-normal text-muted-foreground capitalize">
+                        {hit.entity_type}
+                      </span>
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {renderSnippet(hit.snippet || hit.description)}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0 flex items-center justify-between gap-4">
+                    <div className="text-xs text-muted-foreground">
+                      {hit.updated_at ? new Date(hit.updated_at).toLocaleString("ru-RU") : ""}
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => void openHit(hit)}>
+                      Открыть <ArrowUpRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
 
           {hasMore ? (

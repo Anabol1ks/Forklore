@@ -121,18 +121,19 @@ func mapRepository(r *repositoryv1.Repository) models.RepositoryResponse {
 	}
 
 	resp := models.RepositoryResponse{
-		RepoID:       r.GetRepoId().GetValue(),
-		OwnerID:      r.GetOwnerId().GetValue(),
-		Name:         r.GetName(),
-		Slug:         r.GetSlug(),
-		Description:  toPointerString(r.GetDescription()),
-		Visibility:   mapRepositoryVisibility(r.GetVisibility()),
-		Type:         mapRepositoryType(r.GetType()),
-		Tag:          mapRepositoryTag(r.GetTag()),
-		ParentRepoID: parentRepoID,
-		CreatedAt:    createdAt,
-		UpdatedAt:    updatedAt,
-		DeletedAt:    deletedAtPtr,
+		RepoID:        r.GetRepoId().GetValue(),
+		OwnerID:       r.GetOwnerId().GetValue(),
+		OwnerUsername: r.GetOwnerUsername(),
+		Name:          r.GetName(),
+		Slug:          r.GetSlug(),
+		Description:   toPointerString(r.GetDescription()),
+		Visibility:    mapRepositoryVisibility(r.GetVisibility()),
+		Type:          mapRepositoryType(r.GetType()),
+		Tag:           mapRepositoryTag(r.GetTag()),
+		ParentRepoID:  parentRepoID,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
+		DeletedAt:     deletedAtPtr,
 	}
 
 	return resp

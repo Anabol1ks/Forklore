@@ -162,30 +162,30 @@ services:
     networks:
       - forklore-network
 
-  api-gateway:
-    build:
-      context: .
-      dockerfile: api-gateway/Dockerfile
-    env_file: .env
-    environment:
-      AUTH_SERVICE_ADDR: auth-service:8081
-      REPOSITORY_SERVICE_ADDR: repository-service:8082
-      CONTENT_SERVICE_ADDR: content-service:8083
-      SEARCH_SERVICE_ADDR: search-service:8084
-      GATEWAY_PORT: "8080"
-    depends_on:
-      auth-service:
-        condition: service_started
-      repository-service:
-        condition: service_started
-      content-service:
-        condition: service_started
-      search-service:
-        condition: service_started
-    ports:
-      - "8080:8080"
-    networks:
-      - forklore-network
+  # api-gateway:
+  #   build:
+  #     context: .
+  #     dockerfile: api-gateway/Dockerfile
+  #   env_file: .env
+  #   environment:
+  #     AUTH_SERVICE_ADDR: auth-service:8081
+  #     REPOSITORY_SERVICE_ADDR: repository-service:8082
+  #     CONTENT_SERVICE_ADDR: content-service:8083
+  #     SEARCH_SERVICE_ADDR: search-service:8084
+  #     GATEWAY_PORT: "8080"
+  #   depends_on:
+  #     auth-service:
+  #       condition: service_started
+  #     repository-service:
+  #       condition: service_started
+  #     content-service:
+  #       condition: service_started
+  #     search-service:
+  #       condition: service_started
+  #   ports:
+  #     - "8080:8080"
+  #   networks:
+  #     - forklore-network
 
   kafka:
     image: apache/kafka:4.1.2

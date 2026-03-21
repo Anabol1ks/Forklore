@@ -121,6 +121,7 @@ type Repository struct {
 	state         protoimpl.MessageState  `protogen:"open.v1"`
 	RepoId        *v1.UUID                `protobuf:"bytes,1,opt,name=repo_id,json=repoId,proto3" json:"repo_id,omitempty"`
 	OwnerId       *v1.UUID                `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	OwnerUsername string                  `protobuf:"bytes,14,opt,name=owner_username,json=ownerUsername,proto3" json:"owner_username,omitempty"`
 	TagId         *v1.UUID                `protobuf:"bytes,3,opt,name=tag_id,json=tagId,proto3" json:"tag_id,omitempty"`
 	Name          string                  `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
 	Slug          string                  `protobuf:"bytes,5,opt,name=slug,proto3" json:"slug,omitempty"`
@@ -178,6 +179,13 @@ func (x *Repository) GetOwnerId() *v1.UUID {
 		return x.OwnerId
 	}
 	return nil
+}
+
+func (x *Repository) GetOwnerUsername() string {
+	if x != nil {
+		return x.OwnerUsername
+	}
+	return ""
 }
 
 func (x *Repository) GetTagId() *v1.UUID {
@@ -1099,11 +1107,12 @@ const file_repository_v1_repository_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\b\xfaB\x05\xb2\x01\x02\b\x01R\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x8b\x06\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xbb\x06\n" +
 	"\n" +
 	"Repository\x12;\n" +
 	"\arepo_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06repoId\x12=\n" +
-	"\bowner_id\x18\x02 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aownerId\x129\n" +
+	"\bowner_id\x18\x02 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\aownerId\x12.\n" +
+	"\x0eowner_username\x18\x0e \x01(\tB\a\xfaB\x04r\x02\x18 R\rownerUsername\x129\n" +
 	"\x06tag_id\x18\x03 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x05tagId\x12\x1d\n" +
 	"\x04name\x18\x04 \x01(\tB\t\xfaB\x06r\x04\x10\x03\x18dR\x04name\x12E\n" +
 	"\x04slug\x18\x05 \x01(\tB1\xfaB.r,\x10\x03\x18@2&^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$R\x04slug\x12*\n" +

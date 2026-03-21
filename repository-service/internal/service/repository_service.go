@@ -429,6 +429,54 @@ func (s *repositoryService) ListForks(ctx context.Context, requesterID uuid.UUID
 	return s.repos.Repo.ListForks(ctx, repoID, toRepoListParams(pagination))
 }
 
+func (s *repositoryService) ReindexSearchIndex(ctx context.Context, batchSize int) error {
+	if batchSize <= 0 {
+		batchSize = 200
+	}
+
+	offset := 0
+	processed := 0
+	published := 0
+	failed := 0
+
+	for {
+		repos, total, err := s.repos.Repo.ListAll(ctx, repository.ListParams{Limit: batchSize, Offset: offset})
+		if err != nil {
+			return err
+		}
+
+		if len(repos) == 0 {
+			break
+		}
+
+		for _, repo := range repos {
+			processed++
+			if err := s.publisher.PublishRepositoryUpserted(ctx, repo); err != nil {
+				failed++
+				s.logger.Warn("failed to publish repository upsert event during reindex",
+					zap.String("repo_id", repo.ID.String()),
+					zap.Error(err),
+				)
+				continue
+			}
+			published++
+		}
+
+		offset += len(repos)
+		if int64(offset) >= total {
+			break
+		}
+	}
+
+	s.logger.Info("repository search index reindex completed",
+		zap.Int("processed", processed),
+		zap.Int("published", published),
+		zap.Int("failed", failed),
+	)
+
+	return nil
+}
+
 func (s *repositoryService) ListRepositoryTags(ctx context.Context) ([]*model.RepositoryTag, error) {
 	return s.repos.Tag.ListActive(ctx)
 }

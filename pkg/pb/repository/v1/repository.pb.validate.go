@@ -369,6 +369,17 @@ func (m *Repository) validate(all bool) error {
 		}
 	}
 
+	if utf8.RuneCountInString(m.GetOwnerUsername()) > 32 {
+		err := RepositoryValidationError{
+			field:  "OwnerUsername",
+			reason: "value length must be at most 32 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if m.GetTagId() == nil {
 		err := RepositoryValidationError{
 			field:  "TagId",

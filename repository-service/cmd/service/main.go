@@ -8,6 +8,7 @@ import (
 	"repository-service/internal/kafka"
 	migrations "repository-service/internal/migration"
 	"syscall"
+	"time"
 
 	"repository-service/config"
 	"repository-service/internal/repository"
@@ -57,6 +58,12 @@ func main() {
 	}()
 
 	repoService := service.NewRepositoryService(repos, searchEventsProducer, log)
+	reindexCtx, cancelReindex := context.WithTimeout(context.Background(), 5*time.Minute)
+	if err := repoService.ReindexSearchIndex(reindexCtx, 200); err != nil {
+		log.Warn("failed to reindex repository search data on startup", zap.Error(err))
+	}
+	cancelReindex()
+
 	repoHandler := grpcserver.NewRepositoryHandler(repoService, log)
 
 	tokenManager := authjwt.NewJWTVerifier(cfg.Auth.JWTSecret)

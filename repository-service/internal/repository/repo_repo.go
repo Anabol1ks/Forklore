@@ -16,6 +16,7 @@ type RepoRepository interface {
 	GetByOwnerUsernameAndSlug(ctx context.Context, ownerUsername string, slug string) (*model.Repository, error)
 	Update(ctx context.Context, repo *model.Repository) error
 	DeleteByID(ctx context.Context, repoID uuid.UUID) error
+	ListAll(ctx context.Context, params ListParams) ([]*model.Repository, int64, error)
 
 	ListByOwner(ctx context.Context, ownerID uuid.UUID, params ListParams) ([]*model.Repository, int64, error)
 	ListByOwnerUsername(ctx context.Context, ownerUsername string, params ListParams) ([]*model.Repository, int64, error)
@@ -112,6 +113,29 @@ func (r *repoRepository) ListByOwner(ctx context.Context, ownerID uuid.UUID, par
 	err := r.queryWithTag(ctx).
 		Where("owner_id = ?", ownerID).
 		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&repos).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return repos, total, nil
+}
+
+func (r *repoRepository) ListAll(ctx context.Context, params ListParams) ([]*model.Repository, int64, error) {
+	limit, offset := normalizePagination(params)
+
+	countQuery := r.baseQuery(ctx)
+
+	var total int64
+	if err := countQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var repos []*model.Repository
+	err := r.queryWithTag(ctx).
+		Order("updated_at DESC").
 		Limit(limit).
 		Offset(offset).
 		Find(&repos).Error

@@ -26,6 +26,7 @@ type RepositoryService interface {
 	ListMyRepositories(ctx context.Context, ownerID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error)
 	ListUserRepositories(ctx context.Context, requesterID uuid.UUID, requesterUsername string, ownerKey string, pagination Pagination) ([]*model.Repository, int64, error)
 	ListForks(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error)
+	ReindexSearchIndex(ctx context.Context, batchSize int) error
 
 	ListRepositoryTags(ctx context.Context) ([]*model.RepositoryTag, error)
 }

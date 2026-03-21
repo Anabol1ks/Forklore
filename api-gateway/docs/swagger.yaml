@@ -435,6 +435,9 @@ definitions:
       owner_id:
         example: 550e8400-e29b-41d4-a716-446655440001
         type: string
+      owner_username:
+        example: anabol1ks
+        type: string
       parent_repo_id:
         example: 550e8400-e29b-41d4-a716-446655440002
         type: string

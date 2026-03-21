@@ -153,19 +153,20 @@ func toProtoRepository(repo *model.Repository) *repositoryv1.Repository {
 	}
 
 	return &repositoryv1.Repository{
-		RepoId:       toProtoUUID(repo.ID),
-		OwnerId:      toProtoUUID(repo.OwnerID),
-		Name:         repo.Name,
-		Slug:         repo.Slug,
-		Description:  derefString(repo.Description),
-		Visibility:   toProtoRepositoryVisibility(repo.Visibility),
-		Type:         toProtoRepositoryType(repo.Type),
-		TagId:        toProtoUUID(repo.TagID),
-		Tag:          toProtoRepositoryTag(repo.Tag),
-		ParentRepoId: parentRepoID,
-		CreatedAt:    toProtoTimestamp(repo.CreatedAt),
-		UpdatedAt:    toProtoTimestamp(repo.UpdatedAt),
-		DeletedAt:    deletedAt,
+		RepoId:        toProtoUUID(repo.ID),
+		OwnerId:       toProtoUUID(repo.OwnerID),
+		OwnerUsername: repo.OwnerUsername,
+		Name:          repo.Name,
+		Slug:          repo.Slug,
+		Description:   derefString(repo.Description),
+		Visibility:    toProtoRepositoryVisibility(repo.Visibility),
+		Type:          toProtoRepositoryType(repo.Type),
+		TagId:         toProtoUUID(repo.TagID),
+		Tag:           toProtoRepositoryTag(repo.Tag),
+		ParentRepoId:  parentRepoID,
+		CreatedAt:     toProtoTimestamp(repo.CreatedAt),
+		UpdatedAt:     toProtoTimestamp(repo.UpdatedAt),
+		DeletedAt:     deletedAt,
 	}
 }
 
