@@ -185,6 +185,24 @@ services:
       start_period: 10s
     networks:
       - forklore-network
+  profile-service:
+    build:
+      context: .
+      dockerfile: profile-service/Dockerfile
+    env_file: .env
+    environment:
+      DB_PROFILE_HOST: profile-db
+      DB_PROFILE_PORT: "5432"
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      profile-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8085:8085"
+    networks:
+      - forklore-network
 
   study-service:
     build:
@@ -192,15 +210,15 @@ services:
       dockerfile: study-service/Dockerfile
     env_file: .env
     environment:
-      STUDY_SERVICE_PORT: "8085"
+      STUDY_SERVICE_PORT: "8086"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8085/healthz', timeout=3).read()"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8086/healthz', timeout=3).read()"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
     ports:
-      - "8085:8085"
+      - "8086:8086"
     networks:
       - forklore-network
 
@@ -214,7 +232,8 @@ services:
       REPOSITORY_SERVICE_ADDR: repository-service:8082
       CONTENT_SERVICE_ADDR: content-service:8083
       SEARCH_SERVICE_ADDR: search-service:8084
-      STUDY_SERVICE_URL: http://study-service:8085
+      PROFILE_SERVICE_ADDR: profile-service:8085
+      STUDY_SERVICE_URL: http://study-service:8086
       GATEWAY_PORT: "8080"
     depends_on:
       auth-service:
@@ -224,6 +243,8 @@ services:
       content-service:
         condition: service_started
       search-service:
+        condition: service_started
+      profile-service:
         condition: service_started
       study-service:
         condition: service_healthy

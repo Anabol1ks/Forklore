@@ -73,6 +73,7 @@ func main() {
 	}
 	defer profileClient.Close()
 
+	studyClient := clients.NewStudyClient(cfg.StudyServiceURL)
 	// ── Handlers ──
 	authHandler := handlers.NewAuthHandler(authClient)
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryClient, contentClient)
