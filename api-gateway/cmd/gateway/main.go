@@ -67,14 +67,17 @@ func main() {
 	}
 	defer searchClient.Close()
 
+	studyClient := clients.NewStudyClient(cfg.StudyServiceURL)
+
 	// ── Handlers ──
 	authHandler := handlers.NewAuthHandler(authClient)
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryClient, contentClient)
 	contentHandler := handlers.NewContentHandler(contentClient)
 	searchHandler := handlers.NewSearchHandler(searchClient)
+	studyHandler := handlers.NewStudyHandler(studyClient)
 
 	// ── Router ──
-	r := router.Setup(log, authHandler, repositoryHandler, contentHandler, searchHandler)
+	r := router.Setup(log, authHandler, repositoryHandler, contentHandler, searchHandler, studyHandler)
 
 	// ── HTTP server ──
 	srv := &http.Server{

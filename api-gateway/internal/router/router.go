@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler, searchHandler *handlers.SearchHandler) *gin.Engine {
+func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler, searchHandler *handlers.SearchHandler, studyHandler *handlers.StudyHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.CORS())
@@ -37,6 +37,7 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 		v1.GET("/document-versions/:version_id", contentHandler.GetDocumentVersion)
 		v1.GET("/file-versions/:version_id", contentHandler.GetFileVersion)
 		v1.POST("/search", searchHandler.Search)
+		v1.POST("/study/generate-text", studyHandler.GenerateText)
 
 		v1.GET("/users/:owner_id/repositories", repositoryHandler.ListUserRepositories)
 		v1.GET("/users/:owner_id/repositories/:slug", repositoryHandler.GetRepositoryBySlug)
