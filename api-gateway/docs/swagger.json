@@ -3040,6 +3040,113 @@
                 }
             }
         },
+        "/search/users": {
+            "post": {
+                "description": "Ищет пользователей по профилям и репозиториям с опциональными фильтрами по вузу и предмету",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Поиск пользователей",
+                "parameters": [
+                    {
+                        "description": "Параметры поиска пользователей",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.SearchUsersRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SearchUsersResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные данные",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/study/generate-text": {
+            "post": {
+                "description": "Проксирует запрос во внутренний Python study-service",
+                "consumes": [
+                    "text/plain"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "study"
+                ],
+                "summary": "Сгенерировать карточки или вопросы по тексту",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "flashcards | random_questions",
+                        "name": "mode",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Количество элементов",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Raw note text",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{owner_id}/repositories": {
             "get": {
                 "security": [
@@ -4216,6 +4323,68 @@
                 "total": {
                     "type": "integer",
                     "example": 42
+                }
+            }
+        },
+        "models.SearchUserHitResponse": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "repositories_count": {
+                    "type": "integer"
+                },
+                "university": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SearchUsersRequest": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 1
+                },
+                "offset": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "query": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "tag_id": {
+                    "type": "string"
+                },
+                "university": {
+                    "type": "string",
+                    "maxLength": 100
+                }
+            }
+        },
+        "models.SearchUsersResponse": {
+            "type": "object",
+            "properties": {
+                "total": {
+                    "type": "integer"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.SearchUserHitResponse"
+                    }
                 }
             }
         },

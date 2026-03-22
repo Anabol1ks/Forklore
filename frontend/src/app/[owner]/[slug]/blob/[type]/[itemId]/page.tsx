@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MarkdownPreview } from "@/components/markdown/markdown-preview";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth";
-import { FileText, Files, ArrowLeft } from "lucide-react";
+import { FileText, Files, ArrowLeft, Sparkles, X } from "lucide-react";
 
 interface Repository {
   id?: string;
@@ -37,6 +37,21 @@ interface FileVersion {
   mime_type?: string;
   size_bytes?: number;
 }
+
+interface FlashcardItem {
+  id?: string;
+  front: string;
+  back: string;
+  topic?: string;
+  source_fragment?: string;
+}
+
+interface FlashcardsResponse {
+  mode?: string;
+  items?: FlashcardItem[];
+}
+
+const FLASHCARDS_FIXED_COUNT = 5;
 
 function getId(obj: Record<string, unknown> | null | undefined, keys: string[]): string {
   if (!obj) return "";
@@ -78,6 +93,11 @@ export default function BlobPage() {
   const [selectedDocumentVersionSummary, setSelectedDocumentVersionSummary] = useState("");
   const [documentChangeSummary, setDocumentChangeSummary] = useState("");
   const [documentViewMode, setDocumentViewMode] = useState<"preview" | "edit">("preview");
+  const [isFlashcardsDrawerOpen, setFlashcardsDrawerOpen] = useState(false);
+  const [flashcards, setFlashcards] = useState<FlashcardItem[]>([]);
+  const [revealedFlashcardKeys, setRevealedFlashcardKeys] = useState<Record<string, boolean>>({});
+  const [isGeneratingFlashcards, setGeneratingFlashcards] = useState(false);
+  const [flashcardsError, setFlashcardsError] = useState("");
 
   const [file, setFile] = useState<Record<string, unknown> | null>(null);
   const [fileVersions, setFileVersions] = useState<FileVersion[]>([]);
@@ -215,6 +235,49 @@ export default function BlobPage() {
     setSelectedDocumentVersionId(null);
     setSelectedDocumentVersionContent("");
     setSelectedDocumentVersionSummary("");
+  };
+
+  const handleGenerateFlashcards = async () => {
+    if (!isDocument) {
+      return;
+    }
+
+    const sourceText = (selectedDocumentVersionId ? selectedDocumentVersionContent : documentEditorContent).trim();
+    if (!sourceText) {
+      setFlashcardsError("Недостаточно текста для генерации карточек.");
+      return;
+    }
+
+    setGeneratingFlashcards(true);
+    setFlashcardsError("");
+    setRevealedFlashcardKeys({});
+
+    try {
+      const response = await api.post<FlashcardsResponse>(
+        `/study/generate-text?mode=flashcards&count=${FLASHCARDS_FIXED_COUNT}`,
+        sourceText,
+        {
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const payload = response.data || {};
+      const items = Array.isArray(payload.items) ? payload.items : [];
+      setFlashcards(items);
+
+      if (items.length === 0) {
+        setFlashcardsError("Сервис не вернул карточки. Попробуйте увеличить объём текста.");
+      }
+    } catch (error) {
+      const message = getErrorMessage(error, "Не удалось сгенерировать карточки.");
+      setFlashcardsError(message);
+      toast.error(message);
+    } finally {
+      setGeneratingFlashcards(false);
+    }
   };
 
   const handleViewFileVersion = async (versionId: string) => {
@@ -433,7 +496,12 @@ export default function BlobPage() {
           <div className="border rounded-md p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold flex items-center gap-2"><FileText className="h-5 w-5" /> {String(document.title || "Документ")}</h2>
-              <span className="text-sm text-muted-foreground">Версий: {documentVersions.length}</span>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => setFlashcardsDrawerOpen(true)}>
+                  <Sparkles className="h-4 w-4 mr-2" /> Сгенерировать карточки
+                </Button>
+                <span className="text-sm text-muted-foreground">Версий: {documentVersions.length}</span>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 border-b pb-2">
@@ -510,6 +578,83 @@ export default function BlobPage() {
             }) : <div className="text-sm text-muted-foreground">Версий пока нет</div>}
           </div>
         </div>
+      ) : null}
+
+      {isDocument ? (
+        <>
+          <div
+            className={`fixed inset-0 z-40 bg-black/40 transition-opacity ${isFlashcardsDrawerOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+            onClick={() => setFlashcardsDrawerOpen(false)}
+          />
+
+          <aside
+            className={`fixed right-0 top-0 z-50 h-full w-full max-w-2xl border-l bg-background shadow-xl transition-transform duration-300 ${isFlashcardsDrawerOpen ? "translate-x-0" : "translate-x-full"}`}
+            aria-label="Панель генерации карточек"
+          >
+            <div className="flex h-full flex-col">
+              <div className="flex items-center justify-between border-b px-5 py-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Генерация карточек</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Режим генерации: flashcards</p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setFlashcardsDrawerOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4 overflow-y-auto p-5">
+                <p className="text-sm text-muted-foreground">
+                  Карточки генерируются из {selectedDocumentVersionId ? "выбранной версии документа" : "текущего черновика/версии"}.
+                </p>
+
+                <p className="text-sm text-muted-foreground">Количество карточек: {FLASHCARDS_FIXED_COUNT}</p>
+
+                <Button onClick={() => void handleGenerateFlashcards()} disabled={isGeneratingFlashcards}>
+                  {isGeneratingFlashcards ? "Генерация..." : "Сгенерировать"}
+                </Button>
+
+                {flashcardsError ? (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {flashcardsError}
+                  </div>
+                ) : null}
+
+                {flashcards.length > 0 ? (
+                  <div className="space-y-3">
+                    {flashcards.map((card, index) => (
+                      <button
+                        key={card.id || `flashcard-${index}`}
+                        type="button"
+                        className="w-full rounded-md border p-3 space-y-2 text-left transition hover:bg-muted/40"
+                        onClick={() => {
+                          const cardKey = card.id || `flashcard-${index}`;
+                          setRevealedFlashcardKeys((prev) => ({ ...prev, [cardKey]: !prev[cardKey] }));
+                        }}
+                      >
+                        <div>
+                          <p className="text-xs uppercase text-muted-foreground">Вопрос</p>
+                          <p className="font-medium">{card.front}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase text-muted-foreground">Ответ</p>
+                          {revealedFlashcardKeys[card.id || `flashcard-${index}`] ? (
+                            <p>{card.back}</p>
+                          ) : (
+                            <p className="text-muted-foreground">Нажмите на карточку, чтобы показать ответ</p>
+                          )}
+                        </div>
+                        {card.topic ? <p className="text-xs text-muted-foreground">Тема: {card.topic}</p> : null}
+                        {card.source_fragment ? (
+                          <p className="text-xs text-muted-foreground">Фрагмент: {card.source_fragment}</p>
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </aside>
+        </>
       ) : null}
 
       {isFile && file ? (

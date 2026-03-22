@@ -725,6 +725,48 @@ definitions:
         example: 42
         type: integer
     type: object
+  models.SearchUserHitResponse:
+    properties:
+      avatar_url:
+        type: string
+      display_name:
+        type: string
+      repositories_count:
+        type: integer
+      university:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  models.SearchUsersRequest:
+    properties:
+      limit:
+        maximum: 100
+        minimum: 1
+        type: integer
+      offset:
+        minimum: 0
+        type: integer
+      query:
+        maxLength: 500
+        type: string
+      tag_id:
+        type: string
+      university:
+        maxLength: 100
+        type: string
+    type: object
+  models.SearchUsersResponse:
+    properties:
+      total:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/models.SearchUserHitResponse'
+        type: array
+    type: object
   models.SetProfileTitleRequest:
     properties:
       title_code:
@@ -2963,6 +3005,78 @@ paths:
       summary: Удалить индекс репозитория
       tags:
       - search
+  /search/users:
+    post:
+      consumes:
+      - application/json
+      description: Ищет пользователей по профилям и репозиториям с опциональными фильтрами
+        по вузу и предмету
+      parameters:
+      - description: Параметры поиска пользователей
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.SearchUsersRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SearchUsersResponse'
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Поиск пользователей
+      tags:
+      - search
+  /study/generate-text:
+    post:
+      consumes:
+      - text/plain
+      description: Проксирует запрос во внутренний Python study-service
+      parameters:
+      - description: flashcards | random_questions
+        in: query
+        name: mode
+        required: true
+        type: string
+      - default: 10
+        description: Количество элементов
+        in: query
+        name: count
+        type: integer
+      - description: Raw note text
+        in: body
+        name: body
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Сгенерировать карточки или вопросы по тексту
+      tags:
+      - study
   /users/{owner_id}/repositories:
     get:
       description: Возвращает список публичных репозиториев указанного пользователя
