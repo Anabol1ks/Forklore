@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -12,6 +15,7 @@ import (
 	commonv1 "github.com/Anabol1ks/Forklore/pkg/pb/common/v1"
 	profilev1 "github.com/Anabol1ks/Forklore/pkg/pb/profile/v1"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -471,6 +475,169 @@ func (h *ProfileHandler) SetProfileTitle(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, models.GetProfileResponse{Profile: mapProfile(resp.GetProfile())})
+}
+
+// UploadMyProfileImage godoc
+//
+//	@Summary		Загрузить изображение профиля
+//	@Description	Загружает аватар или обложку текущего пользователя и сразу обновляет профиль
+//	@Tags			profiles
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			kind	formData	string	true	"Тип изображения: avatar или cover"
+//	@Param			file	formData	file	true	"Изображение (JPEG, PNG, GIF, WebP, до 10MB)"
+//	@Success		200		{object}	models.UploadProfileImageResponse
+//	@Failure		400		{object}	models.ErrorResponse
+//	@Failure		401		{object}	models.ErrorResponse
+//	@Failure		500		{object}	models.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/profiles/me/image [post]
+func (h *ProfileHandler) UploadMyProfileImage(c *gin.Context) {
+	const maxSize = 10 * 1024 * 1024 // 10MB
+
+	kind := strings.ToLower(strings.TrimSpace(c.PostForm("kind")))
+	if kind != "avatar" && kind != "cover" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Code: http.StatusBadRequest, Message: "kind must be avatar or cover"})
+		return
+	}
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Code: http.StatusBadRequest, Message: "file is required"})
+		return
+	}
+
+	if fileHeader.Size <= 0 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Code: http.StatusBadRequest, Message: "file must not be empty"})
+		return
+	}
+
+	if fileHeader.Size > maxSize {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Code: http.StatusBadRequest, Message: "file is too large, max size is 10MB"})
+		return
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Code: http.StatusBadRequest, Message: "failed to read file"})
+		return
+	}
+	defer file.Close()
+
+	head := make([]byte, 512)
+	readN, _ := io.ReadFull(file, head)
+	detectedType := http.DetectContentType(head[:readN])
+
+	allowedMIMEs := map[string]string{
+		"image/jpeg": ".jpg",
+		"image/png":  ".png",
+		"image/gif":  ".gif",
+		"image/webp": ".webp",
+	}
+
+	ext, ok := allowedMIMEs[detectedType]
+	if !ok {
+		hintedType := strings.TrimSpace(fileHeader.Header.Get("Content-Type"))
+		if hintedType != "" {
+			ext, ok = allowedMIMEs[hintedType]
+		}
+	}
+	if !ok {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Code: http.StatusBadRequest, Message: "unsupported image type (allowed: JPEG, PNG, GIF, WebP)"})
+		return
+	}
+
+	if err := os.MkdirAll(filepath.Join("uploads", "profile", kind), 0o755); err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Code: http.StatusInternalServerError, Message: "failed to prepare upload storage"})
+		return
+	}
+
+	storedName := strings.TrimSuffix(filepath.Base(fileHeader.Filename), filepath.Ext(fileHeader.Filename))
+	if storedName == "" {
+		storedName = "image"
+	}
+	storedName = sanitizeFileToken(storedName)
+	storedName = fmt.Sprintf("%s-%s%s", storedName, uuid.NewString(), ext)
+
+	storedPath := filepath.Join("uploads", "profile", kind, storedName)
+	publicPath := filepath.ToSlash(storedPath)
+
+	if err := c.SaveUploadedFile(fileHeader, storedPath); err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Code: http.StatusInternalServerError, Message: "failed to save uploaded file"})
+		return
+	}
+
+	ctx := forwardAuth(c)
+	myProfileResp, err := h.client.Client.GetMyProfile(ctx, &emptypb.Empty{})
+	if err != nil {
+		_ = os.Remove(storedPath)
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	myProfile := myProfileResp.GetProfile()
+	if myProfile == nil {
+		_ = os.Remove(storedPath)
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Code: http.StatusInternalServerError, Message: "profile not found"})
+		return
+	}
+
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	if forwardedProto := strings.TrimSpace(c.GetHeader("X-Forwarded-Proto")); forwardedProto != "" {
+		scheme = forwardedProto
+	}
+
+	imageURL := fmt.Sprintf("%s://%s/%s", scheme, c.Request.Host, strings.TrimLeft(publicPath, "/"))
+
+	updateReq := &profilev1.UpdateProfileRequest{
+		DisplayName: myProfile.GetDisplayName(),
+		Bio:         myProfile.GetBio(),
+		AvatarUrl:   myProfile.GetAvatarUrl(),
+		CoverUrl:    myProfile.GetCoverUrl(),
+		Location:    myProfile.GetLocation(),
+		WebsiteUrl:  myProfile.GetWebsiteUrl(),
+		IsPublic:    myProfile.GetIsPublic(),
+	}
+
+	if kind == "avatar" {
+		updateReq.AvatarUrl = imageURL
+	} else {
+		updateReq.CoverUrl = imageURL
+	}
+
+	updated, err := h.client.Client.UpdateProfile(ctx, updateReq)
+	if err != nil {
+		_ = os.Remove(storedPath)
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	c.JSON(http.StatusOK, models.UploadProfileImageResponse{
+		Profile: mapProfile(updated.GetProfile()),
+		Field:   kind,
+		URL:     imageURL,
+	})
+}
+
+func sanitizeFileToken(v string) string {
+	v = strings.ToLower(strings.TrimSpace(v))
+	v = strings.ReplaceAll(v, " ", "-")
+	var b strings.Builder
+	for _, r := range v {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+			b.WriteRune(r)
+		}
+	}
+	out := strings.Trim(b.String(), "-_")
+	if out == "" {
+		return "image"
+	}
+	return out
 }
 
 func (h *ProfileHandler) listProfilePreviews(c *gin.Context, followers bool) {

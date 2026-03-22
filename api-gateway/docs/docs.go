@@ -1111,6 +1111,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/profiles/me/image": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Загружает аватар или обложку текущего пользователя и сразу обновляет профиль",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profiles"
+                ],
+                "summary": "Загрузить изображение профиля",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Тип изображения: avatar или cover",
+                        "name": "kind",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Изображение (JPEG, PNG, GIF, WebP, до 10MB)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UploadProfileImageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/profiles/me/readme": {
             "patch": {
                 "security": [
@@ -4303,6 +4365,20 @@ const docTemplate = `{
             "properties": {
                 "repository": {
                     "$ref": "#/definitions/models.RepositoryResponse"
+                }
+            }
+        },
+        "models.UploadProfileImageResponse": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "profile": {
+                    "$ref": "#/definitions/models.ProfileResponse"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },

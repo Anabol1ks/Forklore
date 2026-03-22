@@ -74,6 +74,12 @@ type GetProfileResponse struct {
 	Profile ProfileResponse `json:"profile"`
 }
 
+type UploadProfileImageResponse struct {
+	Profile ProfileResponse `json:"profile"`
+	Field   string          `json:"field"`
+	URL     string          `json:"url"`
+}
+
 type UpdateProfileRequest struct {
 	DisplayName string `json:"display_name" binding:"required,max=100"`
 	Bio         string `json:"bio" binding:"max=1000"`

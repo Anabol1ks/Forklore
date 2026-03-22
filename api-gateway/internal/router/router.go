@@ -14,6 +14,7 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.CORS())
+	r.Static("/uploads", "./uploads")
 	// Swagger UI
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -131,6 +132,7 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 			profiles.PATCH("/me", profileHandler.UpdateProfile)
 			profiles.PATCH("/me/readme", profileHandler.UpdateProfileReadme)
 			profiles.PUT("/me/title", profileHandler.SetProfileTitle)
+			profiles.POST("/me/image", profileHandler.UploadMyProfileImage)
 
 			profiles.POST("/social-links", profileHandler.UpsertProfileSocialLink)
 			profiles.PUT("/social-links", profileHandler.UpsertProfileSocialLink)

@@ -824,6 +824,15 @@ definitions:
       repository:
         $ref: '#/definitions/models.RepositoryResponse'
     type: object
+  models.UploadProfileImageResponse:
+    properties:
+      field:
+        type: string
+      profile:
+        $ref: '#/definitions/models.ProfileResponse'
+      url:
+        type: string
+    type: object
   models.UpsertDocumentIndexRequest:
     properties:
       content:
@@ -1879,6 +1888,47 @@ paths:
       security:
       - BearerAuth: []
       summary: Обновить профиль
+      tags:
+      - profiles
+  /profiles/me/image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загружает аватар или обложку текущего пользователя и сразу обновляет
+        профиль
+      parameters:
+      - description: 'Тип изображения: avatar или cover'
+        in: formData
+        name: kind
+        required: true
+        type: string
+      - description: Изображение (JPEG, PNG, GIF, WebP, до 10MB)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UploadProfileImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Загрузить изображение профиля
       tags:
       - profiles
   /profiles/me/readme:

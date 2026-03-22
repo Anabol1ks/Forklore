@@ -647,7 +647,9 @@ export default function RepositoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6">
         <div className="flex items-center gap-2 text-2xl">
           <Book className="h-6 w-6 text-muted-foreground" />
-          <span className="text-primary hover:underline cursor-pointer">{owner}</span>
+          <Link href={`/user/${repo.owner_username || owner}`} className="text-primary hover:underline cursor-pointer">
+            {repo.owner_username || owner}
+          </Link>
           <span className="text-muted-foreground">/</span>
           <span className="font-bold">{repo.name}</span>
           <span className="ml-2 px-2 py-0.5 text-xs border rounded-full text-muted-foreground">
