@@ -117,15 +117,15 @@ function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-2xl rounded-lg border bg-background shadow-lg"
+        className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-lg border bg-background shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b p-4">
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <h3 className="text-base font-semibold sm:text-lg">{title}</h3>
           <Button variant="ghost" size="sm" onClick={onClose}>Закрыть</Button>
         </div>
-        <div className="p-4 space-y-4">{children}</div>
-        {footer ? <div className="border-t p-4 flex justify-end gap-2">{footer}</div> : null}
+        <div className="overflow-y-auto p-4 space-y-4">{children}</div>
+        {footer ? <div className="border-t p-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div> : null}
       </div>
     </div>
   );
@@ -627,8 +627,8 @@ export default function RepositoryPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <Skeleton className="h-10 w-75" />
-        <Skeleton className="h-6 w-125" />
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-6 w-full max-w-2xl" />
         <Skeleton className="h-100 w-full" />
       </div>
     );
@@ -644,19 +644,19 @@ export default function RepositoryPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6">
-        <div className="flex items-center gap-2 text-2xl">
+      <div className="flex flex-col gap-4 border-b pb-6 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-xl sm:text-2xl">
           <Book className="h-6 w-6 text-muted-foreground" />
-          <Link href={`/user/${repo.owner_username || owner}`} className="text-primary hover:underline cursor-pointer">
+          <Link href={`/user/${repo.owner_username || owner}`} className="max-w-full text-primary hover:underline cursor-pointer break-all">
             {repo.owner_username || owner}
           </Link>
           <span className="text-muted-foreground">/</span>
-          <span className="font-bold">{repo.name}</span>
+          <span className="min-w-0 truncate font-bold">{repo.name}</span>
           <span className="ml-2 px-2 py-0.5 text-xs border rounded-full text-muted-foreground">
             {repo.visibility}
           </span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleToggleStar} disabled={isStarLoading}>
             <Star className="mr-2 h-4 w-4" /> {isStarred ? "Starred" : "Star"} <span className="ml-2 text-muted-foreground">{starsCount}</span>
           </Button>
@@ -666,9 +666,9 @@ export default function RepositoryPage() {
         </div>
       </div>
 
-      <p className="text-lg text-muted-foreground">{repo.description || "Без описания"}</p>
+      <p className="text-base text-muted-foreground break-words sm:text-lg">{repo.description || "Без описания"}</p>
       {parentRepo ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground break-all">
           Форк от{" "}
           <Link
             href={`/${parentRepo.owner_username || parentRepo.owner_id || "unknown"}/${parentRepo.slug}`}
@@ -681,7 +681,7 @@ export default function RepositoryPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="documents" className="w-full">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 w-full">
           <TabsTrigger value="documents" className="flex items-center gap-2">
             <FileText className="h-4 w-4" /> Документы
           </TabsTrigger>
@@ -697,18 +697,18 @@ export default function RepositoryPage() {
 
         <TabsContent value="documents" className="space-y-4">
           <div className="border rounded-md overflow-hidden">
-            <div className="bg-muted px-4 py-3 border-b flex justify-between items-center">
+            <div className="bg-muted border-b px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="font-medium text-sm">Документы в репозитории</span>
-              {isOwner ? <Button size="sm" onClick={() => setCreateDocumentModalOpen(true)}>Создать документ</Button> : null}
+              {isOwner ? <Button size="sm" className="w-full sm:w-auto" onClick={() => setCreateDocumentModalOpen(true)}>Создать документ</Button> : null}
             </div>
             {documents.length > 0 ? (
               <div className="divide-y">
                 {documents.map((doc) => (
-                  <div key={doc.id || doc.document_id || doc.title} className="p-4 flex items-center justify-between hover:bg-muted/50 transition">
-                    <div className="flex items-center gap-3">
+                  <div key={doc.id || doc.document_id || doc.title} className="p-4 flex flex-col gap-3 hover:bg-muted/50 transition sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       <FileText className="h-5 w-5 text-primary" />
                       <span
-                        className="font-medium cursor-pointer hover:underline"
+                        className="block min-w-0 cursor-pointer truncate font-medium hover:underline"
                         onClick={() => {
                           const documentId = getId(doc as unknown as Record<string, unknown>, ["id", "document_id"]);
                           if (!documentId) return;
@@ -718,7 +718,7 @@ export default function RepositoryPage() {
                         {doc.title || "Без названия"}
                       </span>
                     </div>
-                    <div className="text-sm text-muted-foreground flex gap-3 items-center">
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:justify-end">
                       <span className="capitalize">{doc.status || "draft"}</span>
                       <span>{doc.updated_at ? new Date(doc.updated_at).toLocaleDateString("ru-RU") : "-"}</span>
                       <Button
@@ -746,18 +746,18 @@ export default function RepositoryPage() {
 
         <TabsContent value="files">
           <div className="border rounded-md overflow-hidden">
-            <div className="bg-muted px-4 py-3 border-b flex justify-between items-center">
+            <div className="bg-muted border-b px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="font-medium text-sm">Файлы (бинарные архивы, PDF и пр.)</span>
-              {isOwner ? <Button size="sm" onClick={() => setCreateFileModalOpen(true)}>Загрузить файл</Button> : null}
+              {isOwner ? <Button size="sm" className="w-full sm:w-auto" onClick={() => setCreateFileModalOpen(true)}>Загрузить файл</Button> : null}
             </div>
             {files.length > 0 ? (
               <div className="divide-y">
                 {files.map((file) => (
-                  <div key={file.id || file.file_id || file.file_name} className="p-4 flex items-center justify-between hover:bg-muted/50 transition">
-                    <div className="flex items-center gap-3">
+                  <div key={file.id || file.file_id || file.file_name} className="p-4 flex flex-col gap-3 hover:bg-muted/50 transition sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       <Files className="h-5 w-5 text-primary" />
                       <span
-                        className="font-medium cursor-pointer hover:underline"
+                        className="block min-w-0 cursor-pointer truncate font-medium hover:underline"
                         onClick={() => {
                           const fileId = getId(file as unknown as Record<string, unknown>, ["id", "file_id"]);
                           if (!fileId) return;
@@ -767,7 +767,7 @@ export default function RepositoryPage() {
                         {file.file_name || "Без имени"}
                       </span>
                     </div>
-                    <div className="text-sm text-muted-foreground flex gap-3 items-center">
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:justify-end">
                       <span>{file.mime_type || "application/octet-stream"}</span>
                       <span>{Math.round(((file.size_bytes || file.size || 0) as number) / 1024)} KB</span>
                       <Button
@@ -798,9 +798,9 @@ export default function RepositoryPage() {
             <div className="p-4 border rounded-md space-y-4">
               <h3 className="font-bold text-lg mb-2">Настройки репозитория</h3>
               <p className="text-muted-foreground mb-4">Настройки видимости, переименование, удаление.</p>
-              <div className="flex gap-4">
-                <Button variant="outline" onClick={() => setEditRepoModalOpen(true)}>Редактировать репозиторий</Button>
-                <Button variant="destructive" onClick={handleDelete}>Удалить репозиторий</Button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button variant="outline" className="w-full sm:w-auto" onClick={() => setEditRepoModalOpen(true)}>Редактировать репозиторий</Button>
+                <Button variant="destructive" className="w-full sm:w-auto" onClick={handleDelete}>Удалить репозиторий</Button>
               </div>
 
               <div className="border-t pt-4 space-y-3">
@@ -856,10 +856,11 @@ export default function RepositoryPage() {
         </p>
         <div className="space-y-2">
           <p className="text-sm font-medium">Видимость форка</p>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               type="button"
               variant={forkVisibility === "public" ? "default" : "outline"}
+              className="w-full sm:w-auto"
               onClick={() => setForkVisibility("public")}
             >
               Public
@@ -867,6 +868,7 @@ export default function RepositoryPage() {
             <Button
               type="button"
               variant={forkVisibility === "private" ? "default" : "outline"}
+              className="w-full sm:w-auto"
               onClick={() => setForkVisibility("private")}
             >
               Private

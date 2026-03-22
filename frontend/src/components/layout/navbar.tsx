@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BookOpen, LogOut, Plus, UserCircle, Sun, Moon, Search } from "lucide-react";
+import { BookOpen, LogOut, Plus, UserCircle, Sun, Moon, Search, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useMounted } from "@/hooks/use-mounted";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -36,17 +36,17 @@ export function Navbar() {
 
   return (
     <nav className="border-b bg-background sticky top-0 z-50">
-      <div className="container mx-auto flex h-16 items-center px-4 justify-between">
-        <div className="flex items-center gap-4 md:gap-6 min-w-0">
-          <Link href="/" className="flex items-center space-x-2 font-bold text-xl">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-2 px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-6">
+          <Link href="/" className="flex shrink-0 items-center space-x-2 font-bold text-lg sm:text-xl">
             <BookOpen className="h-6 w-6" />
             <span>Forklore</span>
           </Link>
-          <div className="hidden md:flex space-x-4 shrink-0">
+          <div className="hidden md:flex shrink-0 space-x-4">
             <Link href="/" className="text-sm font-medium hover:underline underline-offset-4">Репозитории</Link>
             <Link href="/ranking" className="text-sm font-medium hover:underline underline-offset-4">Рейтинг</Link>
           </div>
-          <div className="hidden md:flex items-center w-90 lg:w-105">
+          <div className="hidden md:flex items-center w-full max-w-[420px]">
             <div className="relative w-full">
               <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
@@ -68,8 +68,35 @@ export function Navbar() {
             </div>
           </div>
         </div>
-        
-        <div className="flex items-center space-x-2 md:space-x-4">
+
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 md:hidden">
+              <Menu className="h-5 w-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => router.push("/")}>Репозитории</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/ranking")}>Рейтинг</DropdownMenuItem>
+              {isAuthenticated && user ? (
+                <>
+                  <DropdownMenuItem onClick={() => router.push("/repo/create")}>Создать репозиторий</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push(`/user/${user.username}`)}>Профиль</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => void logout()}>
+                    <LogOut className="mr-2 h-4 w-4" /> Выйти
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => void logoutAll()}>
+                    <LogOut className="mr-2 h-4 w-4" /> Выйти со всех устройств
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem onClick={() => router.push("/login")}>Войти</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/register")}>Регистрация</DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button
             variant="ghost"
             size="icon"
@@ -88,7 +115,7 @@ export function Navbar() {
 
           {isAuthenticated && user ? (
             <>
-              <Link href="/repo/create" title="Создать репозиторий">
+              <Link href="/repo/create" title="Создать репозиторий" className="hidden sm:block">
                 <Button variant="ghost" size="icon">
                   <Plus className="h-5 w-5" />
                 </Button>
@@ -96,7 +123,7 @@ export function Navbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="inline-flex h-7 items-center gap-2 rounded-md px-2.5 text-[0.8rem] font-medium hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
                     <UserCircle className="h-5 w-5" />
-                    <span>{user.username}</span>
+                    <span className="hidden max-w-32 truncate sm:inline">{user.username}</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => router.push(`/user/${user.username}`)}>Профиль</DropdownMenuItem>
@@ -110,14 +137,14 @@ export function Navbar() {
               </DropdownMenu>
             </>
           ) : (
-            <>
+            <div className="hidden sm:flex items-center gap-2">
               <Link href="/login">
                 <Button variant="ghost">Войти</Button>
               </Link>
               <Link href="/register">
                 <Button>Регистрация</Button>
               </Link>
-            </>
+            </div>
           )}
         </div>
       </div>

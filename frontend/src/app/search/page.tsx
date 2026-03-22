@@ -461,7 +461,7 @@ function SearchPageContent() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-xl font-semibold">
+        <div className="flex items-center gap-2 text-lg font-semibold sm:text-xl">
           <Sparkles className="h-5 w-5 text-primary" />
           <span>Global Search</span>
         </div>
@@ -575,7 +575,7 @@ function SearchPageContent() {
                 {typeLabel(type)}
               </Button>
             )) : null}
-            <Button size="sm" className="ml-auto" onClick={handleSubmit}>Search</Button>
+            <Button size="sm" className="w-full sm:ml-auto sm:w-auto" onClick={handleSubmit}>Search</Button>
           </div>
         </CardContent>
       </Card>
@@ -606,7 +606,7 @@ function SearchPageContent() {
             userHits.map((item) => (
               <Card key={item.user_id} className="hover:border-primary/40 transition-colors">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar size="sm">
                         <AvatarImage src={item.avatar_url || `https://github.com/identicons/${item.username}.png`} />
@@ -618,13 +618,13 @@ function SearchPageContent() {
                       </div>
                     </div>
                     {item.university ? (
-                      <span className="shrink-0 rounded-full border px-2 py-1 text-xs font-normal text-muted-foreground">
+                      <span className="w-fit shrink-0 rounded-full border px-2 py-1 text-xs font-normal text-muted-foreground">
                         {item.university}
                       </span>
                     ) : null}
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0 flex items-center justify-between gap-4">
+                <CardContent className="pt-0 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-xs text-muted-foreground">
                     Совпадений по репозиториям: {item.repositories_count}
                   </div>
@@ -660,10 +660,10 @@ function SearchPageContent() {
               return (
                 <Card key={`${hit.entity_type}-${hit.entity_id}`} className="hover:border-primary/40 transition-colors">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-2">
+                    <CardTitle className="text-base flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="flex min-w-0 items-center gap-2">
                         {iconByType(hit.entity_type)}
-                        {formatHitTitle(hit, resolvedRepo)}
+                        <span className="truncate">{formatHitTitle(hit, resolvedRepo)}</span>
                       </span>
                       <span className="text-xs font-normal text-muted-foreground capitalize">
                         {hit.entity_type}
@@ -673,7 +673,7 @@ function SearchPageContent() {
                       {renderSnippet(hit.snippet || hit.description)}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="pt-0 flex items-center justify-between gap-4">
+                  <CardContent className="pt-0 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-muted-foreground">
                       {hit.updated_at ? new Date(hit.updated_at).toLocaleString("ru-RU") : ""}
                     </div>
