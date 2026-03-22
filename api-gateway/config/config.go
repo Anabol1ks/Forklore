@@ -12,6 +12,7 @@ type Config struct {
 	RepositoryServiceAddr string
 	ContentServiceAddr    string
 	SearchServiceAddr     string
+	ProfileServiceAddr    string
 	StudyServiceURL       string
 }
 
@@ -22,6 +23,7 @@ func Load(log *zap.Logger) *Config {
 		RepositoryServiceAddr: getEnv("REPOSITORY_SERVICE_ADDR", "localhost:8082", log),
 		ContentServiceAddr:    getEnv("CONTENT_SERVICE_ADDR", "localhost:8083", log),
 		SearchServiceAddr:     getEnv("SEARCH_SERVICE_ADDR", "localhost:8084", log),
+		ProfileServiceAddr:    getEnv("PROFILE_SERVICE_ADDR", "localhost:8085", log),
 		StudyServiceURL:       getEnv("STUDY_SERVICE_URL", "http://localhost:8085", log),
 	}
 }

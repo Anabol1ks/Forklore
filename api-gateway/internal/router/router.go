@@ -11,9 +11,11 @@ import (
 )
 
 func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler, searchHandler *handlers.SearchHandler, studyHandler *handlers.StudyHandler) *gin.Engine {
+func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler, searchHandler *handlers.SearchHandler, profileHandler *handlers.ProfileHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.CORS())
+	r.Static("/uploads", "./uploads")
 	// Swagger UI
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -41,6 +43,12 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 
 		v1.GET("/users/:owner_id/repositories", repositoryHandler.ListUserRepositories)
 		v1.GET("/users/:owner_id/repositories/:slug", repositoryHandler.GetRepositoryBySlug)
+		v1.GET("/profiles/by-user/:user_id", profileHandler.GetProfileByUserID)
+		v1.GET("/profiles/by-username/:username", profileHandler.GetProfileByUsername)
+		v1.GET("/profiles/:user_id/social-links", profileHandler.ListProfileSocialLinks)
+		v1.GET("/profiles/:user_id/followers", profileHandler.ListFollowers)
+		v1.GET("/profiles/:user_id/following", profileHandler.ListFollowing)
+		v1.GET("/profiles/titles", profileHandler.ListAvailableTitles)
 
 		// ── Auth ──
 		auth := v1.Group("/auth")
@@ -117,6 +125,23 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 
 			search.POST("/index/files", searchHandler.UpsertFileIndex)
 			search.DELETE("/index/files/:file_id", searchHandler.DeleteFileIndex)
+		}
+
+		profiles := v1.Group("/profiles")
+		profiles.Use(middleware.AuthRequired())
+		{
+			profiles.GET("/me", profileHandler.GetMyProfile)
+			profiles.PATCH("/me", profileHandler.UpdateProfile)
+			profiles.PATCH("/me/readme", profileHandler.UpdateProfileReadme)
+			profiles.PUT("/me/title", profileHandler.SetProfileTitle)
+			profiles.POST("/me/image", profileHandler.UploadMyProfileImage)
+
+			profiles.POST("/social-links", profileHandler.UpsertProfileSocialLink)
+			profiles.PUT("/social-links", profileHandler.UpsertProfileSocialLink)
+			profiles.DELETE("/social-links/:social_link_id", profileHandler.DeleteProfileSocialLink)
+
+			profiles.POST("/:followee_id/follow", profileHandler.FollowUser)
+			profiles.DELETE("/:followee_id/follow", profileHandler.UnfollowUser)
 		}
 	}
 

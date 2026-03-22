@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MarkdownPreview } from "@/components/markdown/markdown-preview";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth";
-import { FileText, Files } from "lucide-react";
+import { FileText, Files, ArrowLeft } from "lucide-react";
 
 interface Repository {
   id?: string;
@@ -56,20 +56,6 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function normalizeSlug(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9а-яё-]/gi, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function looksLikeUUID(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
-
 export default function BlobPage() {
   const params = useParams<{ owner: string; slug: string; type: string; itemId: string }>();
   const router = useRouter();
@@ -79,13 +65,11 @@ export default function BlobPage() {
   const repoSlug = params.slug;
   const itemType = params.type;
   const itemId = params.itemId;
-  const decodedItemId = decodeURIComponent(itemId);
 
   const [repo, setRepo] = useState<Repository | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [document, setDocument] = useState<Record<string, unknown> | null>(null);
-  const [resolvedDocumentId, setResolvedDocumentId] = useState("");
   const [documentVersions, setDocumentVersions] = useState<DocumentVersion[]>([]);
   const [documentEditorContent, setDocumentEditorContent] = useState("");
   const [currentVersionContent, setCurrentVersionContent] = useState("");
@@ -174,40 +158,10 @@ export default function BlobPage() {
     return repoData;
   }, [owner, repoSlug]);
 
-  const resolveDocumentId = useCallback(async (): Promise<string> => {
-    if (looksLikeUUID(decodedItemId)) {
-      return decodedItemId;
-    }
-
-    const bySlug = await api.get(`/users/${owner}/repositories/${repoSlug}`);
-    const slugRepo = (bySlug.data.repository || bySlug.data) as Repository;
-    const repoId = getId(slugRepo as unknown as Record<string, unknown>, ["id", "repo_id"]);
-    if (!repoId) {
-      throw new Error("Repository id is missing");
-    }
-
-    const docsRes = await api.get(`/repositories/${repoId}/documents`);
-    const docs = (docsRes.data.documents || []) as Array<Record<string, unknown>>;
-    const target = normalizeSlug(decodedItemId);
-
-    const matched = docs.find((doc) => {
-      const slug = typeof doc.slug === "string" ? normalizeSlug(doc.slug) : "";
-      const title = typeof doc.title === "string" ? normalizeSlug(doc.title) : "";
-      return slug === target || title === target;
-    });
-
-    const documentId = getId(matched, ["id", "document_id"]);
-    if (!documentId) {
-      throw new Error("Document not found by slug");
-    }
-
-    return documentId;
-  }, [decodedItemId, owner, repoSlug]);
-
-  const fetchDocument = useCallback(async (documentId: string) => {
+  const fetchDocument = useCallback(async () => {
     const [detailRes, versionsRes] = await Promise.all([
-      api.get(`/documents/${documentId}`),
-      api.get(`/documents/${documentId}/versions`),
+      api.get(`/documents/${itemId}`),
+      api.get(`/documents/${itemId}/versions`),
     ]);
 
     const detailPayload = detailRes.data as { document?: Record<string, unknown> };
@@ -226,7 +180,7 @@ export default function BlobPage() {
     setSelectedDocumentVersionContent("");
     setSelectedDocumentVersionSummary("");
     setDocumentViewMode("preview");
-  }, []);
+  }, [itemId]);
 
   const fetchFile = useCallback(async () => {
     const [detailRes, versionsRes] = await Promise.all([
@@ -286,9 +240,7 @@ export default function BlobPage() {
         await fetchRepo();
 
         if (isDocument) {
-          const documentId = await resolveDocumentId();
-          setResolvedDocumentId(documentId);
-          await fetchDocument(documentId);
+          await fetchDocument();
         } else if (isFile) {
           await fetchFile();
         } else {
@@ -302,7 +254,7 @@ export default function BlobPage() {
     };
 
     void run();
-  }, [fetchRepo, fetchDocument, fetchFile, isDocument, isFile, resolveDocumentId]);
+  }, [fetchRepo, fetchDocument, fetchFile, isDocument, isFile]);
 
   useEffect(() => {
     let objectUrl: string | null = null;
@@ -362,12 +314,11 @@ export default function BlobPage() {
 
   const handleSaveDraft = async () => {
     if (!isOwner || !isDocument) return;
-    if (!resolvedDocumentId) return;
 
     try {
-      await api.patch(`/documents/${resolvedDocumentId}/draft`, { content: documentEditorContent });
+      await api.patch(`/documents/${itemId}/draft`, { content: documentEditorContent });
       toast.success("Черновик сохранен");
-      await fetchDocument(resolvedDocumentId);
+      await fetchDocument();
     } catch (error) {
       toast.error(getErrorMessage(error, "Ошибка сохранения черновика"));
     }
@@ -375,7 +326,6 @@ export default function BlobPage() {
 
   const handleCreateVersion = async () => {
     if (!isOwner || !isDocument) return;
-    if (!resolvedDocumentId) return;
     if (!documentEditorContent.trim()) {
       toast.error("Нельзя создать версию с пустым содержимым");
       return;
@@ -386,13 +336,13 @@ export default function BlobPage() {
     }
 
     try {
-      await api.post(`/documents/${resolvedDocumentId}/versions`, {
+      await api.post(`/documents/${itemId}/versions`, {
         content: documentEditorContent,
         change_summary: documentChangeSummary,
       });
       toast.success("Версия документа создана");
       setDocumentChangeSummary("");
-      await fetchDocument(resolvedDocumentId);
+      await fetchDocument();
     } catch (error) {
       toast.error(getErrorMessage(error, "Ошибка создания версии"));
     }
@@ -400,12 +350,11 @@ export default function BlobPage() {
 
   const handleRestoreDocumentVersion = async (versionId: string) => {
     if (!isOwner || !isDocument) return;
-    if (!resolvedDocumentId) return;
 
     try {
-      await api.post(`/documents/${resolvedDocumentId}/versions/${versionId}/restore`, {});
+      await api.post(`/documents/${itemId}/versions/${versionId}/restore`, {});
       toast.success("Версия документа восстановлена");
-      await fetchDocument(resolvedDocumentId);
+      await fetchDocument();
     } catch (error) {
       toast.error(getErrorMessage(error, "Ошибка восстановления версии"));
     }
@@ -468,12 +417,15 @@ export default function BlobPage() {
 
   return (
     <div className="space-y-4">
-<div className="flex items-center gap-2 text-xl font-semibold bg-muted/40 px-4 py-2.5 border rounded-md">
-          <span className="text-primary hover:underline cursor-pointer" onClick={() => router.push(`/${owner}`)}>{owner}</span>
-          <span className="text-muted-foreground font-normal">/</span>
-            <span className="font-bold cursor-pointer hover:underline" onClick={() => router.push(`/${owner}/${repoSlug}`)}>{repo.name}</span>
-          <span className="text-muted-foreground font-normal">/</span>
-            <span className="font-medium text-lg">{isDocument ? String(document?.title || "Документ") : String(file?.file_name || "Файл")}</span>
+      <div className="flex items-center justify-between border-b pb-4">
+        <div className="flex items-center gap-2 text-xl font-semibold">
+          <Button variant="ghost" size="sm" onClick={() => router.push(`/${owner}/${repoSlug}`)}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Назад
+          </Button>
+          <span className="text-primary">{owner}</span>
+          <span className="text-muted-foreground">/</span>
+          <span>{repo.name}</span>
+        </div>
       </div>
 
       {isDocument && document ? (
