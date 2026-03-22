@@ -890,6 +890,39 @@ func (s *contentService) DeleteFile(ctx context.Context, requesterID, fileID uui
 	return nil
 }
 
+func (s *contentService) GetFileStorageInfo(ctx context.Context, requesterID, fileID uuid.UUID) (*FileStorageInfo, error) {
+	file, err := s.repos.File.GetByID(ctx, fileID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrFileNotFound
+		}
+		return nil, err
+	}
+
+	if err := s.repoAccess.EnsureCanRead(ctx, file.RepoID, requesterID); err != nil {
+		return nil, err
+	}
+
+	if file.CurrentVersion == nil {
+		return &FileStorageInfo{}, nil
+	}
+
+	storageKey := strings.TrimSpace(file.CurrentVersion.StorageKey)
+	if storageKey == "" {
+		return &FileStorageInfo{}, nil
+	}
+
+	otherCount, err := s.repos.FileVersion.CountByStorageKeyExcludingFile(ctx, storageKey, file.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &FileStorageInfo{
+		StorageKey:           storageKey,
+		OtherReferencesCount: otherCount,
+	}, nil
+}
+
 func (s *contentService) publishDocumentUpserted(ctx context.Context, document *model.Document, version *model.DocumentVersion) {
 	if document == nil {
 		return

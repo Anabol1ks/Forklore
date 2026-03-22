@@ -8,6 +8,7 @@ import { GitFork, BookOpen, Clock, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 interface Repository {
   id: string;
@@ -43,7 +44,12 @@ export default function Home() {
           setRepos(res.data.repositories || []);
         }
       } catch (err) {
-        console.error("Failed to load repos", err);
+        if (isMounted) {
+          setRepos([]);
+        }
+        if (!axios.isAxiosError(err) || err.response?.status !== 401) {
+          console.error("Failed to load repos", err);
+        }
       } finally {
         if (isMounted) {
           setLoading(false);

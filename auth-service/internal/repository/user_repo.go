@@ -15,6 +15,7 @@ type UserRepo interface {
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	GetByLogin(ctx context.Context, login string) (*model.User, error)
+	List(ctx context.Context) ([]*model.User, error)
 	UpdateLastLoginAt(ctx context.Context, userID uuid.UUID, ts time.Time) error
 }
 
@@ -76,6 +77,20 @@ func (r *userRepo) GetByLogin(ctx context.Context, login string) (*model.User, e
 	}
 
 	return &user, nil
+}
+
+func (r *userRepo) List(ctx context.Context) ([]*model.User, error) {
+	users := make([]*model.User, 0)
+
+	err := r.db.WithContext(ctx).
+		Order("created_at ASC").
+		Order("id ASC").
+		Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (r *userRepo) UpdateLastLoginAt(ctx context.Context, userID uuid.UUID, ts time.Time) error {

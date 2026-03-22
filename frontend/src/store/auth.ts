@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api';
+import { clearAuthTokens, getAccessToken, getRefreshToken, setAuthTokens } from '@/lib/auth-cookies';
 
 interface User {
   id: string;
@@ -54,8 +55,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   login: (token, refreshToken, userData) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('token', token);
-      localStorage.setItem('refresh_token', refreshToken);
+      setAuthTokens(token, refreshToken);
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
     }
     const normalized = normalizeUser(userData);
     set({
@@ -66,14 +68,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   logout: async () => {
     if (typeof window !== 'undefined') {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (refreshToken) {
+      const activeRefreshToken = getRefreshToken() || localStorage.getItem('refresh_token');
+      if (activeRefreshToken) {
         try {
-          await api.post('/auth/logout', { refresh_token: refreshToken });
+          await api.post('/auth/logout', { refresh_token: activeRefreshToken });
         } catch (e) {
           console.error("Logout failed on server", e);
         }
       }
+      clearAuthTokens();
       localStorage.removeItem('token');
       localStorage.removeItem('refresh_token');
     }
@@ -86,6 +89,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error('Logout-all failed on server', e);
     } finally {
       if (typeof window !== 'undefined') {
+        clearAuthTokens();
         localStorage.removeItem('token');
         localStorage.removeItem('refresh_token');
       }
@@ -94,7 +98,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   initialize: async () => {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('token');
+    const tokenFromCookie = getAccessToken();
+    const tokenFromLocalStorage = localStorage.getItem('token');
+    const token = tokenFromCookie || tokenFromLocalStorage;
+
+    if (!tokenFromCookie && tokenFromLocalStorage) {
+      const refreshFromLocalStorage = localStorage.getItem('refresh_token') || '';
+      if (refreshFromLocalStorage) {
+        setAuthTokens(tokenFromLocalStorage, refreshFromLocalStorage);
+      }
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+    }
+
     if (!token) {
       set({ user: null, isAuthenticated: false, isLoading: false });
       return;
@@ -108,6 +124,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       set({ user: normalized, isAuthenticated: true, isLoading: false });
     } catch {
+      clearAuthTokens();
       localStorage.removeItem('token');
       localStorage.removeItem('refresh_token');
       set({ user: null, isAuthenticated: false, isLoading: false });

@@ -332,6 +332,15 @@ definitions:
         example: forked-article
         maxLength: 64
         type: string
+      visibility:
+        allOf:
+        - $ref: '#/definitions/models.RepositoryVisibility'
+        enum:
+        - public
+        - private
+        example: private
+    required:
+    - visibility
     type: object
   models.ForkRepositoryResponse:
     properties:
@@ -343,10 +352,38 @@ definitions:
       user:
         $ref: '#/definitions/models.UserResponse'
     type: object
+  models.GetProfileResponse:
+    properties:
+      profile:
+        $ref: '#/definitions/models.ProfileResponse'
+    type: object
   models.GetRepositoryResponse:
     properties:
       repository:
         $ref: '#/definitions/models.RepositoryResponse'
+    type: object
+  models.ListAvailableTitlesResponse:
+    properties:
+      titles:
+        items:
+          $ref: '#/definitions/models.ProfileTitleResponse'
+        type: array
+    type: object
+  models.ListProfilePreviewsResponse:
+    properties:
+      profiles:
+        items:
+          $ref: '#/definitions/models.ProfilePreviewResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  models.ListProfileSocialLinksResponse:
+    properties:
+      social_links:
+        items:
+          $ref: '#/definitions/models.ProfileSocialLinkResponse'
+        type: array
     type: object
   models.ListRepositoriesResponse:
     properties:
@@ -388,6 +425,144 @@ definitions:
         type: string
     required:
     - refresh_token
+    type: object
+  models.ProfilePreviewResponse:
+    properties:
+      avatar_url:
+        type: string
+      display_name:
+        type: string
+      title:
+        $ref: '#/definitions/models.ProfileTitleResponse'
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  models.ProfileResponse:
+    properties:
+      avatar_url:
+        type: string
+      bio:
+        type: string
+      cover_url:
+        type: string
+      created_at:
+        type: string
+      display_name:
+        type: string
+      followers_count:
+        type: integer
+      following_count:
+        type: integer
+      is_public:
+        type: boolean
+      location:
+        type: string
+      readme_markdown:
+        type: string
+      social_links:
+        items:
+          $ref: '#/definitions/models.ProfileSocialLinkResponse'
+        type: array
+      title:
+        $ref: '#/definitions/models.ProfileTitleResponse'
+      title_source:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+      website_url:
+        type: string
+    type: object
+  models.ProfileSocialLinkResponse:
+    properties:
+      created_at:
+        type: string
+      is_visible:
+        type: boolean
+      label:
+        type: string
+      platform:
+        type: string
+      position:
+        type: integer
+      social_link_id:
+        type: string
+      updated_at:
+        type: string
+      url:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.ProfileTitleResponse:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      is_active:
+        type: boolean
+      is_system:
+        type: boolean
+      label:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  models.RankingEntryResponse:
+    properties:
+      active_months_count:
+        type: integer
+      active_weeks_last_8:
+        type: integer
+      activity_points_30d:
+        type: integer
+      activity_points_total:
+        type: integer
+      avatar_url:
+        type: string
+      display_name:
+        type: string
+      followers_count:
+        type: integer
+      followers_gained_30d:
+        type: integer
+      forks_received_30d:
+        type: integer
+      forks_received_total:
+        type: integer
+      public_repositories_count:
+        type: integer
+      score:
+        type: number
+      stars_received_30d:
+        type: integer
+      stars_received_total:
+        type: integer
+      subject_score:
+        type: number
+      tag_id:
+        type: string
+      title_label:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  models.RankingResponse:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/models.RankingEntryResponse'
+        type: array
+      total:
+        type: integer
     type: object
   models.RefreshRequest:
     properties:
@@ -435,6 +610,9 @@ definitions:
       owner_id:
         example: 550e8400-e29b-41d4-a716-446655440001
         type: string
+      owner_username:
+        example: anabol1ks
+        type: string
       parent_repo_id:
         example: 550e8400-e29b-41d4-a716-446655440002
         type: string
@@ -462,6 +640,18 @@ definitions:
         - private
         example: public
         type: string
+    type: object
+  models.RepositoryStarStateResponse:
+    properties:
+      repo_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      starred:
+        example: true
+        type: boolean
+      stars_count:
+        example: 12
+        type: integer
     type: object
   models.RepositoryTagResponse:
     properties:
@@ -585,6 +775,56 @@ definitions:
         example: 42
         type: integer
     type: object
+  models.SearchUserHitResponse:
+    properties:
+      avatar_url:
+        type: string
+      display_name:
+        type: string
+      repositories_count:
+        type: integer
+      university:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  models.SearchUsersRequest:
+    properties:
+      limit:
+        maximum: 100
+        minimum: 1
+        type: integer
+      offset:
+        minimum: 0
+        type: integer
+      query:
+        maxLength: 500
+        type: string
+      tag_id:
+        type: string
+      university:
+        maxLength: 100
+        type: string
+    type: object
+  models.SearchUsersResponse:
+    properties:
+      total:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/models.SearchUserHitResponse'
+        type: array
+    type: object
+  models.SetProfileTitleRequest:
+    properties:
+      title_code:
+        maxLength: 64
+        type: string
+    required:
+    - title_code
+    type: object
   models.TokenPairResponse:
     properties:
       access_expires_at:
@@ -605,6 +845,36 @@ definitions:
       token_type:
         example: Bearer
         type: string
+    type: object
+  models.UpdateProfileReadmeRequest:
+    properties:
+      readme_markdown:
+        type: string
+    type: object
+  models.UpdateProfileRequest:
+    properties:
+      avatar_url:
+        maxLength: 2048
+        type: string
+      bio:
+        maxLength: 1000
+        type: string
+      cover_url:
+        maxLength: 2048
+        type: string
+      display_name:
+        maxLength: 100
+        type: string
+      is_public:
+        type: boolean
+      location:
+        maxLength: 100
+        type: string
+      website_url:
+        maxLength: 2048
+        type: string
+    required:
+    - display_name
     type: object
   models.UpdateRepositoryRequest:
     properties:
@@ -645,6 +915,15 @@ definitions:
     properties:
       repository:
         $ref: '#/definitions/models.RepositoryResponse'
+    type: object
+  models.UploadProfileImageResponse:
+    properties:
+      field:
+        type: string
+      profile:
+        $ref: '#/definitions/models.ProfileResponse'
+      url:
+        type: string
     type: object
   models.UpsertDocumentIndexRequest:
     properties:
@@ -708,6 +987,31 @@ definitions:
     - repo_id
     - tag_id
     - updated_at
+    type: object
+  models.UpsertProfileSocialLinkRequest:
+    properties:
+      is_visible:
+        type: boolean
+      label:
+        maxLength: 64
+        type: string
+      platform:
+        type: string
+      position:
+        type: integer
+      social_link_id:
+        type: string
+      url:
+        maxLength: 2048
+        type: string
+    required:
+    - platform
+    - url
+    type: object
+  models.UpsertProfileSocialLinkResponse:
+    properties:
+      social_link:
+        $ref: '#/definitions/models.ProfileSocialLinkResponse'
     type: object
   models.UpsertRepositoryIndexRequest:
     properties:
@@ -1384,6 +1688,633 @@ paths:
       summary: Восстановить версию файла
       tags:
       - content
+  /profiles/{followee_id}/follow:
+    delete:
+      description: Удаляет подписку текущего пользователя на пользователя followee_id
+      parameters:
+      - description: ID пользователя, от которого отписываемся
+        in: path
+        name: followee_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Отписаться от пользователя
+      tags:
+      - profiles
+    post:
+      description: Создаёт подписку текущего пользователя на пользователя followee_id
+      parameters:
+      - description: ID пользователя, на которого подписываемся
+        in: path
+        name: followee_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Подписаться на пользователя
+      tags:
+      - profiles
+  /profiles/{user_id}/followers:
+    get:
+      description: Возвращает подписчиков пользователя user_id
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - default: 20
+        description: Лимит (1..100)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListProfilePreviewsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список подписчиков пользователя
+      tags:
+      - profiles
+  /profiles/{user_id}/following:
+    get:
+      description: Возвращает пользователей, на которых подписан user_id
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - default: 20
+        description: Лимит (1..100)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListProfilePreviewsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список подписок пользователя
+      tags:
+      - profiles
+  /profiles/{user_id}/social-links:
+    get:
+      description: Возвращает социальные ссылки профиля по user_id
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListProfileSocialLinksResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список соцссылок профиля
+      tags:
+      - profiles
+  /profiles/by-user/{user_id}:
+    get:
+      description: Возвращает профиль пользователя по user_id
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить профиль по user_id
+      tags:
+      - profiles
+  /profiles/by-username/{username}:
+    get:
+      description: Возвращает профиль пользователя по username
+      parameters:
+      - description: Username пользователя
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить профиль по username
+      tags:
+      - profiles
+  /profiles/me:
+    get:
+      description: Возвращает профиль текущего авторизованного пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить мой профиль
+      tags:
+      - profiles
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет публичные поля профиля текущего пользователя
+      parameters:
+      - description: Данные профиля
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить профиль
+      tags:
+      - profiles
+  /profiles/me/image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загружает аватар или обложку текущего пользователя и сразу обновляет
+        профиль
+      parameters:
+      - description: 'Тип изображения: avatar или cover'
+        in: formData
+        name: kind
+        required: true
+        type: string
+      - description: Изображение (JPEG, PNG, GIF, WebP, до 10MB)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UploadProfileImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Загрузить изображение профиля
+      tags:
+      - profiles
+  /profiles/me/readme:
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет readme_markdown текущего пользователя
+      parameters:
+      - description: README профиля
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateProfileReadmeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить README профиля
+      tags:
+      - profiles
+  /profiles/me/title:
+    put:
+      consumes:
+      - application/json
+      description: Устанавливает title_code для текущего пользователя
+      parameters:
+      - description: Титул профиля
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.SetProfileTitleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Установить титул профиля
+      tags:
+      - profiles
+  /profiles/social-links:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую соцссылку или обновляет существующую по social_link_id
+      parameters:
+      - description: Данные соцссылки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpsertProfileSocialLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpsertProfileSocialLinkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать или обновить соцссылку
+      tags:
+      - profiles
+    put:
+      consumes:
+      - application/json
+      description: Создаёт новую соцссылку или обновляет существующую по social_link_id
+      parameters:
+      - description: Данные соцссылки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpsertProfileSocialLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpsertProfileSocialLinkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать или обновить соцссылку
+      tags:
+      - profiles
+  /profiles/social-links/{social_link_id}:
+    delete:
+      description: Удаляет соцссылку текущего пользователя по social_link_id
+      parameters:
+      - description: ID соцссылки
+        in: path
+        name: social_link_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить соцссылку
+      tags:
+      - profiles
+  /profiles/titles:
+    get:
+      description: Возвращает активные титулы профиля
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListAvailableTitlesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список доступных титулов
+      tags:
+      - profiles
+  /rankings/monthly:
+    get:
+      description: Возвращает таблицу лидеров по рейтингу за последние 30 дней
+      parameters:
+      - default: 20
+        description: Лимит
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RankingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить месячный рейтинг
+      tags:
+      - rankings
+  /rankings/overall:
+    get:
+      description: Возвращает таблицу лидеров по общему рейтингу пользователей
+      parameters:
+      - default: 20
+        description: Лимит
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RankingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить общий рейтинг
+      tags:
+      - rankings
+  /rankings/subject/{tag_id}:
+    get:
+      description: Возвращает таблицу лидеров по выбранному предметному тегу
+      parameters:
+      - description: ID предметного тега
+        in: path
+        name: tag_id
+        required: true
+        type: string
+      - default: 20
+        description: Лимит
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RankingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить предметный рейтинг
+      tags:
+      - rankings
   /repositories:
     post:
       consumes:
@@ -1833,6 +2764,83 @@ paths:
       summary: Получение форков репозитория
       tags:
       - repositories
+  /repositories/{repo_id}/star:
+    get:
+      description: Возвращает текущий статус star и общее число stars
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RepositoryStarStateResponse'
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение состояния star репозитория
+      tags:
+      - repositories
+    post:
+      description: Ставит или снимает star для текущего пользователя
+      parameters:
+      - description: ID репозитория
+        in: path
+        name: repo_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RepositoryStarStateResponse'
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Репозиторий не найден
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Переключение star у репозитория
+      tags:
+      - repositories
   /repositories/me:
     get:
       description: Возвращает список всех репозиториев текущего пользователя
@@ -1869,6 +2877,41 @@ paths:
       security:
       - BearerAuth: []
       summary: Получение моих репозиториев
+      tags:
+      - repositories
+  /repositories/me/starred:
+    get:
+      description: Возвращает список репозиториев, которые текущий пользователь отметил
+        star
+      parameters:
+      - default: 10
+        description: Лимит элементов
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListRepositoriesResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получение списка избранных репозиториев
       tags:
       - repositories
   /repositories/tags:
@@ -2113,6 +3156,78 @@ paths:
       summary: Удалить индекс репозитория
       tags:
       - search
+  /search/users:
+    post:
+      consumes:
+      - application/json
+      description: Ищет пользователей по профилям и репозиториям с опциональными фильтрами
+        по вузу и предмету
+      parameters:
+      - description: Параметры поиска пользователей
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.SearchUsersRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SearchUsersResponse'
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Поиск пользователей
+      tags:
+      - search
+  /study/generate-text:
+    post:
+      consumes:
+      - text/plain
+      description: Проксирует запрос во внутренний Python study-service
+      parameters:
+      - description: flashcards | random_questions
+        in: query
+        name: mode
+        required: true
+        type: string
+      - default: 10
+        description: Количество элементов
+        in: query
+        name: count
+        type: integer
+      - description: Raw note text
+        in: body
+        name: body
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Сгенерировать карточки или вопросы по тексту
+      tags:
+      - study
   /users/{owner_id}/repositories:
     get:
       description: Возвращает список публичных репозиториев указанного пользователя

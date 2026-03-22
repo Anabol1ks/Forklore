@@ -296,6 +296,9 @@ func (s *repositoryService) ForkRepository(ctx context.Context, input ForkReposi
 	if strings.TrimSpace(input.RequesterUsername) == "" {
 		return nil, domain.ErrUnauthorized
 	}
+	if err := validateVisibility(input.Visibility); err != nil {
+		return nil, err
+	}
 
 	sourceRepo, err := s.repos.Repo.GetByID(ctx, input.SourceRepoID)
 	if err != nil {
@@ -353,7 +356,7 @@ func (s *repositoryService) ForkRepository(ctx context.Context, input ForkReposi
 		Name:          name,
 		Slug:          slug,
 		Description:   description,
-		Visibility:    model.RepositoryVisibilityPrivate,
+		Visibility:    input.Visibility,
 		Type:          sourceRepo.Type,
 		ParentRepoID:  &sourceRepo.ID,
 	}
@@ -426,7 +429,147 @@ func (s *repositoryService) ListForks(ctx context.Context, requesterID uuid.UUID
 		return nil, 0, domain.ErrRepositoryAccessDenied
 	}
 
-	return s.repos.Repo.ListForks(ctx, repoID, toRepoListParams(pagination))
+	return s.repos.Repo.ListForks(ctx, requesterID, repoID, requesterID != uuid.Nil && repo.OwnerID == requesterID, toRepoListParams(pagination))
+}
+
+func (s *repositoryService) GetRepositoryStarState(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID) (*RepositoryStarState, error) {
+	repo, err := s.repos.Repo.GetByID(ctx, repoID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRepositoryNotFound
+		}
+		return nil, err
+	}
+
+	if !canReadRepository(requesterID, repo) {
+		return nil, domain.ErrRepositoryAccessDenied
+	}
+
+	starsCount, err := s.repos.Star.CountByRepoID(ctx, repoID)
+	if err != nil {
+		return nil, err
+	}
+
+	starred := false
+	if requesterID != uuid.Nil {
+		starred, err = s.repos.Star.Exists(ctx, requesterID, repoID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &RepositoryStarState{
+		RepoID:     repoID,
+		Starred:    starred,
+		StarsCount: starsCount,
+	}, nil
+}
+
+func (s *repositoryService) ToggleRepositoryStar(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID) (*RepositoryStarState, error) {
+	if requesterID == uuid.Nil {
+		return nil, domain.ErrUnauthorized
+	}
+
+	repo, err := s.repos.Repo.GetByID(ctx, repoID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRepositoryNotFound
+		}
+		return nil, err
+	}
+
+	if !canReadRepository(requesterID, repo) {
+		return nil, domain.ErrRepositoryAccessDenied
+	}
+
+	starred, err := s.repos.Star.Exists(ctx, requesterID, repoID)
+	if err != nil {
+		return nil, err
+	}
+
+	if starred {
+		if err := s.repos.Star.DeleteByUserAndRepo(ctx, requesterID, repoID); err != nil {
+			return nil, err
+		}
+		starred = false
+	} else {
+		if err := s.repos.Star.Create(ctx, &model.RepositoryStar{UserID: requesterID, RepoID: repoID}); err != nil {
+			if strings.Contains(strings.ToLower(err.Error()), "uq_repository_stars_user_repo") {
+				starred = true
+			} else {
+				return nil, err
+			}
+		} else {
+			starred = true
+		}
+	}
+
+	starsCount, err := s.repos.Star.CountByRepoID(ctx, repoID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RepositoryStarState{
+		RepoID:     repoID,
+		Starred:    starred,
+		StarsCount: starsCount,
+	}, nil
+}
+
+func (s *repositoryService) ListMyStarredRepositories(ctx context.Context, requesterID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error) {
+	if requesterID == uuid.Nil {
+		return nil, 0, domain.ErrUnauthorized
+	}
+
+	return s.repos.Star.ListStarredRepositoriesByUser(ctx, requesterID, toRepoListParams(pagination))
+}
+
+func (s *repositoryService) ReindexSearchIndex(ctx context.Context, batchSize int) error {
+	if batchSize <= 0 {
+		batchSize = 200
+	}
+
+	offset := 0
+	processed := 0
+	published := 0
+	failed := 0
+
+	for {
+		repos, total, err := s.repos.Repo.ListAll(ctx, repository.ListParams{Limit: batchSize, Offset: offset})
+		if err != nil {
+			return err
+		}
+
+		if len(repos) == 0 {
+			break
+		}
+
+		for _, repo := range repos {
+			processed++
+			if err := s.publisher.PublishRepositoryUpserted(ctx, repo); err != nil {
+				failed++
+				s.logger.Warn("failed to publish repository upsert event during reindex",
+					zap.String("repo_id", repo.ID.String()),
+					zap.Error(err),
+				)
+				continue
+			}
+			published++
+		}
+
+		offset += len(repos)
+		if int64(offset) >= total {
+			break
+		}
+	}
+
+	s.logger.Info("repository search index reindex completed",
+		zap.Int("processed", processed),
+		zap.Int("published", published),
+		zap.Int("failed", failed),
+	)
+
+	return nil
 }
 
 func (s *repositoryService) ListRepositoryTags(ctx context.Context) ([]*model.RepositoryTag, error) {

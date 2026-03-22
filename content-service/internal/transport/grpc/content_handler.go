@@ -584,6 +584,32 @@ func (h *ContentHandler) DeleteFile(ctx context.Context, req *contentv1.DeleteFi
 	return &emptypb.Empty{}, nil
 }
 
+func (h *ContentHandler) GetFileStorageInfo(ctx context.Context, req *contentv1.GetFileStorageInfoRequest) (*contentv1.GetFileStorageInfoResponse, error) {
+	if err := validateProto(req); err != nil {
+		return nil, err
+	}
+
+	fileID, err := parseProtoUUID(req.GetFileId(), "file_id")
+	if err != nil {
+		return nil, err
+	}
+
+	requesterID := requesterIDFromContext(ctx)
+
+	info, err := h.service.GetFileStorageInfo(ctx, requesterID, fileID)
+	if err != nil {
+		return nil, LogAndMapError(h.logger, "get file storage info failed", err,
+			zap.String("file_id", fileID.String()),
+			zap.String("requester_id", requesterID.String()),
+		)
+	}
+
+	return &contentv1.GetFileStorageInfoResponse{
+		StorageKey:           info.StorageKey,
+		OtherReferencesCount: uint64(info.OtherReferencesCount),
+	}, nil
+}
+
 type protoValidator interface {
 	ValidateAll() error
 }

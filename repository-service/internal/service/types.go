@@ -26,6 +26,10 @@ type RepositoryService interface {
 	ListMyRepositories(ctx context.Context, ownerID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error)
 	ListUserRepositories(ctx context.Context, requesterID uuid.UUID, requesterUsername string, ownerKey string, pagination Pagination) ([]*model.Repository, int64, error)
 	ListForks(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error)
+	GetRepositoryStarState(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID) (*RepositoryStarState, error)
+	ToggleRepositoryStar(ctx context.Context, requesterID uuid.UUID, repoID uuid.UUID) (*RepositoryStarState, error)
+	ListMyStarredRepositories(ctx context.Context, requesterID uuid.UUID, pagination Pagination) ([]*model.Repository, int64, error)
+	ReindexSearchIndex(ctx context.Context, batchSize int) error
 
 	ListRepositoryTags(ctx context.Context) ([]*model.RepositoryTag, error)
 }
@@ -59,6 +63,7 @@ type ForkRepositoryInput struct {
 	Name              string
 	Slug              string
 	Description       string
+	Visibility        model.RepositoryVisibility
 }
 
 type RepositoryTagOutput struct {
@@ -69,4 +74,10 @@ type RepositoryTagOutput struct {
 	IsActive    bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type RepositoryStarState struct {
+	RepoID     uuid.UUID
+	Starred    bool
+	StarsCount int64
 }

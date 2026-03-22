@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -11,15 +12,17 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	commonv1 "github.com/Anabol1ks/Forklore/pkg/pb/common/v1"
+	contentv1 "github.com/Anabol1ks/Forklore/pkg/pb/content/v1"
 	repositoryv1 "github.com/Anabol1ks/Forklore/pkg/pb/repository/v1"
 )
 
 type RepositoryHandler struct {
-	client *clients.RepositoryClient
+	client        *clients.RepositoryClient
+	contentClient *clients.ContentClient
 }
 
-func NewRepositoryHandler(client *clients.RepositoryClient) *RepositoryHandler {
-	return &RepositoryHandler{client: client}
+func NewRepositoryHandler(client *clients.RepositoryClient, contentClient *clients.ContentClient) *RepositoryHandler {
+	return &RepositoryHandler{client: client, contentClient: contentClient}
 }
 
 // CreateRepository godoc
@@ -319,11 +322,8 @@ func (h *RepositoryHandler) ForkRepository(c *gin.Context) {
 
 	ctx := forwardAuth(c)
 
-	resp, err := h.client.Client.ForkRepository(ctx, &repositoryv1.ForkRepositoryRequest{
-		SourceRepoId: uuid,
-		Name:         req.Name,
-		Slug:         req.Slug,
-		Description:  req.Description,
+	_, err = h.client.Client.GetRepositoryById(ctx, &repositoryv1.GetRepositoryByIdRequest{
+		RepoId: uuid,
 	})
 	if err != nil {
 		code, errResp := handleGRPCError(err)
@@ -331,9 +331,162 @@ func (h *RepositoryHandler) ForkRepository(c *gin.Context) {
 		return
 	}
 
+	resp, err := h.client.Client.ForkRepository(ctx, &repositoryv1.ForkRepositoryRequest{
+		SourceRepoId: uuid,
+		Name:         req.Name,
+		Slug:         req.Slug,
+		Description:  req.Description,
+		Visibility:   toProtoVisibility(req.Visibility),
+	})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	forkedRepoID := resp.GetRepository().GetRepoId().GetValue()
+	if forkedRepoID != "" {
+		if copyErr := h.copyForkContent(ctx, repoID, forkedRepoID); copyErr != nil {
+			_, _ = h.client.Client.DeleteRepository(ctx, &repositoryv1.DeleteRepositoryRequest{
+				RepoId: &commonv1.UUID{Value: forkedRepoID},
+			})
+			code, errResp := handleGRPCError(copyErr)
+			c.JSON(code, errResp)
+			return
+		}
+	}
+
 	c.JSON(http.StatusCreated, models.ForkRepositoryResponse{
 		Repository: mapRepository(resp.GetRepository()),
 	})
+}
+
+func (h *RepositoryHandler) copyForkContent(ctx context.Context, sourceRepoID string, forkRepoID string) error {
+	if h.contentClient == nil {
+		return nil
+	}
+
+	if err := h.copyForkDocuments(ctx, sourceRepoID, forkRepoID); err != nil {
+		return err
+	}
+
+	if err := h.copyForkFiles(ctx, sourceRepoID, forkRepoID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *RepositoryHandler) copyForkDocuments(ctx context.Context, sourceRepoID string, forkRepoID string) error {
+	const pageSize = 100
+	offset := uint32(0)
+
+	for {
+		listResp, err := h.contentClient.Client.ListRepositoryDocuments(ctx, &contentv1.ListRepositoryDocumentsRequest{
+			RepoId: &commonv1.UUID{Value: sourceRepoID},
+			Limit:  pageSize,
+			Offset: offset,
+		})
+		if err != nil {
+			return err
+		}
+
+		documents := listResp.GetDocuments()
+		if len(documents) == 0 {
+			break
+		}
+
+		for _, srcDoc := range documents {
+			docID := srcDoc.GetDocumentId().GetValue()
+			if docID == "" {
+				continue
+			}
+
+			docResp, err := h.contentClient.Client.GetDocumentById(ctx, &contentv1.GetDocumentByIdRequest{
+				DocumentId: &commonv1.UUID{Value: docID},
+			})
+			if err != nil {
+				return err
+			}
+
+			if _, err := h.contentClient.Client.CreateDocument(ctx, &contentv1.CreateDocumentRequest{
+				RepoId:         &commonv1.UUID{Value: forkRepoID},
+				Title:          srcDoc.GetTitle(),
+				Slug:           srcDoc.GetSlug(),
+				Format:         srcDoc.GetFormat(),
+				InitialContent: docResp.GetCurrentVersion().GetContent(),
+				ChangeSummary:  "Fork copy",
+			}); err != nil {
+				return err
+			}
+		}
+
+		offset += uint32(len(documents))
+		if offset >= uint32(listResp.GetTotal()) {
+			break
+		}
+	}
+
+	return nil
+}
+
+func (h *RepositoryHandler) copyForkFiles(ctx context.Context, sourceRepoID string, forkRepoID string) error {
+	const pageSize = 100
+	offset := uint32(0)
+
+	for {
+		listResp, err := h.contentClient.Client.ListRepositoryFiles(ctx, &contentv1.ListRepositoryFilesRequest{
+			RepoId: &commonv1.UUID{Value: sourceRepoID},
+			Limit:  pageSize,
+			Offset: offset,
+		})
+		if err != nil {
+			return err
+		}
+
+		files := listResp.GetFiles()
+		if len(files) == 0 {
+			break
+		}
+
+		for _, srcFile := range files {
+			fileID := srcFile.GetFileId().GetValue()
+			if fileID == "" {
+				continue
+			}
+
+			fileResp, err := h.contentClient.Client.GetFileById(ctx, &contentv1.GetFileByIdRequest{
+				FileId: &commonv1.UUID{Value: fileID},
+			})
+			if err != nil {
+				return err
+			}
+
+			currentVersion := fileResp.GetCurrentVersion()
+			if currentVersion == nil {
+				continue
+			}
+
+			if _, err := h.contentClient.Client.CreateFile(ctx, &contentv1.CreateFileRequest{
+				RepoId:         &commonv1.UUID{Value: forkRepoID},
+				FileName:       srcFile.GetFileName(),
+				StorageKey:     currentVersion.GetStorageKey(),
+				MimeType:       currentVersion.GetMimeType(),
+				SizeBytes:      currentVersion.GetSizeBytes(),
+				ChecksumSha256: currentVersion.GetChecksumSha256(),
+				ChangeSummary:  "Fork copy",
+			}); err != nil {
+				return err
+			}
+		}
+
+		offset += uint32(len(files))
+		if offset >= uint32(listResp.GetTotal()) {
+			break
+		}
+	}
+
+	return nil
 }
 
 // ListMyRepositories godoc
@@ -463,6 +616,127 @@ func (h *RepositoryHandler) ListForks(c *gin.Context) {
 
 	resp, err := h.client.Client.ListForks(ctx, &repositoryv1.ListForksRequest{
 		RepoId: uuid,
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	repos := make([]models.RepositoryResponse, len(resp.GetRepositories()))
+	for i, r := range resp.GetRepositories() {
+		repos[i] = mapRepository(r)
+	}
+
+	c.JSON(http.StatusOK, models.ListRepositoriesResponse{
+		Repositories: repos,
+		Total:        resp.GetTotal(),
+	})
+}
+
+// GetRepositoryStarState godoc
+//
+//	@Summary		Получение состояния star репозитория
+//	@Description	Возвращает текущий статус star и общее число stars
+//	@Tags			repositories
+//	@Produce		json
+//	@Param			repo_id	path		string	true	"ID репозитория"
+//	@Success		200		{object}	models.RepositoryStarStateResponse
+//	@Failure		400		{object}	models.ErrorResponse	"Неверный формат ID"
+//	@Failure		403		{object}	models.ErrorResponse	"Доступ запрещён"
+//	@Failure		404		{object}	models.ErrorResponse	"Репозиторий не найден"
+//	@Failure		500		{object}	models.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/repositories/{repo_id}/star [get]
+func (h *RepositoryHandler) GetRepositoryStarState(c *gin.Context) {
+	repoID := c.Param("repo_id")
+
+	uuid, err := uuidFromString(repoID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "invalid repo_id format",
+		})
+		return
+	}
+
+	ctx := forwardAuth(c)
+	resp, err := h.client.Client.GetRepositoryStarState(ctx, &repositoryv1.GetRepositoryStarStateRequest{RepoId: uuid})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	c.JSON(http.StatusOK, models.RepositoryStarStateResponse{
+		RepoID:     resp.GetRepoId().GetValue(),
+		Starred:    resp.GetStarred(),
+		StarsCount: resp.GetStarsCount(),
+	})
+}
+
+// ToggleRepositoryStar godoc
+//
+//	@Summary		Переключение star у репозитория
+//	@Description	Ставит или снимает star для текущего пользователя
+//	@Tags			repositories
+//	@Produce		json
+//	@Param			repo_id	path		string	true	"ID репозитория"
+//	@Success		200		{object}	models.RepositoryStarStateResponse
+//	@Failure		400		{object}	models.ErrorResponse	"Неверный формат ID"
+//	@Failure		401		{object}	models.ErrorResponse	"Не авторизован"
+//	@Failure		403		{object}	models.ErrorResponse	"Доступ запрещён"
+//	@Failure		404		{object}	models.ErrorResponse	"Репозиторий не найден"
+//	@Failure		500		{object}	models.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/repositories/{repo_id}/star [post]
+func (h *RepositoryHandler) ToggleRepositoryStar(c *gin.Context) {
+	repoID := c.Param("repo_id")
+
+	uuid, err := uuidFromString(repoID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "invalid repo_id format",
+		})
+		return
+	}
+
+	ctx := forwardAuth(c)
+	resp, err := h.client.Client.ToggleRepositoryStar(ctx, &repositoryv1.ToggleRepositoryStarRequest{RepoId: uuid})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	c.JSON(http.StatusOK, models.RepositoryStarStateResponse{
+		RepoID:     resp.GetRepoId().GetValue(),
+		Starred:    resp.GetStarred(),
+		StarsCount: resp.GetStarsCount(),
+	})
+}
+
+// ListMyStarredRepositories godoc
+//
+//	@Summary		Получение списка избранных репозиториев
+//	@Description	Возвращает список репозиториев, которые текущий пользователь отметил star
+//	@Tags			repositories
+//	@Produce		json
+//	@Param			limit	query		integer	false	"Лимит элементов"	default(10)
+//	@Param			offset	query		integer	false	"Смещение"			default(0)
+//	@Success		200		{object}	models.ListRepositoriesResponse
+//	@Failure		401		{object}	models.ErrorResponse	"Не авторизован"
+//	@Failure		500		{object}	models.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/repositories/me/starred [get]
+func (h *RepositoryHandler) ListMyStarredRepositories(c *gin.Context) {
+	limit, offset := parsePagination(c)
+
+	ctx := forwardAuth(c)
+	resp, err := h.client.Client.ListMyStarredRepositories(ctx, &repositoryv1.ListMyStarredRepositoriesRequest{
 		Limit:  limit,
 		Offset: offset,
 	})

@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package forklore.ranking.events.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/ranking/events/v1;rankingeventsv1";
+
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "common/v1/common.proto";
+
+enum RankingEventType {
+  RANKING_EVENT_TYPE_UNSPECIFIED = 0;
+  RANKING_EVENT_TYPE_USER_FOLLOWED = 1;
+  RANKING_EVENT_TYPE_USER_UNFOLLOWED = 2;
+  RANKING_EVENT_TYPE_REPOSITORY_CREATED = 3;
+  RANKING_EVENT_TYPE_REPOSITORY_VISIBILITY_CHANGED = 4;
+  RANKING_EVENT_TYPE_REPOSITORY_STARRED = 5;
+  RANKING_EVENT_TYPE_REPOSITORY_UNSTARRED = 6;
+  RANKING_EVENT_TYPE_REPOSITORY_FORKED = 7;
+  RANKING_EVENT_TYPE_DOCUMENT_CREATED = 8;
+  RANKING_EVENT_TYPE_DOCUMENT_VERSION_CREATED = 9;
+  RANKING_EVENT_TYPE_FILE_CREATED = 10;
+  RANKING_EVENT_TYPE_FILE_VERSION_CREATED = 11;
+}
+
+message RankingEventEnvelope {
+  string event_id = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  RankingEventType event_type = 2;
+  google.protobuf.Timestamp occurred_at = 3 [(validate.rules).timestamp = {required: true}];
+
+  oneof payload {
+    UserFollowed user_followed = 10;
+    UserUnfollowed user_unfollowed = 11;
+    RepositoryCreated repository_created = 12;
+    RepositoryVisibilityChanged repository_visibility_changed = 13;
+    RepositoryStarred repository_starred = 14;
+    RepositoryUnstarred repository_unstarred = 15;
+    RepositoryForked repository_forked = 16;
+    DocumentCreated document_created = 17;
+    DocumentVersionCreated document_version_created = 18;
+    FileCreated file_created = 19;
+    FileVersionCreated file_version_created = 20;
+  }
+}
+
+message UserFollowed {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+  int64 delta = 2;
+}
+
+message UserUnfollowed {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+  int64 delta = 2;
+}
+
+message RepositoryCreated {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+  bool is_public = 4;
+}
+
+message RepositoryVisibilityChanged {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+  bool is_public = 4;
+  int64 delta = 5;
+}
+
+message RepositoryStarred {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+  int64 delta = 4;
+}
+
+message RepositoryUnstarred {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+  int64 delta = 4;
+}
+
+message RepositoryForked {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+  int64 delta = 4;
+}
+
+message DocumentCreated {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+}
+
+message DocumentVersionCreated {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+}
+
+message FileCreated {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+}
+
+message FileVersionCreated {
+  common.v1.UUID owner_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID repo_id = 2 [(validate.rules).message = {required: true}];
+  common.v1.UUID tag_id = 3 [(validate.rules).message = {required: true}];
+}

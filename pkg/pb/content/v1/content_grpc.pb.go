@@ -37,6 +37,7 @@ const (
 	ContentService_ListFileVersions_FullMethodName        = "/forklore.content.v1.ContentService/ListFileVersions"
 	ContentService_RestoreFileVersion_FullMethodName      = "/forklore.content.v1.ContentService/RestoreFileVersion"
 	ContentService_DeleteFile_FullMethodName              = "/forklore.content.v1.ContentService/DeleteFile"
+	ContentService_GetFileStorageInfo_FullMethodName      = "/forklore.content.v1.ContentService/GetFileStorageInfo"
 )
 
 // ContentServiceClient is the client API for ContentService service.
@@ -62,6 +63,7 @@ type ContentServiceClient interface {
 	ListFileVersions(ctx context.Context, in *ListFileVersionsRequest, opts ...grpc.CallOption) (*ListFileVersionsResponse, error)
 	RestoreFileVersion(ctx context.Context, in *RestoreFileVersionRequest, opts ...grpc.CallOption) (*AddFileVersionResponse, error)
 	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetFileStorageInfo(ctx context.Context, in *GetFileStorageInfoRequest, opts ...grpc.CallOption) (*GetFileStorageInfoResponse, error)
 }
 
 type contentServiceClient struct {
@@ -242,6 +244,16 @@ func (c *contentServiceClient) DeleteFile(ctx context.Context, in *DeleteFileReq
 	return out, nil
 }
 
+func (c *contentServiceClient) GetFileStorageInfo(ctx context.Context, in *GetFileStorageInfoRequest, opts ...grpc.CallOption) (*GetFileStorageInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFileStorageInfoResponse)
+	err := c.cc.Invoke(ctx, ContentService_GetFileStorageInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContentServiceServer is the server API for ContentService service.
 // All implementations must embed UnimplementedContentServiceServer
 // for forward compatibility.
@@ -265,6 +277,7 @@ type ContentServiceServer interface {
 	ListFileVersions(context.Context, *ListFileVersionsRequest) (*ListFileVersionsResponse, error)
 	RestoreFileVersion(context.Context, *RestoreFileVersionRequest) (*AddFileVersionResponse, error)
 	DeleteFile(context.Context, *DeleteFileRequest) (*emptypb.Empty, error)
+	GetFileStorageInfo(context.Context, *GetFileStorageInfoRequest) (*GetFileStorageInfoResponse, error)
 	mustEmbedUnimplementedContentServiceServer()
 }
 
@@ -325,6 +338,9 @@ func (UnimplementedContentServiceServer) RestoreFileVersion(context.Context, *Re
 }
 func (UnimplementedContentServiceServer) DeleteFile(context.Context, *DeleteFileRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
+}
+func (UnimplementedContentServiceServer) GetFileStorageInfo(context.Context, *GetFileStorageInfoRequest) (*GetFileStorageInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFileStorageInfo not implemented")
 }
 func (UnimplementedContentServiceServer) mustEmbedUnimplementedContentServiceServer() {}
 func (UnimplementedContentServiceServer) testEmbeddedByValue()                        {}
@@ -653,6 +669,24 @@ func _ContentService_DeleteFile_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContentService_GetFileStorageInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFileStorageInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServiceServer).GetFileStorageInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContentService_GetFileStorageInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServiceServer).GetFileStorageInfo(ctx, req.(*GetFileStorageInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ContentService_ServiceDesc is the grpc.ServiceDesc for ContentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -727,6 +761,10 @@ var ContentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteFile",
 			Handler:    _ContentService_DeleteFile_Handler,
+		},
+		{
+			MethodName: "GetFileStorageInfo",
+			Handler:    _ContentService_GetFileStorageInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

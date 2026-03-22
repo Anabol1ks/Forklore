@@ -23,6 +23,20 @@ interface RepositoryResponse {
   slug?: string;
 }
 
+type RepositoryTag = {
+  tag_id: string;
+  name: string;
+};
+
+type UniversityKey = "МИРЭА" | "МГУ";
+
+const UNIVERSITY_KEYS: UniversityKey[] = ["МИРЭА", "МГУ"];
+const QUICK_SUBJECT_LIMIT = 8;
+
+function stripUniversityPrefix(tagName: string): string {
+  return tagName.replace(/^МИРЭА •\s*/, "").replace(/^МГУ •\s*/, "");
+}
+
 const cyrillicToLatinMap: Record<string, string> = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e",
   ж: "zh", з: "z", и: "i", й: "y", к: "k", л: "l", м: "m",
@@ -52,19 +66,76 @@ export default function CreateRepoPage() {
   const [visibility, setVisibility] = useState("public");
   const [type, setType] = useState("mixed");
   const [tagId, setTagId] = useState("");
-  const [tags, setTags] = useState<{ tag_id: string; name: string }[]>([]);
+  const [tags, setTags] = useState<RepositoryTag[]>([]);
+  const [selectedUniversity, setSelectedUniversity] = useState<UniversityKey | "">("");
+  const [subjectQuery, setSubjectQuery] = useState("");
+  const [activeSubjectIndex, setActiveSubjectIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user } = useAuthStore();
   const selectedTagName = useMemo(() => tags.find((tag) => tag.tag_id === tagId)?.name, [tags, tagId]);
   const slugPreview = useMemo(() => slugifyRepositoryName(name), [name]);
 
+  const universityTags = useMemo(() => {
+    const groups: Record<UniversityKey, RepositoryTag[]> = {
+      МИРЭА: [],
+      МГУ: [],
+    };
+
+    for (const tag of tags) {
+      if (tag.name.startsWith("МИРЭА • ")) {
+        groups.МИРЭА.push(tag);
+      } else if (tag.name.startsWith("МГУ • ")) {
+        groups.МГУ.push(tag);
+      }
+    }
+
+    return groups;
+  }, [tags]);
+
+  const selectedUniversityTags = useMemo(() => {
+    if (!selectedUniversity) {
+      return [];
+    }
+
+    return universityTags[selectedUniversity];
+  }, [selectedUniversity, universityTags]);
+
+  const filteredSubjects = useMemo(() => {
+    const query = subjectQuery.trim().toLowerCase();
+    if (!query) {
+      return selectedUniversityTags;
+    }
+
+    return selectedUniversityTags.filter((tag) => tag.name.toLowerCase().includes(query));
+  }, [selectedUniversityTags, subjectQuery]);
+
+  const quickSubjects = useMemo(() => filteredSubjects.slice(0, QUICK_SUBJECT_LIMIT), [filteredSubjects]);
+
+  useEffect(() => {
+    if (filteredSubjects.length === 0) {
+      setActiveSubjectIndex(-1);
+      return;
+    }
+
+    setActiveSubjectIndex((prev) => {
+      if (prev < 0) {
+        return 0;
+      }
+      if (prev >= filteredSubjects.length) {
+        return filteredSubjects.length - 1;
+      }
+      return prev;
+    });
+  }, [filteredSubjects]);
+
   useEffect(() => {
     const fetchTags = async () => {
       try {
         const res = await api.get("/repositories/tags");
         if (res.data?.tags) {
-          setTags(res.data.tags);
+          const nextTags = (res.data.tags as RepositoryTag[]) || [];
+          setTags(nextTags);
         }
       } catch (err) {
         console.error("Failed to load tags:", err);
@@ -73,6 +144,18 @@ export default function CreateRepoPage() {
     };
     fetchTags();
   }, []);
+
+  useEffect(() => {
+    const selected = tags.find((tag) => tag.tag_id === tagId);
+    if (!selected) {
+      return;
+    }
+    if (selected.name.startsWith("МИРЭА • ")) {
+      setSelectedUniversity("МИРЭА");
+    } else if (selected.name.startsWith("МГУ • ")) {
+      setSelectedUniversity("МГУ");
+    }
+  }, [tagId, tags]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,21 +259,143 @@ export default function CreateRepoPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Тег репозитория *</Label>
-              <Select value={tagId} onValueChange={(val) => setTagId(val ?? "") }>
+              <Label>Вуз *</Label>
+              <Select
+                value={selectedUniversity}
+                onValueChange={(val) => {
+                  const nextUniversity = (val as UniversityKey) || "";
+                  setSelectedUniversity(nextUniversity);
+                  setSubjectQuery("");
+                  setTagId("");
+                }}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder={tags.length > 0 ? "Выберите тег" : "Загрузка тегов..."}>
-                    {selectedTagName}
-                  </SelectValue>
+                  <SelectValue placeholder="Выберите университет" />
                 </SelectTrigger>
                 <SelectContent>
-                  {tags.map((t) => (
-                    <SelectItem key={t.tag_id} value={t.tag_id}>
-                      {t.name}
+                  {UNIVERSITY_KEYS.map((university) => (
+                    <SelectItem key={university} value={university}>
+                      {university}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="subject-query">Поиск предмета</Label>
+              <Input
+                id="subject-query"
+                value={subjectQuery}
+                onChange={(event) => setSubjectQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (!selectedUniversity || filteredSubjects.length === 0) {
+                    return;
+                  }
+
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    setActiveSubjectIndex((prev) => {
+                      const next = prev < filteredSubjects.length - 1 ? prev + 1 : 0;
+                      setTagId(filteredSubjects[next].tag_id);
+                      return next;
+                    });
+                    return;
+                  }
+
+                  if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    setActiveSubjectIndex((prev) => {
+                      const next = prev > 0 ? prev - 1 : filteredSubjects.length - 1;
+                      setTagId(filteredSubjects[next].tag_id);
+                      return next;
+                    });
+                    return;
+                  }
+
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    const current = activeSubjectIndex >= 0 ? activeSubjectIndex : 0;
+                    const selected = filteredSubjects[current];
+                    if (selected) {
+                      setTagId(selected.tag_id);
+                    }
+                  }
+                }}
+                placeholder={selectedUniversity ? "Начните вводить предмет" : "Сначала выберите вуз"}
+                disabled={!selectedUniversity}
+              />
+              {selectedUniversity && quickSubjects.length > 0 ? (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {quickSubjects.map((subject) => (
+                    <Button
+                      key={`quick-${subject.tag_id}`}
+                      type="button"
+                      size="sm"
+                      variant={tagId === subject.tag_id ? "default" : "outline"}
+                      onClick={() => setTagId(subject.tag_id)}
+                    >
+                      {stripUniversityPrefix(subject.name)}
+                    </Button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Предмет (тег репозитория) *</Label>
+              {!selectedUniversity ? (
+                <div className="rounded-md border border-dashed px-3 py-6 text-sm text-muted-foreground">
+                  Сначала выберите вуз, затем начните вводить название предмета.
+                </div>
+              ) : null}
+
+              {selectedUniversity ? (
+                <div className="rounded-md border bg-card">
+                  <div className="max-h-64 overflow-y-auto p-2 space-y-1">
+                    {filteredSubjects.length === 0 ? (
+                      <p className="px-2 py-3 text-sm text-muted-foreground">По вашему запросу предметы не найдены.</p>
+                    ) : (
+                      filteredSubjects.map((subject, index) => {
+                        const isSelected = tagId === subject.tag_id;
+                        const isActive = activeSubjectIndex === index;
+
+                        return (
+                          <button
+                            key={subject.tag_id}
+                            type="button"
+                            className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
+                              isSelected
+                                ? "bg-primary text-primary-foreground"
+                                : isActive
+                                  ? "bg-muted"
+                                  : "hover:bg-muted"
+                            }`}
+                            onMouseEnter={() => setActiveSubjectIndex(index)}
+                            onClick={() => {
+                              setActiveSubjectIndex(index);
+                              setTagId(subject.tag_id);
+                            }}
+                          >
+                            {stripUniversityPrefix(subject.name)}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              ) : null}
+
+              <p className="text-sm text-muted-foreground">
+                {selectedTagName
+                  ? `Выбран предмет: ${stripUniversityPrefix(selectedTagName)}`
+                  : "Предмет пока не выбран."}
+              </p>
+              {selectedUniversity ? (
+                <p className="text-xs text-muted-foreground">
+                  Выбрано: {selectedUniversity}. Доступно предметов: {selectedUniversityTags.length}.
+                </p>
+              ) : null}
             </div>
 
           </CardContent>

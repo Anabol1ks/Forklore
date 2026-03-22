@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package forklore.ranking.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/ranking/v1;rankingv1";
+
+import "validate/validate.proto";
+import "common/v1/common.proto";
+
+service RankingService {
+  rpc GetOverallLeaderboard(GetLeaderboardRequest) returns (GetLeaderboardResponse);
+  rpc GetMonthlyLeaderboard(GetLeaderboardRequest) returns (GetLeaderboardResponse);
+  rpc GetSubjectLeaderboard(GetSubjectLeaderboardRequest) returns (GetLeaderboardResponse);
+}
+
+message GetLeaderboardRequest {
+  uint32 limit = 1 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 2;
+}
+
+message GetSubjectLeaderboardRequest {
+  common.v1.UUID tag_id = 1 [(validate.rules).message = {required: true}];
+  uint32 limit = 2 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 3;
+}
+
+message LeaderboardEntry {
+  common.v1.UUID user_id = 1;
+  common.v1.UUID tag_id = 2;
+  string username = 3;
+  string display_name = 4;
+  string avatar_url = 5;
+  string title_label = 6;
+  double score = 7;
+
+  int64 followers_count = 8;
+  int64 followers_gained_30d = 9;
+  int64 stars_received_total = 10;
+  int64 stars_received_30d = 11;
+  int64 forks_received_total = 12;
+  int64 forks_received_30d = 13;
+  int64 public_repositories_count = 14;
+  int64 activity_points_total = 15;
+  int64 activity_points_30d = 16;
+  int64 active_weeks_last_8 = 17;
+  int64 active_months_count = 18;
+  double subject_score = 19;
+}
+
+message GetLeaderboardResponse {
+  repeated LeaderboardEntry entries = 1;
+  uint64 total = 2;
+}

@@ -4,7 +4,10 @@ import (
 	"auth-service/internal/domain"
 	"auth-service/internal/service"
 	"context"
+	"time"
 
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -14,12 +17,24 @@ import (
 
 type AuthHandler struct {
 	authv1.UnimplementedAuthServiceServer
-	authService service.AuthService
+	authService    service.AuthService
+	eventPublisher UserRegisteredPublisher
+	logger         *zap.Logger
 }
 
-func NewAuthHandler(authService service.AuthService) *AuthHandler {
+type UserRegisteredPublisher interface {
+	PublishUserRegistered(ctx context.Context, userID uuid.UUID, username, email string) error
+}
+
+func NewAuthHandler(authService service.AuthService, eventPublisher UserRegisteredPublisher, logger *zap.Logger) *AuthHandler {
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+
 	return &AuthHandler{
-		authService: authService,
+		authService:    authService,
+		eventPublisher: eventPublisher,
+		logger:         logger,
 	}
 }
 
@@ -41,6 +56,8 @@ func (h *AuthHandler) Register(ctx context.Context, req *authv1.RegisterRequest)
 	if err != nil {
 		return nil, ToGRPCError(err)
 	}
+
+	h.publishUserRegisteredEvent(ctx, out)
 
 	return toProtoAuthResponse(out), nil
 }
@@ -149,4 +166,26 @@ func validateProto(v protoValidator) error {
 		return status.Error(codes.InvalidArgument, err.Error())
 	}
 	return nil
+}
+
+func (h *AuthHandler) publishUserRegisteredEvent(ctx context.Context, out *service.AuthOutput) {
+	if h.eventPublisher == nil || out == nil || out.User == nil {
+		return
+	}
+
+	publishCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	if err := h.eventPublisher.PublishUserRegistered(
+		publishCtx,
+		out.User.ID,
+		out.User.Username,
+		out.User.Email,
+	); err != nil {
+		h.logger.Warn("failed to publish user.registered event",
+			zap.String("user_id", out.User.ID.String()),
+			zap.String("username", out.User.Username),
+			zap.Error(err),
+		)
+	}
 }

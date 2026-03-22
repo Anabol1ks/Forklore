@@ -11,6 +11,7 @@ type Repository struct {
 
 	Repo RepoRepository
 	Tag  TagRepository
+	Star RepositoryStarRepository
 }
 
 type ListParams struct {
@@ -23,6 +24,7 @@ func New(db *gorm.DB) *Repository {
 		db:   db,
 		Repo: NewRepoRepository(db),
 		Tag:  NewTagRepository(db),
+		Star: NewRepositoryStarRepository(db),
 	}
 }
 

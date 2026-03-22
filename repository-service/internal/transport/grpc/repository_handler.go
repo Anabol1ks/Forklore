@@ -240,6 +240,7 @@ func (h *RepositoryHandler) ForkRepository(ctx context.Context, req *repositoryv
 		Name:              req.GetName(),
 		Slug:              req.GetSlug(),
 		Description:       req.GetDescription(),
+		Visibility:        toModelRepositoryVisibility(req.GetVisibility()),
 	})
 	if err != nil {
 		return nil, LogAndMapError(h.logger, "fork repository failed", err,
@@ -357,6 +358,89 @@ func (h *RepositoryHandler) ListForks(ctx context.Context, req *repositoryv1.Lis
 		zap.Int("count", len(repos)),
 		zap.Uint64("total", uint64(total)),
 	)
+
+	return &repositoryv1.ListRepositoriesResponse{
+		Repositories: toProtoRepositories(repos),
+		Total:        uint64(total),
+	}, nil
+}
+
+func (h *RepositoryHandler) GetRepositoryStarState(ctx context.Context, req *repositoryv1.GetRepositoryStarStateRequest) (*repositoryv1.RepositoryStarStateResponse, error) {
+	if err := validateProto(req); err != nil {
+		return nil, err
+	}
+
+	repoID, err := parseProtoUUID(req.GetRepoId(), "repo_id")
+	if err != nil {
+		return nil, err
+	}
+
+	requesterID := requesterIDFromContext(ctx)
+
+	state, err := h.service.GetRepositoryStarState(ctx, requesterID, repoID)
+	if err != nil {
+		return nil, LogAndMapError(h.logger, "get repository star state failed", err,
+			zap.String("repo_id", repoID.String()),
+			zap.String("requester_id", requesterID.String()),
+		)
+	}
+
+	return &repositoryv1.RepositoryStarStateResponse{
+		RepoId:     toProtoUUID(state.RepoID),
+		Starred:    state.Starred,
+		StarsCount: uint64(state.StarsCount),
+	}, nil
+}
+
+func (h *RepositoryHandler) ToggleRepositoryStar(ctx context.Context, req *repositoryv1.ToggleRepositoryStarRequest) (*repositoryv1.RepositoryStarStateResponse, error) {
+	if err := validateProto(req); err != nil {
+		return nil, err
+	}
+
+	claims, ok := ClaimsFromContext(ctx)
+	if !ok {
+		return nil, LogAndMapError(h.logger, "toggle repository star: missing claims", domain.ErrUnauthorized)
+	}
+
+	repoID, err := parseProtoUUID(req.GetRepoId(), "repo_id")
+	if err != nil {
+		return nil, err
+	}
+
+	state, err := h.service.ToggleRepositoryStar(ctx, claims.UserID, repoID)
+	if err != nil {
+		return nil, LogAndMapError(h.logger, "toggle repository star failed", err,
+			zap.String("repo_id", repoID.String()),
+			zap.String("requester_id", claims.UserID.String()),
+		)
+	}
+
+	return &repositoryv1.RepositoryStarStateResponse{
+		RepoId:     toProtoUUID(state.RepoID),
+		Starred:    state.Starred,
+		StarsCount: uint64(state.StarsCount),
+	}, nil
+}
+
+func (h *RepositoryHandler) ListMyStarredRepositories(ctx context.Context, req *repositoryv1.ListMyStarredRepositoriesRequest) (*repositoryv1.ListRepositoriesResponse, error) {
+	if err := validateProto(req); err != nil {
+		return nil, err
+	}
+
+	claims, ok := ClaimsFromContext(ctx)
+	if !ok {
+		return nil, LogAndMapError(h.logger, "list my starred repositories: missing claims", domain.ErrUnauthorized)
+	}
+
+	repos, total, err := h.service.ListMyStarredRepositories(ctx, claims.UserID, service.Pagination{
+		Limit:  int(req.GetLimit()),
+		Offset: int(req.GetOffset()),
+	})
+	if err != nil {
+		return nil, LogAndMapError(h.logger, "list my starred repositories failed", err,
+			zap.String("owner_id", claims.UserID.String()),
+		)
+	}
 
 	return &repositoryv1.ListRepositoriesResponse{
 		Repositories: toProtoRepositories(repos),

@@ -369,6 +369,17 @@ func (m *Repository) validate(all bool) error {
 		}
 	}
 
+	if utf8.RuneCountInString(m.GetOwnerUsername()) > 32 {
+		err := RepositoryValidationError{
+			field:  "OwnerUsername",
+			reason: "value length must be at most 32 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if m.GetTagId() == nil {
 		err := RepositoryValidationError{
 			field:  "TagId",
@@ -2001,6 +2012,8 @@ func (m *ForkRepositoryRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for Visibility
+
 	if len(errors) > 0 {
 		return ForkRepositoryRequestMultiError(errors)
 	}
@@ -2909,3 +2922,543 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListRepositoryTagsResponseValidationError{}
+
+// Validate checks the field values on GetRepositoryStarStateRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetRepositoryStarStateRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetRepositoryStarStateRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// GetRepositoryStarStateRequestMultiError, or nil if none found.
+func (m *GetRepositoryStarStateRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetRepositoryStarStateRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetRepoId() == nil {
+		err := GetRepositoryStarStateRequestValidationError{
+			field:  "RepoId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetRepoId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetRepositoryStarStateRequestValidationError{
+					field:  "RepoId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetRepositoryStarStateRequestValidationError{
+					field:  "RepoId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRepoId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetRepositoryStarStateRequestValidationError{
+				field:  "RepoId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetRepositoryStarStateRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetRepositoryStarStateRequestMultiError is an error wrapping multiple
+// validation errors returned by GetRepositoryStarStateRequest.ValidateAll()
+// if the designated constraints aren't met.
+type GetRepositoryStarStateRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetRepositoryStarStateRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetRepositoryStarStateRequestMultiError) AllErrors() []error { return m }
+
+// GetRepositoryStarStateRequestValidationError is the validation error
+// returned by GetRepositoryStarStateRequest.Validate if the designated
+// constraints aren't met.
+type GetRepositoryStarStateRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetRepositoryStarStateRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetRepositoryStarStateRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetRepositoryStarStateRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetRepositoryStarStateRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetRepositoryStarStateRequestValidationError) ErrorName() string {
+	return "GetRepositoryStarStateRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetRepositoryStarStateRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetRepositoryStarStateRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetRepositoryStarStateRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetRepositoryStarStateRequestValidationError{}
+
+// Validate checks the field values on ToggleRepositoryStarRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ToggleRepositoryStarRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ToggleRepositoryStarRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ToggleRepositoryStarRequestMultiError, or nil if none found.
+func (m *ToggleRepositoryStarRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ToggleRepositoryStarRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetRepoId() == nil {
+		err := ToggleRepositoryStarRequestValidationError{
+			field:  "RepoId",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetRepoId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ToggleRepositoryStarRequestValidationError{
+					field:  "RepoId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ToggleRepositoryStarRequestValidationError{
+					field:  "RepoId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRepoId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ToggleRepositoryStarRequestValidationError{
+				field:  "RepoId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ToggleRepositoryStarRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ToggleRepositoryStarRequestMultiError is an error wrapping multiple
+// validation errors returned by ToggleRepositoryStarRequest.ValidateAll() if
+// the designated constraints aren't met.
+type ToggleRepositoryStarRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ToggleRepositoryStarRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ToggleRepositoryStarRequestMultiError) AllErrors() []error { return m }
+
+// ToggleRepositoryStarRequestValidationError is the validation error returned
+// by ToggleRepositoryStarRequest.Validate if the designated constraints
+// aren't met.
+type ToggleRepositoryStarRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ToggleRepositoryStarRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ToggleRepositoryStarRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ToggleRepositoryStarRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ToggleRepositoryStarRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ToggleRepositoryStarRequestValidationError) ErrorName() string {
+	return "ToggleRepositoryStarRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ToggleRepositoryStarRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sToggleRepositoryStarRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ToggleRepositoryStarRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ToggleRepositoryStarRequestValidationError{}
+
+// Validate checks the field values on ListMyStarredRepositoriesRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ListMyStarredRepositoriesRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListMyStarredRepositoriesRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ListMyStarredRepositoriesRequestMultiError, or nil if none found.
+func (m *ListMyStarredRepositoriesRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListMyStarredRepositoriesRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if val := m.GetLimit(); val < 1 || val > 100 {
+		err := ListMyStarredRepositoriesRequestValidationError{
+			field:  "Limit",
+			reason: "value must be inside range [1, 100]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Offset
+
+	if len(errors) > 0 {
+		return ListMyStarredRepositoriesRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListMyStarredRepositoriesRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// ListMyStarredRepositoriesRequest.ValidateAll() if the designated
+// constraints aren't met.
+type ListMyStarredRepositoriesRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListMyStarredRepositoriesRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListMyStarredRepositoriesRequestMultiError) AllErrors() []error { return m }
+
+// ListMyStarredRepositoriesRequestValidationError is the validation error
+// returned by ListMyStarredRepositoriesRequest.Validate if the designated
+// constraints aren't met.
+type ListMyStarredRepositoriesRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListMyStarredRepositoriesRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListMyStarredRepositoriesRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListMyStarredRepositoriesRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListMyStarredRepositoriesRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListMyStarredRepositoriesRequestValidationError) ErrorName() string {
+	return "ListMyStarredRepositoriesRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListMyStarredRepositoriesRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListMyStarredRepositoriesRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListMyStarredRepositoriesRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListMyStarredRepositoriesRequestValidationError{}
+
+// Validate checks the field values on RepositoryStarStateResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RepositoryStarStateResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RepositoryStarStateResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RepositoryStarStateResponseMultiError, or nil if none found.
+func (m *RepositoryStarStateResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RepositoryStarStateResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetRepoId()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RepositoryStarStateResponseValidationError{
+					field:  "RepoId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RepositoryStarStateResponseValidationError{
+					field:  "RepoId",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRepoId()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RepositoryStarStateResponseValidationError{
+				field:  "RepoId",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Starred
+
+	// no validation rules for StarsCount
+
+	if len(errors) > 0 {
+		return RepositoryStarStateResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// RepositoryStarStateResponseMultiError is an error wrapping multiple
+// validation errors returned by RepositoryStarStateResponse.ValidateAll() if
+// the designated constraints aren't met.
+type RepositoryStarStateResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RepositoryStarStateResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RepositoryStarStateResponseMultiError) AllErrors() []error { return m }
+
+// RepositoryStarStateResponseValidationError is the validation error returned
+// by RepositoryStarStateResponse.Validate if the designated constraints
+// aren't met.
+type RepositoryStarStateResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RepositoryStarStateResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RepositoryStarStateResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RepositoryStarStateResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RepositoryStarStateResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RepositoryStarStateResponseValidationError) ErrorName() string {
+	return "RepositoryStarStateResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RepositoryStarStateResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRepositoryStarStateResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RepositoryStarStateResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RepositoryStarStateResponseValidationError{}

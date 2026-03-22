@@ -2,10 +2,13 @@ package migrations
 
 import (
 	"context"
+	"fmt"
 	"repository-service/internal/model"
+	"strings"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
@@ -24,6 +27,7 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 	modelsAny := []any{
 		&model.RepositoryTag{},
 		&model.Repository{},
+		&model.RepositoryStar{},
 	}
 	if err := db.AutoMigrate(modelsAny...); err != nil {
 		log.Error("Не удалось создать базовые таблицы", zap.Error(err))
@@ -112,6 +116,12 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 			ON repositories(visibility) WHERE deleted_at IS NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_repositories_created_at_active
 			ON repositories(created_at DESC) WHERE deleted_at IS NULL`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS uq_repository_stars_user_repo
+			ON repository_stars(user_id, repo_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_repository_stars_user_created_at
+			ON repository_stars(user_id, created_at DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_repository_stars_repo_id
+			ON repository_stars(repo_id)`,
 	}
 	for _, idx := range indexes {
 		if err := db.Exec(idx).Error; err != nil {
@@ -121,27 +131,110 @@ func AutoMigrate(ctx context.Context, db *gorm.DB, log *zap.Logger) error {
 	}
 	log.Info("Частичные индексы успешно созданы")
 
-	// Вставка дефолтных тегов (без дублирования по slug)
-	insertTagsSQL := `INSERT INTO repository_tags (name, slug, description)
-	VALUES
-		('Математика', 'mathematics', 'Материалы по математике'),
-		('Физика', 'physics', 'Материалы по физике'),
-		('Программирование', 'programming', 'Материалы по программированию'),
-		('Алгоритмы', 'algorithms', 'Алгоритмы и структуры данных'),
-		('Базы данных', 'databases', 'Материалы по базам данных'),
-		('Машинное обучение', 'machine-learning', 'ML и AI'),
-		('Сети', 'networks', 'Компьютерные сети'),
-		('Операционные системы', 'operating-systems', 'ОС и системное ПО'),
-		('Экономика', 'economics', 'Материалы по экономике'),
-		('Право', 'law', 'Материалы по праву')
-	ON CONFLICT (slug) DO NOTHING;`
+	if err := seedDefaultTags(db, log); err != nil {
+		return err
+	}
 
-	if err := db.Exec(insertTagsSQL).Error; err != nil {
+	if err := seedUniversitySubjectTags(db, log); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func seedDefaultTags(db *gorm.DB, log *zap.Logger) error {
+	defaultTags := []*model.RepositoryTag{
+		{Name: "Математика", Slug: "mathematics", Description: stringPtr("Материалы по математике"), IsActive: true},
+		{Name: "Физика", Slug: "physics", Description: stringPtr("Материалы по физике"), IsActive: true},
+		{Name: "Программирование", Slug: "programming", Description: stringPtr("Материалы по программированию"), IsActive: true},
+		{Name: "Алгоритмы", Slug: "algorithms", Description: stringPtr("Алгоритмы и структуры данных"), IsActive: true},
+		{Name: "Базы данных", Slug: "databases", Description: stringPtr("Материалы по базам данных"), IsActive: true},
+		{Name: "Машинное обучение", Slug: "machine-learning", Description: stringPtr("ML и AI"), IsActive: true},
+		{Name: "Сети", Slug: "networks", Description: stringPtr("Компьютерные сети"), IsActive: true},
+		{Name: "Операционные системы", Slug: "operating-systems", Description: stringPtr("ОС и системное ПО"), IsActive: true},
+		{Name: "Экономика", Slug: "economics", Description: stringPtr("Материалы по экономике"), IsActive: true},
+		{Name: "Право", Slug: "law", Description: stringPtr("Материалы по праву"), IsActive: true},
+	}
+
+	if err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "slug"}},
+		DoNothing: true,
+	}).Create(&defaultTags).Error; err != nil {
 		log.Error("Не удалось вставить дефолтные теги", zap.Error(err))
 		return err
 	}
 
 	return nil
+}
+
+func seedUniversitySubjectTags(db *gorm.DB, log *zap.Logger) error {
+	mireaSubjects := []string{
+		"Высшая математика", "Линейная алгебра", "Аналитическая геометрия", "Дискретная математика", "Теория вероятностей",
+		"Математическая статистика", "Физика", "Теоретическая механика", "Электротехника", "Электроника",
+		"Цифровая схемотехника", "Архитектура ЭВМ", "Операционные системы", "Компьютерные сети", "Системное программирование",
+		"Программирование на C", "Программирование на C++", "Программирование на Java", "Программирование на Python", "Веб-программирование",
+		"Алгоритмы и структуры данных", "Базы данных", "Проектирование БД", "Инженерия ПО", "Тестирование ПО",
+		"DevOps", "Контейнеризация", "Микросервисы", "Информационная безопасность", "Криптография",
+		"Защита информации", "Машинное обучение", "Нейронные сети", "Компьютерное зрение", "Обработка сигналов",
+		"Цифровая обработка изображений", "Робототехника", "Микроконтроллеры", "Встраиваемые системы", "Телекоммуникации",
+		"Радиотехника", "Теория автоматического управления", "Моделирование систем", "САПР", "Экономика ИТ",
+		"Менеджмент проектов", "Английский для ИТ", "Право в ИТ", "Научно-исследовательская работа", "Подготовка ВКР",
+	}
+
+	mguSubjects := []string{
+		"Математический анализ", "Линейная алгебра", "Дифференциальные уравнения", "Функциональный анализ", "Теория чисел",
+		"Топология", "Дифференциальная геометрия", "Теория вероятностей", "Математическая статистика", "Математическая логика",
+		"Алгебра", "Комплексный анализ", "Уравнения матфизики", "Численные методы", "Оптимизация",
+		"Физика", "Квантовая механика", "Электродинамика", "Термодинамика", "Статистическая физика",
+		"Астрономия", "Методы вычислений", "Информатика", "Алгоритмы", "Структуры данных",
+		"Программирование на Python", "Программирование на C++", "Системы управления БД", "Машинное обучение", "Искусственный интеллект",
+		"Компьютерная лингвистика", "Биоинформатика", "Эконометрика", "Теория игр", "Макроэкономика",
+		"Микроэкономика", "Финансовая математика", "Право", "Конституционное право", "Международное право",
+		"История", "Философия", "Социология", "Политология", "Психология",
+		"Академическое письмо", "Английский язык", "Немецкий язык", "Научный семинар", "Подготовка ВКР",
+	}
+
+	tags := make([]*model.RepositoryTag, 0, 100)
+	tags = append(tags, buildUniversityTags("МИРЭА", "mirea", mireaSubjects)...)
+	tags = append(tags, buildUniversityTags("МГУ", "msu", mguSubjects)...)
+
+	if err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "slug"}},
+		DoNothing: true,
+	}).Create(&tags).Error; err != nil {
+		log.Error("Не удалось вставить университетские предметные теги", zap.Error(err))
+		return err
+	}
+
+	log.Info("Университетские предметные теги готовы", zap.Int("count", len(tags)))
+	return nil
+}
+
+func buildUniversityTags(universityName, universitySlug string, subjects []string) []*model.RepositoryTag {
+	tags := make([]*model.RepositoryTag, 0, len(subjects))
+	for index, subject := range subjects {
+		subject = strings.TrimSpace(subject)
+		if subject == "" {
+			continue
+		}
+
+		name := fmt.Sprintf("%s • %s", universityName, subject)
+		slug := fmt.Sprintf("%s-subject-%02d", universitySlug, index+1)
+		description := fmt.Sprintf("%s: %s", universityName, subject)
+
+		tags = append(tags, &model.RepositoryTag{
+			Name:        name,
+			Slug:        slug,
+			Description: stringPtr(description),
+			IsActive:    true,
+		})
+	}
+
+	return tags
+}
+
+func stringPtr(v string) *string {
+	return &v
 }
 
 // addConstraintIfNotExists добавляет ограничение, если оно ещё не существует.

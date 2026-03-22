@@ -1,0 +1,205 @@
+syntax = "proto3";
+
+package forklore.profile.v1;
+
+option go_package = "github.com/Anabol1ks/Forklore/pkg/pb/profile/v1;profilev1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "common/v1/common.proto";
+
+service ProfileService {
+  rpc GetMyProfile(google.protobuf.Empty) returns (GetProfileResponse);
+  rpc GetProfileByUserId(GetProfileByUserIdRequest) returns (GetProfileResponse);
+  rpc GetProfileByUsername(GetProfileByUsernameRequest) returns (GetProfileResponse);
+
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+  rpc UpdateProfileReadme(UpdateProfileReadmeRequest) returns (UpdateProfileResponse);
+
+  rpc ListProfileSocialLinks(ListProfileSocialLinksRequest) returns (ListProfileSocialLinksResponse);
+  rpc UpsertProfileSocialLink(UpsertProfileSocialLinkRequest) returns (UpsertProfileSocialLinkResponse);
+  rpc DeleteProfileSocialLink(DeleteProfileSocialLinkRequest) returns (google.protobuf.Empty);
+
+  rpc FollowUser(FollowUserRequest) returns (google.protobuf.Empty);
+  rpc UnfollowUser(UnfollowUserRequest) returns (google.protobuf.Empty);
+  rpc ListFollowers(ListFollowersRequest) returns (ListProfilePreviewsResponse);
+  rpc ListFollowing(ListFollowingRequest) returns (ListProfilePreviewsResponse);
+
+  rpc ListAvailableTitles(google.protobuf.Empty) returns (ListAvailableTitlesResponse);
+  rpc SetProfileTitle(SetProfileTitleRequest) returns (UpdateProfileResponse);
+}
+
+enum ProfileTitleSource {
+  PROFILE_TITLE_SOURCE_UNSPECIFIED = 0;
+  PROFILE_TITLE_SOURCE_SYSTEM = 1;
+  PROFILE_TITLE_SOURCE_MANUAL = 2;
+  PROFILE_TITLE_SOURCE_ACHIEVEMENT = 3;
+}
+
+enum SocialPlatform {
+  SOCIAL_PLATFORM_UNSPECIFIED = 0;
+  SOCIAL_PLATFORM_TELEGRAM = 1;
+  SOCIAL_PLATFORM_GITHUB = 2;
+  SOCIAL_PLATFORM_VK = 3;
+  SOCIAL_PLATFORM_LINKEDIN = 4;
+  SOCIAL_PLATFORM_X = 5;
+  SOCIAL_PLATFORM_YOUTUBE = 6;
+  SOCIAL_PLATFORM_WEBSITE = 7;
+  SOCIAL_PLATFORM_OTHER = 8;
+}
+
+message ProfileTitle {
+  string code = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  string label = 2 [(validate.rules).string = {min_len: 1, max_len: 100}];
+  string description = 3 [(validate.rules).string = {max_len: 500}];
+  int32 sort_order = 4;
+  bool is_active = 5;
+  bool is_system = 6;
+}
+
+message ProfileSocialLink {
+  common.v1.UUID social_link_id = 1 [(validate.rules).message = {required: true}];
+  common.v1.UUID user_id = 2 [(validate.rules).message = {required: true}];
+  SocialPlatform platform = 3;
+  string url = 4 [(validate.rules).string = {min_len: 1, max_len: 2048}];
+  string label = 5 [(validate.rules).string = {max_len: 64}];
+  int32 position = 6;
+  bool is_visible = 7;
+  google.protobuf.Timestamp created_at = 8 [(validate.rules).timestamp = {required: true}];
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message Profile {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+  string username = 2 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 32,
+      pattern: "^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$"
+    }
+  ];
+
+  string display_name = 3 [(validate.rules).string = {max_len: 100}];
+  string bio = 4 [(validate.rules).string = {max_len: 1000}];
+  string avatar_url = 5 [(validate.rules).string = {max_len: 2048}];
+  string cover_url = 6 [(validate.rules).string = {max_len: 2048}];
+  string location = 7 [(validate.rules).string = {max_len: 100}];
+  string website_url = 8 [(validate.rules).string = {max_len: 2048}];
+
+  string readme_markdown = 9;
+  bool is_public = 10;
+
+  ProfileTitle title = 11;
+  ProfileTitleSource title_source = 12;
+
+  uint64 followers_count = 13;
+  uint64 following_count = 14;
+
+  repeated ProfileSocialLink social_links = 15;
+
+  google.protobuf.Timestamp created_at = 16 [(validate.rules).timestamp = {required: true}];
+  google.protobuf.Timestamp updated_at = 17;
+}
+
+message ProfilePreview {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+  string username = 2 [(validate.rules).string = {min_len: 3, max_len: 32}];
+  string display_name = 3 [(validate.rules).string = {max_len: 100}];
+  string avatar_url = 4 [(validate.rules).string = {max_len: 2048}];
+  ProfileTitle title = 5;
+}
+
+message GetProfileByUserIdRequest {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message GetProfileByUsernameRequest {
+  string username = 1 [
+    (validate.rules).string = {
+      min_len: 3,
+      max_len: 32,
+      pattern: "^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$"
+    }
+  ];
+}
+
+message GetProfileResponse {
+  Profile profile = 1;
+}
+
+message UpdateProfileRequest {
+  string display_name = 1 [(validate.rules).string = {max_len: 100}];
+  string bio = 2 [(validate.rules).string = {max_len: 1000}];
+  string avatar_url = 3 [(validate.rules).string = {max_len: 2048}];
+  string cover_url = 4 [(validate.rules).string = {max_len: 2048}];
+  string location = 5 [(validate.rules).string = {max_len: 100}];
+  string website_url = 6 [(validate.rules).string = {max_len: 2048}];
+  bool is_public = 7;
+}
+
+message UpdateProfileReadmeRequest {
+  string readme_markdown = 1;
+}
+
+message UpdateProfileResponse {
+  Profile profile = 1;
+}
+
+message ListProfileSocialLinksRequest {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message ListProfileSocialLinksResponse {
+  repeated ProfileSocialLink social_links = 1;
+}
+
+message UpsertProfileSocialLinkRequest {
+  common.v1.UUID social_link_id = 1;
+  SocialPlatform platform = 2;
+  string url = 3 [(validate.rules).string = {min_len: 1, max_len: 2048}];
+  string label = 4 [(validate.rules).string = {max_len: 64}];
+  int32 position = 5;
+  bool is_visible = 6;
+}
+
+message UpsertProfileSocialLinkResponse {
+  ProfileSocialLink social_link = 1;
+}
+
+message DeleteProfileSocialLinkRequest {
+  common.v1.UUID social_link_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message FollowUserRequest {
+  common.v1.UUID followee_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message UnfollowUserRequest {
+  common.v1.UUID followee_id = 1 [(validate.rules).message = {required: true}];
+}
+
+message ListFollowersRequest {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+  uint32 limit = 2 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 3;
+}
+
+message ListFollowingRequest {
+  common.v1.UUID user_id = 1 [(validate.rules).message = {required: true}];
+  uint32 limit = 2 [(validate.rules).uint32 = {gte: 1, lte: 100}];
+  uint32 offset = 3;
+}
+
+message ListProfilePreviewsResponse {
+  repeated ProfilePreview profiles = 1;
+  uint64 total = 2;
+}
+
+message ListAvailableTitlesResponse {
+  repeated ProfileTitle titles = 1;
+}
+
+message SetProfileTitleRequest {
+  string title_code = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}

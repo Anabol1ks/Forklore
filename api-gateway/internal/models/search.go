@@ -30,6 +30,28 @@ type SearchResponse struct {
 	Total uint64              `json:"total" example:"42"`
 }
 
+type SearchUsersRequest struct {
+	Query      string `json:"query" binding:"omitempty,max=500"`
+	University string `json:"university,omitempty" binding:"omitempty,max=100"`
+	TagID      string `json:"tag_id,omitempty"`
+	Limit      uint32 `json:"limit" binding:"omitempty,gte=1,lte=100"`
+	Offset     uint32 `json:"offset" binding:"omitempty,gte=0"`
+}
+
+type SearchUserHitResponse struct {
+	UserID            string `json:"user_id"`
+	Username          string `json:"username"`
+	DisplayName       string `json:"display_name,omitempty"`
+	AvatarURL         string `json:"avatar_url,omitempty"`
+	University        string `json:"university,omitempty"`
+	RepositoriesCount uint32 `json:"repositories_count"`
+}
+
+type SearchUsersResponse struct {
+	Users []SearchUserHitResponse `json:"users"`
+	Total uint64                  `json:"total"`
+}
+
 type UpsertRepositoryIndexRequest struct {
 	RepoID      string    `json:"repo_id" binding:"required"`
 	OwnerID     string    `json:"owner_id" binding:"required"`

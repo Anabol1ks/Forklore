@@ -10,10 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler, searchHandler *handlers.SearchHandler) *gin.Engine {
+func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler, searchHandler *handlers.SearchHandler, studyHandler *handlers.StudyHandler, profileHandler *handlers.ProfileHandler, rankingHandler *handlers.RankingHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.CORS())
+	r.Static("/uploads", "./uploads")
 	// Swagger UI
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -23,6 +24,7 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 		v1.GET("/repositories/tags", repositoryHandler.ListRepositoryTags)
 		v1.GET("/repositories/:repo_id", repositoryHandler.GetRepositoryByID)
 		v1.GET("/repositories/:repo_id/forks", repositoryHandler.ListForks)
+		v1.GET("/repositories/:repo_id/star", repositoryHandler.GetRepositoryStarState)
 		v1.GET("/repositories/:repo_id/documents", contentHandler.ListRepositoryDocuments)
 		v1.GET("/repositories/:repo_id/files", contentHandler.ListRepositoryFiles)
 
@@ -36,9 +38,20 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 		v1.GET("/document-versions/:version_id", contentHandler.GetDocumentVersion)
 		v1.GET("/file-versions/:version_id", contentHandler.GetFileVersion)
 		v1.POST("/search", searchHandler.Search)
+		v1.POST("/study/generate-text", studyHandler.GenerateText)
+		v1.POST("/search/users", searchHandler.SearchUsers)
 
 		v1.GET("/users/:owner_id/repositories", repositoryHandler.ListUserRepositories)
 		v1.GET("/users/:owner_id/repositories/:slug", repositoryHandler.GetRepositoryBySlug)
+		v1.GET("/profiles/by-user/:user_id", profileHandler.GetProfileByUserID)
+		v1.GET("/profiles/by-username/:username", profileHandler.GetProfileByUsername)
+		v1.GET("/profiles/:user_id/social-links", profileHandler.ListProfileSocialLinks)
+		v1.GET("/profiles/:user_id/followers", profileHandler.ListFollowers)
+		v1.GET("/profiles/:user_id/following", profileHandler.ListFollowing)
+		v1.GET("/profiles/titles", profileHandler.ListAvailableTitles)
+		v1.GET("/rankings/overall", rankingHandler.GetOverallLeaderboard)
+		v1.GET("/rankings/monthly", rankingHandler.GetMonthlyLeaderboard)
+		v1.GET("/rankings/subject/:tag_id", rankingHandler.GetSubjectLeaderboard)
 
 		// ── Auth ──
 		auth := v1.Group("/auth")
@@ -65,11 +78,13 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 
 			// Special paths
 			repositories.GET("/me", repositoryHandler.ListMyRepositories)
+			repositories.GET("/me/starred", repositoryHandler.ListMyStarredRepositories)
 
 			// Repository write paths (by ID)
 			repositories.PATCH("/:repo_id", repositoryHandler.UpdateRepository)
 			repositories.DELETE("/:repo_id", repositoryHandler.DeleteRepository)
 			repositories.POST("/:repo_id/fork", repositoryHandler.ForkRepository)
+			repositories.POST("/:repo_id/star", repositoryHandler.ToggleRepositoryStar)
 
 			// ── Documents ──
 			repositories.POST("/:repo_id/documents", contentHandler.CreateDocument)
@@ -113,6 +128,23 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 
 			search.POST("/index/files", searchHandler.UpsertFileIndex)
 			search.DELETE("/index/files/:file_id", searchHandler.DeleteFileIndex)
+		}
+
+		profiles := v1.Group("/profiles")
+		profiles.Use(middleware.AuthRequired())
+		{
+			profiles.GET("/me", profileHandler.GetMyProfile)
+			profiles.PATCH("/me", profileHandler.UpdateProfile)
+			profiles.PATCH("/me/readme", profileHandler.UpdateProfileReadme)
+			profiles.PUT("/me/title", profileHandler.SetProfileTitle)
+			profiles.POST("/me/image", profileHandler.UploadMyProfileImage)
+
+			profiles.POST("/social-links", profileHandler.UpsertProfileSocialLink)
+			profiles.PUT("/social-links", profileHandler.UpsertProfileSocialLink)
+			profiles.DELETE("/social-links/:social_link_id", profileHandler.DeleteProfileSocialLink)
+
+			profiles.POST("/:followee_id/follow", profileHandler.FollowUser)
+			profiles.DELETE("/:followee_id/follow", profileHandler.UnfollowUser)
 		}
 	}
 

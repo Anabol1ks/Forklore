@@ -95,6 +95,22 @@ func (r *fileVersionRepository) ListByFileID(ctx context.Context, fileID uuid.UU
 	return versions, total, nil
 }
 
+func (r *fileVersionRepository) CountByStorageKeyExcludingFile(ctx context.Context, storageKey string, excludedFileID uuid.UUID) (int64, error) {
+	var total int64
+	err := r.db.WithContext(ctx).
+		Table("file_versions AS fv").
+		Joins("JOIN files AS f ON f.id = fv.file_id").
+		Where("fv.storage_key = ?", storageKey).
+		Where("fv.file_id <> ?", excludedFileID).
+		Where("f.deleted_at IS NULL").
+		Count(&total).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
 func (r *fileVersionRepository) baseQuery(ctx context.Context) *gorm.DB {
 	return r.db.WithContext(ctx).Model(&model.FileVersion{})
 }

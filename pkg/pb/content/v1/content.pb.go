@@ -2197,6 +2197,102 @@ func (x *DeleteFileRequest) GetFileId() *v1.UUID {
 	return nil
 }
 
+type GetFileStorageInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FileId        *v1.UUID               `protobuf:"bytes,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFileStorageInfoRequest) Reset() {
+	*x = GetFileStorageInfoRequest{}
+	mi := &file_content_v1_content_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFileStorageInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFileStorageInfoRequest) ProtoMessage() {}
+
+func (x *GetFileStorageInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_content_v1_content_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFileStorageInfoRequest.ProtoReflect.Descriptor instead.
+func (*GetFileStorageInfoRequest) Descriptor() ([]byte, []int) {
+	return file_content_v1_content_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *GetFileStorageInfoRequest) GetFileId() *v1.UUID {
+	if x != nil {
+		return x.FileId
+	}
+	return nil
+}
+
+type GetFileStorageInfoResponse struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	StorageKey           string                 `protobuf:"bytes,1,opt,name=storage_key,json=storageKey,proto3" json:"storage_key,omitempty"`
+	OtherReferencesCount uint64                 `protobuf:"varint,2,opt,name=other_references_count,json=otherReferencesCount,proto3" json:"other_references_count,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *GetFileStorageInfoResponse) Reset() {
+	*x = GetFileStorageInfoResponse{}
+	mi := &file_content_v1_content_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFileStorageInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFileStorageInfoResponse) ProtoMessage() {}
+
+func (x *GetFileStorageInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_content_v1_content_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFileStorageInfoResponse.ProtoReflect.Descriptor instead.
+func (*GetFileStorageInfoResponse) Descriptor() ([]byte, []int) {
+	return file_content_v1_content_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *GetFileStorageInfoResponse) GetStorageKey() string {
+	if x != nil {
+		return x.StorageKey
+	}
+	return ""
+}
+
+func (x *GetFileStorageInfoResponse) GetOtherReferencesCount() uint64 {
+	if x != nil {
+		return x.OtherReferencesCount
+	}
+	return 0
+}
+
 var File_content_v1_content_proto protoreflect.FileDescriptor
 
 const file_content_v1_content_proto_rawDesc = "" +
@@ -2395,7 +2491,13 @@ const file_content_v1_content_proto_rawDesc = "" +
 	"version_id\x18\x02 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\tversionId\x12/\n" +
 	"\x0echange_summary\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\rchangeSummary\"P\n" +
 	"\x11DeleteFileRequest\x12;\n" +
-	"\afile_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06fileId2\xe7\x0e\n" +
+	"\afile_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06fileId\"X\n" +
+	"\x19GetFileStorageInfoRequest\x12;\n" +
+	"\afile_id\x18\x01 \x01(\v2\x18.forklore.common.v1.UUIDB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06fileId\"s\n" +
+	"\x1aGetFileStorageInfoResponse\x12\x1f\n" +
+	"\vstorage_key\x18\x01 \x01(\tR\n" +
+	"storageKey\x124\n" +
+	"\x16other_references_count\x18\x02 \x01(\x04R\x14otherReferencesCount2\xde\x0f\n" +
 	"\x0eContentService\x12i\n" +
 	"\x0eCreateDocument\x12*.forklore.content.v1.CreateDocumentRequest\x1a+.forklore.content.v1.CreateDocumentResponse\x12h\n" +
 	"\x0fGetDocumentById\x12+.forklore.content.v1.GetDocumentByIdRequest\x1a(.forklore.content.v1.GetDocumentResponse\x12z\n" +
@@ -2415,7 +2517,8 @@ const file_content_v1_content_proto_rawDesc = "" +
 	"\x10ListFileVersions\x12,.forklore.content.v1.ListFileVersionsRequest\x1a-.forklore.content.v1.ListFileVersionsResponse\x12q\n" +
 	"\x12RestoreFileVersion\x12..forklore.content.v1.RestoreFileVersionRequest\x1a+.forklore.content.v1.AddFileVersionResponse\x12L\n" +
 	"\n" +
-	"DeleteFile\x12&.forklore.content.v1.DeleteFileRequest\x1a\x16.google.protobuf.EmptyB;Z9github.com/Anabol1ks/Forklore/pkg/pb/content/v1;contentv1b\x06proto3"
+	"DeleteFile\x12&.forklore.content.v1.DeleteFileRequest\x1a\x16.google.protobuf.Empty\x12u\n" +
+	"\x12GetFileStorageInfo\x12..forklore.content.v1.GetFileStorageInfoRequest\x1a/.forklore.content.v1.GetFileStorageInfoResponseB;Z9github.com/Anabol1ks/Forklore/pkg/pb/content/v1;contentv1b\x06proto3"
 
 var (
 	file_content_v1_content_proto_rawDescOnce sync.Once
@@ -2429,7 +2532,7 @@ func file_content_v1_content_proto_rawDescGZIP() []byte {
 	return file_content_v1_content_proto_rawDescData
 }
 
-var file_content_v1_content_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
+var file_content_v1_content_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
 var file_content_v1_content_proto_goTypes = []any{
 	(*Document)(nil),                       // 0: forklore.content.v1.Document
 	(*DocumentDraft)(nil),                  // 1: forklore.content.v1.DocumentDraft
@@ -2466,120 +2569,125 @@ var file_content_v1_content_proto_goTypes = []any{
 	(*ListFileVersionsResponse)(nil),       // 32: forklore.content.v1.ListFileVersionsResponse
 	(*RestoreFileVersionRequest)(nil),      // 33: forklore.content.v1.RestoreFileVersionRequest
 	(*DeleteFileRequest)(nil),              // 34: forklore.content.v1.DeleteFileRequest
-	(*v1.UUID)(nil),                        // 35: forklore.common.v1.UUID
-	(v1.DocumentFormat)(0),                 // 36: forklore.common.v1.DocumentFormat
-	(*timestamppb.Timestamp)(nil),          // 37: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),                  // 38: google.protobuf.Empty
+	(*GetFileStorageInfoRequest)(nil),      // 35: forklore.content.v1.GetFileStorageInfoRequest
+	(*GetFileStorageInfoResponse)(nil),     // 36: forklore.content.v1.GetFileStorageInfoResponse
+	(*v1.UUID)(nil),                        // 37: forklore.common.v1.UUID
+	(v1.DocumentFormat)(0),                 // 38: forklore.common.v1.DocumentFormat
+	(*timestamppb.Timestamp)(nil),          // 39: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),                  // 40: google.protobuf.Empty
 }
 var file_content_v1_content_proto_depIdxs = []int32{
-	35, // 0: forklore.content.v1.Document.document_id:type_name -> forklore.common.v1.UUID
-	35, // 1: forklore.content.v1.Document.repo_id:type_name -> forklore.common.v1.UUID
-	35, // 2: forklore.content.v1.Document.author_id:type_name -> forklore.common.v1.UUID
-	36, // 3: forklore.content.v1.Document.format:type_name -> forklore.common.v1.DocumentFormat
-	35, // 4: forklore.content.v1.Document.current_version_id:type_name -> forklore.common.v1.UUID
-	37, // 5: forklore.content.v1.Document.latest_draft_updated_at:type_name -> google.protobuf.Timestamp
-	37, // 6: forklore.content.v1.Document.created_at:type_name -> google.protobuf.Timestamp
-	37, // 7: forklore.content.v1.Document.updated_at:type_name -> google.protobuf.Timestamp
-	37, // 8: forklore.content.v1.Document.deleted_at:type_name -> google.protobuf.Timestamp
-	35, // 9: forklore.content.v1.DocumentDraft.document_id:type_name -> forklore.common.v1.UUID
-	35, // 10: forklore.content.v1.DocumentDraft.updated_by:type_name -> forklore.common.v1.UUID
-	37, // 11: forklore.content.v1.DocumentDraft.updated_at:type_name -> google.protobuf.Timestamp
-	35, // 12: forklore.content.v1.DocumentVersion.version_id:type_name -> forklore.common.v1.UUID
-	35, // 13: forklore.content.v1.DocumentVersion.document_id:type_name -> forklore.common.v1.UUID
-	35, // 14: forklore.content.v1.DocumentVersion.author_id:type_name -> forklore.common.v1.UUID
-	37, // 15: forklore.content.v1.DocumentVersion.created_at:type_name -> google.protobuf.Timestamp
-	35, // 16: forklore.content.v1.File.file_id:type_name -> forklore.common.v1.UUID
-	35, // 17: forklore.content.v1.File.repo_id:type_name -> forklore.common.v1.UUID
-	35, // 18: forklore.content.v1.File.uploaded_by:type_name -> forklore.common.v1.UUID
-	35, // 19: forklore.content.v1.File.current_version_id:type_name -> forklore.common.v1.UUID
-	37, // 20: forklore.content.v1.File.created_at:type_name -> google.protobuf.Timestamp
-	37, // 21: forklore.content.v1.File.updated_at:type_name -> google.protobuf.Timestamp
-	37, // 22: forklore.content.v1.File.deleted_at:type_name -> google.protobuf.Timestamp
-	35, // 23: forklore.content.v1.FileVersion.version_id:type_name -> forklore.common.v1.UUID
-	35, // 24: forklore.content.v1.FileVersion.file_id:type_name -> forklore.common.v1.UUID
-	35, // 25: forklore.content.v1.FileVersion.uploaded_by:type_name -> forklore.common.v1.UUID
-	37, // 26: forklore.content.v1.FileVersion.created_at:type_name -> google.protobuf.Timestamp
-	35, // 27: forklore.content.v1.CreateDocumentRequest.repo_id:type_name -> forklore.common.v1.UUID
-	36, // 28: forklore.content.v1.CreateDocumentRequest.format:type_name -> forklore.common.v1.DocumentFormat
+	37, // 0: forklore.content.v1.Document.document_id:type_name -> forklore.common.v1.UUID
+	37, // 1: forklore.content.v1.Document.repo_id:type_name -> forklore.common.v1.UUID
+	37, // 2: forklore.content.v1.Document.author_id:type_name -> forklore.common.v1.UUID
+	38, // 3: forklore.content.v1.Document.format:type_name -> forklore.common.v1.DocumentFormat
+	37, // 4: forklore.content.v1.Document.current_version_id:type_name -> forklore.common.v1.UUID
+	39, // 5: forklore.content.v1.Document.latest_draft_updated_at:type_name -> google.protobuf.Timestamp
+	39, // 6: forklore.content.v1.Document.created_at:type_name -> google.protobuf.Timestamp
+	39, // 7: forklore.content.v1.Document.updated_at:type_name -> google.protobuf.Timestamp
+	39, // 8: forklore.content.v1.Document.deleted_at:type_name -> google.protobuf.Timestamp
+	37, // 9: forklore.content.v1.DocumentDraft.document_id:type_name -> forklore.common.v1.UUID
+	37, // 10: forklore.content.v1.DocumentDraft.updated_by:type_name -> forklore.common.v1.UUID
+	39, // 11: forklore.content.v1.DocumentDraft.updated_at:type_name -> google.protobuf.Timestamp
+	37, // 12: forklore.content.v1.DocumentVersion.version_id:type_name -> forklore.common.v1.UUID
+	37, // 13: forklore.content.v1.DocumentVersion.document_id:type_name -> forklore.common.v1.UUID
+	37, // 14: forklore.content.v1.DocumentVersion.author_id:type_name -> forklore.common.v1.UUID
+	39, // 15: forklore.content.v1.DocumentVersion.created_at:type_name -> google.protobuf.Timestamp
+	37, // 16: forklore.content.v1.File.file_id:type_name -> forklore.common.v1.UUID
+	37, // 17: forklore.content.v1.File.repo_id:type_name -> forklore.common.v1.UUID
+	37, // 18: forklore.content.v1.File.uploaded_by:type_name -> forklore.common.v1.UUID
+	37, // 19: forklore.content.v1.File.current_version_id:type_name -> forklore.common.v1.UUID
+	39, // 20: forklore.content.v1.File.created_at:type_name -> google.protobuf.Timestamp
+	39, // 21: forklore.content.v1.File.updated_at:type_name -> google.protobuf.Timestamp
+	39, // 22: forklore.content.v1.File.deleted_at:type_name -> google.protobuf.Timestamp
+	37, // 23: forklore.content.v1.FileVersion.version_id:type_name -> forklore.common.v1.UUID
+	37, // 24: forklore.content.v1.FileVersion.file_id:type_name -> forklore.common.v1.UUID
+	37, // 25: forklore.content.v1.FileVersion.uploaded_by:type_name -> forklore.common.v1.UUID
+	39, // 26: forklore.content.v1.FileVersion.created_at:type_name -> google.protobuf.Timestamp
+	37, // 27: forklore.content.v1.CreateDocumentRequest.repo_id:type_name -> forklore.common.v1.UUID
+	38, // 28: forklore.content.v1.CreateDocumentRequest.format:type_name -> forklore.common.v1.DocumentFormat
 	0,  // 29: forklore.content.v1.CreateDocumentResponse.document:type_name -> forklore.content.v1.Document
 	1,  // 30: forklore.content.v1.CreateDocumentResponse.draft:type_name -> forklore.content.v1.DocumentDraft
 	2,  // 31: forklore.content.v1.CreateDocumentResponse.current_version:type_name -> forklore.content.v1.DocumentVersion
-	35, // 32: forklore.content.v1.GetDocumentByIdRequest.document_id:type_name -> forklore.common.v1.UUID
+	37, // 32: forklore.content.v1.GetDocumentByIdRequest.document_id:type_name -> forklore.common.v1.UUID
 	0,  // 33: forklore.content.v1.GetDocumentResponse.document:type_name -> forklore.content.v1.Document
 	1,  // 34: forklore.content.v1.GetDocumentResponse.draft:type_name -> forklore.content.v1.DocumentDraft
 	2,  // 35: forklore.content.v1.GetDocumentResponse.current_version:type_name -> forklore.content.v1.DocumentVersion
-	35, // 36: forklore.content.v1.ListRepositoryDocumentsRequest.repo_id:type_name -> forklore.common.v1.UUID
+	37, // 36: forklore.content.v1.ListRepositoryDocumentsRequest.repo_id:type_name -> forklore.common.v1.UUID
 	0,  // 37: forklore.content.v1.ListDocumentsResponse.documents:type_name -> forklore.content.v1.Document
-	35, // 38: forklore.content.v1.SaveDocumentDraftRequest.document_id:type_name -> forklore.common.v1.UUID
+	37, // 38: forklore.content.v1.SaveDocumentDraftRequest.document_id:type_name -> forklore.common.v1.UUID
 	0,  // 39: forklore.content.v1.SaveDocumentDraftResponse.document:type_name -> forklore.content.v1.Document
 	1,  // 40: forklore.content.v1.SaveDocumentDraftResponse.draft:type_name -> forklore.content.v1.DocumentDraft
-	35, // 41: forklore.content.v1.CreateDocumentVersionRequest.document_id:type_name -> forklore.common.v1.UUID
+	37, // 41: forklore.content.v1.CreateDocumentVersionRequest.document_id:type_name -> forklore.common.v1.UUID
 	0,  // 42: forklore.content.v1.CreateDocumentVersionResponse.document:type_name -> forklore.content.v1.Document
 	2,  // 43: forklore.content.v1.CreateDocumentVersionResponse.version:type_name -> forklore.content.v1.DocumentVersion
-	35, // 44: forklore.content.v1.GetDocumentVersionByIdRequest.version_id:type_name -> forklore.common.v1.UUID
+	37, // 44: forklore.content.v1.GetDocumentVersionByIdRequest.version_id:type_name -> forklore.common.v1.UUID
 	2,  // 45: forklore.content.v1.GetDocumentVersionResponse.version:type_name -> forklore.content.v1.DocumentVersion
-	35, // 46: forklore.content.v1.ListDocumentVersionsRequest.document_id:type_name -> forklore.common.v1.UUID
+	37, // 46: forklore.content.v1.ListDocumentVersionsRequest.document_id:type_name -> forklore.common.v1.UUID
 	2,  // 47: forklore.content.v1.ListDocumentVersionsResponse.versions:type_name -> forklore.content.v1.DocumentVersion
-	35, // 48: forklore.content.v1.RestoreDocumentVersionRequest.document_id:type_name -> forklore.common.v1.UUID
-	35, // 49: forklore.content.v1.RestoreDocumentVersionRequest.version_id:type_name -> forklore.common.v1.UUID
-	35, // 50: forklore.content.v1.DeleteDocumentRequest.document_id:type_name -> forklore.common.v1.UUID
-	35, // 51: forklore.content.v1.CreateFileRequest.repo_id:type_name -> forklore.common.v1.UUID
+	37, // 48: forklore.content.v1.RestoreDocumentVersionRequest.document_id:type_name -> forklore.common.v1.UUID
+	37, // 49: forklore.content.v1.RestoreDocumentVersionRequest.version_id:type_name -> forklore.common.v1.UUID
+	37, // 50: forklore.content.v1.DeleteDocumentRequest.document_id:type_name -> forklore.common.v1.UUID
+	37, // 51: forklore.content.v1.CreateFileRequest.repo_id:type_name -> forklore.common.v1.UUID
 	3,  // 52: forklore.content.v1.CreateFileResponse.file:type_name -> forklore.content.v1.File
 	4,  // 53: forklore.content.v1.CreateFileResponse.current_version:type_name -> forklore.content.v1.FileVersion
-	35, // 54: forklore.content.v1.GetFileByIdRequest.file_id:type_name -> forklore.common.v1.UUID
+	37, // 54: forklore.content.v1.GetFileByIdRequest.file_id:type_name -> forklore.common.v1.UUID
 	3,  // 55: forklore.content.v1.GetFileResponse.file:type_name -> forklore.content.v1.File
 	4,  // 56: forklore.content.v1.GetFileResponse.current_version:type_name -> forklore.content.v1.FileVersion
-	35, // 57: forklore.content.v1.ListRepositoryFilesRequest.repo_id:type_name -> forklore.common.v1.UUID
+	37, // 57: forklore.content.v1.ListRepositoryFilesRequest.repo_id:type_name -> forklore.common.v1.UUID
 	3,  // 58: forklore.content.v1.ListFilesResponse.files:type_name -> forklore.content.v1.File
-	35, // 59: forklore.content.v1.AddFileVersionRequest.file_id:type_name -> forklore.common.v1.UUID
+	37, // 59: forklore.content.v1.AddFileVersionRequest.file_id:type_name -> forklore.common.v1.UUID
 	3,  // 60: forklore.content.v1.AddFileVersionResponse.file:type_name -> forklore.content.v1.File
 	4,  // 61: forklore.content.v1.AddFileVersionResponse.version:type_name -> forklore.content.v1.FileVersion
-	35, // 62: forklore.content.v1.GetFileVersionByIdRequest.version_id:type_name -> forklore.common.v1.UUID
+	37, // 62: forklore.content.v1.GetFileVersionByIdRequest.version_id:type_name -> forklore.common.v1.UUID
 	4,  // 63: forklore.content.v1.GetFileVersionResponse.version:type_name -> forklore.content.v1.FileVersion
-	35, // 64: forklore.content.v1.ListFileVersionsRequest.file_id:type_name -> forklore.common.v1.UUID
+	37, // 64: forklore.content.v1.ListFileVersionsRequest.file_id:type_name -> forklore.common.v1.UUID
 	4,  // 65: forklore.content.v1.ListFileVersionsResponse.versions:type_name -> forklore.content.v1.FileVersion
-	35, // 66: forklore.content.v1.RestoreFileVersionRequest.file_id:type_name -> forklore.common.v1.UUID
-	35, // 67: forklore.content.v1.RestoreFileVersionRequest.version_id:type_name -> forklore.common.v1.UUID
-	35, // 68: forklore.content.v1.DeleteFileRequest.file_id:type_name -> forklore.common.v1.UUID
-	5,  // 69: forklore.content.v1.ContentService.CreateDocument:input_type -> forklore.content.v1.CreateDocumentRequest
-	7,  // 70: forklore.content.v1.ContentService.GetDocumentById:input_type -> forklore.content.v1.GetDocumentByIdRequest
-	9,  // 71: forklore.content.v1.ContentService.ListRepositoryDocuments:input_type -> forklore.content.v1.ListRepositoryDocumentsRequest
-	11, // 72: forklore.content.v1.ContentService.SaveDocumentDraft:input_type -> forklore.content.v1.SaveDocumentDraftRequest
-	13, // 73: forklore.content.v1.ContentService.CreateDocumentVersion:input_type -> forklore.content.v1.CreateDocumentVersionRequest
-	15, // 74: forklore.content.v1.ContentService.GetDocumentVersionById:input_type -> forklore.content.v1.GetDocumentVersionByIdRequest
-	17, // 75: forklore.content.v1.ContentService.ListDocumentVersions:input_type -> forklore.content.v1.ListDocumentVersionsRequest
-	19, // 76: forklore.content.v1.ContentService.RestoreDocumentVersion:input_type -> forklore.content.v1.RestoreDocumentVersionRequest
-	20, // 77: forklore.content.v1.ContentService.DeleteDocument:input_type -> forklore.content.v1.DeleteDocumentRequest
-	21, // 78: forklore.content.v1.ContentService.CreateFile:input_type -> forklore.content.v1.CreateFileRequest
-	23, // 79: forklore.content.v1.ContentService.GetFileById:input_type -> forklore.content.v1.GetFileByIdRequest
-	25, // 80: forklore.content.v1.ContentService.ListRepositoryFiles:input_type -> forklore.content.v1.ListRepositoryFilesRequest
-	27, // 81: forklore.content.v1.ContentService.AddFileVersion:input_type -> forklore.content.v1.AddFileVersionRequest
-	29, // 82: forklore.content.v1.ContentService.GetFileVersionById:input_type -> forklore.content.v1.GetFileVersionByIdRequest
-	31, // 83: forklore.content.v1.ContentService.ListFileVersions:input_type -> forklore.content.v1.ListFileVersionsRequest
-	33, // 84: forklore.content.v1.ContentService.RestoreFileVersion:input_type -> forklore.content.v1.RestoreFileVersionRequest
-	34, // 85: forklore.content.v1.ContentService.DeleteFile:input_type -> forklore.content.v1.DeleteFileRequest
-	6,  // 86: forklore.content.v1.ContentService.CreateDocument:output_type -> forklore.content.v1.CreateDocumentResponse
-	8,  // 87: forklore.content.v1.ContentService.GetDocumentById:output_type -> forklore.content.v1.GetDocumentResponse
-	10, // 88: forklore.content.v1.ContentService.ListRepositoryDocuments:output_type -> forklore.content.v1.ListDocumentsResponse
-	12, // 89: forklore.content.v1.ContentService.SaveDocumentDraft:output_type -> forklore.content.v1.SaveDocumentDraftResponse
-	14, // 90: forklore.content.v1.ContentService.CreateDocumentVersion:output_type -> forklore.content.v1.CreateDocumentVersionResponse
-	16, // 91: forklore.content.v1.ContentService.GetDocumentVersionById:output_type -> forklore.content.v1.GetDocumentVersionResponse
-	18, // 92: forklore.content.v1.ContentService.ListDocumentVersions:output_type -> forklore.content.v1.ListDocumentVersionsResponse
-	14, // 93: forklore.content.v1.ContentService.RestoreDocumentVersion:output_type -> forklore.content.v1.CreateDocumentVersionResponse
-	38, // 94: forklore.content.v1.ContentService.DeleteDocument:output_type -> google.protobuf.Empty
-	22, // 95: forklore.content.v1.ContentService.CreateFile:output_type -> forklore.content.v1.CreateFileResponse
-	24, // 96: forklore.content.v1.ContentService.GetFileById:output_type -> forklore.content.v1.GetFileResponse
-	26, // 97: forklore.content.v1.ContentService.ListRepositoryFiles:output_type -> forklore.content.v1.ListFilesResponse
-	28, // 98: forklore.content.v1.ContentService.AddFileVersion:output_type -> forklore.content.v1.AddFileVersionResponse
-	30, // 99: forklore.content.v1.ContentService.GetFileVersionById:output_type -> forklore.content.v1.GetFileVersionResponse
-	32, // 100: forklore.content.v1.ContentService.ListFileVersions:output_type -> forklore.content.v1.ListFileVersionsResponse
-	28, // 101: forklore.content.v1.ContentService.RestoreFileVersion:output_type -> forklore.content.v1.AddFileVersionResponse
-	38, // 102: forklore.content.v1.ContentService.DeleteFile:output_type -> google.protobuf.Empty
-	86, // [86:103] is the sub-list for method output_type
-	69, // [69:86] is the sub-list for method input_type
-	69, // [69:69] is the sub-list for extension type_name
-	69, // [69:69] is the sub-list for extension extendee
-	0,  // [0:69] is the sub-list for field type_name
+	37, // 66: forklore.content.v1.RestoreFileVersionRequest.file_id:type_name -> forklore.common.v1.UUID
+	37, // 67: forklore.content.v1.RestoreFileVersionRequest.version_id:type_name -> forklore.common.v1.UUID
+	37, // 68: forklore.content.v1.DeleteFileRequest.file_id:type_name -> forklore.common.v1.UUID
+	37, // 69: forklore.content.v1.GetFileStorageInfoRequest.file_id:type_name -> forklore.common.v1.UUID
+	5,  // 70: forklore.content.v1.ContentService.CreateDocument:input_type -> forklore.content.v1.CreateDocumentRequest
+	7,  // 71: forklore.content.v1.ContentService.GetDocumentById:input_type -> forklore.content.v1.GetDocumentByIdRequest
+	9,  // 72: forklore.content.v1.ContentService.ListRepositoryDocuments:input_type -> forklore.content.v1.ListRepositoryDocumentsRequest
+	11, // 73: forklore.content.v1.ContentService.SaveDocumentDraft:input_type -> forklore.content.v1.SaveDocumentDraftRequest
+	13, // 74: forklore.content.v1.ContentService.CreateDocumentVersion:input_type -> forklore.content.v1.CreateDocumentVersionRequest
+	15, // 75: forklore.content.v1.ContentService.GetDocumentVersionById:input_type -> forklore.content.v1.GetDocumentVersionByIdRequest
+	17, // 76: forklore.content.v1.ContentService.ListDocumentVersions:input_type -> forklore.content.v1.ListDocumentVersionsRequest
+	19, // 77: forklore.content.v1.ContentService.RestoreDocumentVersion:input_type -> forklore.content.v1.RestoreDocumentVersionRequest
+	20, // 78: forklore.content.v1.ContentService.DeleteDocument:input_type -> forklore.content.v1.DeleteDocumentRequest
+	21, // 79: forklore.content.v1.ContentService.CreateFile:input_type -> forklore.content.v1.CreateFileRequest
+	23, // 80: forklore.content.v1.ContentService.GetFileById:input_type -> forklore.content.v1.GetFileByIdRequest
+	25, // 81: forklore.content.v1.ContentService.ListRepositoryFiles:input_type -> forklore.content.v1.ListRepositoryFilesRequest
+	27, // 82: forklore.content.v1.ContentService.AddFileVersion:input_type -> forklore.content.v1.AddFileVersionRequest
+	29, // 83: forklore.content.v1.ContentService.GetFileVersionById:input_type -> forklore.content.v1.GetFileVersionByIdRequest
+	31, // 84: forklore.content.v1.ContentService.ListFileVersions:input_type -> forklore.content.v1.ListFileVersionsRequest
+	33, // 85: forklore.content.v1.ContentService.RestoreFileVersion:input_type -> forklore.content.v1.RestoreFileVersionRequest
+	34, // 86: forklore.content.v1.ContentService.DeleteFile:input_type -> forklore.content.v1.DeleteFileRequest
+	35, // 87: forklore.content.v1.ContentService.GetFileStorageInfo:input_type -> forklore.content.v1.GetFileStorageInfoRequest
+	6,  // 88: forklore.content.v1.ContentService.CreateDocument:output_type -> forklore.content.v1.CreateDocumentResponse
+	8,  // 89: forklore.content.v1.ContentService.GetDocumentById:output_type -> forklore.content.v1.GetDocumentResponse
+	10, // 90: forklore.content.v1.ContentService.ListRepositoryDocuments:output_type -> forklore.content.v1.ListDocumentsResponse
+	12, // 91: forklore.content.v1.ContentService.SaveDocumentDraft:output_type -> forklore.content.v1.SaveDocumentDraftResponse
+	14, // 92: forklore.content.v1.ContentService.CreateDocumentVersion:output_type -> forklore.content.v1.CreateDocumentVersionResponse
+	16, // 93: forklore.content.v1.ContentService.GetDocumentVersionById:output_type -> forklore.content.v1.GetDocumentVersionResponse
+	18, // 94: forklore.content.v1.ContentService.ListDocumentVersions:output_type -> forklore.content.v1.ListDocumentVersionsResponse
+	14, // 95: forklore.content.v1.ContentService.RestoreDocumentVersion:output_type -> forklore.content.v1.CreateDocumentVersionResponse
+	40, // 96: forklore.content.v1.ContentService.DeleteDocument:output_type -> google.protobuf.Empty
+	22, // 97: forklore.content.v1.ContentService.CreateFile:output_type -> forklore.content.v1.CreateFileResponse
+	24, // 98: forklore.content.v1.ContentService.GetFileById:output_type -> forklore.content.v1.GetFileResponse
+	26, // 99: forklore.content.v1.ContentService.ListRepositoryFiles:output_type -> forklore.content.v1.ListFilesResponse
+	28, // 100: forklore.content.v1.ContentService.AddFileVersion:output_type -> forklore.content.v1.AddFileVersionResponse
+	30, // 101: forklore.content.v1.ContentService.GetFileVersionById:output_type -> forklore.content.v1.GetFileVersionResponse
+	32, // 102: forklore.content.v1.ContentService.ListFileVersions:output_type -> forklore.content.v1.ListFileVersionsResponse
+	28, // 103: forklore.content.v1.ContentService.RestoreFileVersion:output_type -> forklore.content.v1.AddFileVersionResponse
+	40, // 104: forklore.content.v1.ContentService.DeleteFile:output_type -> google.protobuf.Empty
+	36, // 105: forklore.content.v1.ContentService.GetFileStorageInfo:output_type -> forklore.content.v1.GetFileStorageInfoResponse
+	88, // [88:106] is the sub-list for method output_type
+	70, // [70:88] is the sub-list for method input_type
+	70, // [70:70] is the sub-list for extension type_name
+	70, // [70:70] is the sub-list for extension extendee
+	0,  // [0:70] is the sub-list for field type_name
 }
 
 func init() { file_content_v1_content_proto_init() }
@@ -2593,7 +2701,7 @@ func file_content_v1_content_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_content_v1_content_proto_rawDesc), len(file_content_v1_content_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   35,
+			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

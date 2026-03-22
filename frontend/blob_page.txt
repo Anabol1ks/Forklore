@@ -1,0 +1,253 @@
+  const handleRestoreDocumentVersion = async (versionId: string) => {
+    if (!isOwner || !isDocument) return;
+
+    try {
+      await api.post(`/documents/${itemId}/versions/${versionId}/restore`, {});
+      toast.success("Версия документа восстановлена");
+      await fetchDocument();
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Ошибка восстановления версии"));
+    }
+  };
+
+  const handleAddFileVersion = async () => {
+    if (!isOwner || !isFile) return;
+
+    const size = Number.parseInt(fileVersionSize, 10);
+    if (!Number.isFinite(size) || size <= 0) {
+      toast.error("Размер версии файла должен быть положительным числом");
+      return;
+    }
+
+    const storageKey = fileVersionStorageKey.trim() || `files/version_${Date.now()}`;
+
+    try {
+      await api.post(`/files/${itemId}/versions`, {
+        storage_key: storageKey,
+        mime_type: fileVersionMimeType || "application/octet-stream",
+        size_bytes: size,
+        change_summary: fileVersionChangeSummary,
+      });
+      toast.success("Версия файла добавлена");
+      setFileVersionStorageKey("");
+      setFileVersionChangeSummary("");
+      await fetchFile();
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Ошибка добавления версии файла"));
+    }
+  };
+
+  const handleRestoreFileVersion = async (versionId: string) => {
+    if (!isOwner || !isFile) return;
+
+    try {
+      await api.post(`/files/${itemId}/versions/${versionId}/restore`, {});
+      toast.success("Версия файла восстановлена");
+      await fetchFile();
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Ошибка восстановления версии файла"));
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-80" />
+        <Skeleton className="h-80 w-full" />
+      </div>
+    );
+  }
+
+  if (!repo) {
+    return <div className="text-center py-20 text-xl font-bold">Репозиторий не найден</div>;
+  }
+
+  const activeDocumentPreview = selectedDocumentVersionId ? selectedDocumentVersionContent : documentEditorContent;
+  const activeDocumentVersionLabel = selectedDocumentVersionId ? "Просматривается историческая версия" : "Текущая версия/черновик";
+
+  return (
+    <div className="space-y-4">
+<div className="flex items-center gap-2 text-xl font-semibold bg-muted/40 px-4 py-2.5 border rounded-md">
+          <span className="text-primary hover:underline cursor-pointer" onClick={() => router.push(`/${owner}`)}>{owner}</span>
+          <span className="text-muted-foreground font-normal">/</span>
+          <span className="font-bold cursor-pointer hover:underline" onClick={() => router.push(`/${owner}/${repoSlug}`)}>{repo.name}</span>
+          <span className="text-muted-foreground font-normal">/</span>
+          <span className="font-medium text-lg">{isDocument ? String(document?.title || "Документ") : String(file?.file_name || "Файл")}</span>
+      {isDocument && document ? (
+        <div className="space-y-4">
+          <div className="border rounded-md p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold flex items-center gap-2"><FileText className="h-5 w-5" /> {String(document.title || "Документ")}</h2>
+              <span className="text-sm text-muted-foreground">Версий: {documentVersions.length}</span>
+            </div>
+
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Button size="sm" variant={documentViewMode === "preview" ? "default" : "outline"} onClick={() => setDocumentViewMode("preview")}>Preview</Button>
+              {isOwner ? <Button size="sm" variant={documentViewMode === "edit" ? "default" : "outline"} onClick={() => setDocumentViewMode("edit")}>Edit</Button> : null}
+            </div>
+
+            <div className="text-sm text-muted-foreground">
+              {activeDocumentVersionLabel}
+              {selectedDocumentVersionId ? (
+                <>
+                  {": "}
+                  <span className="font-medium text-foreground">{selectedDocumentVersionId}</span>
+                  <Button variant="ghost" size="sm" className="ml-2" onClick={handleUseCurrentDocumentVersion}>
+                    Вернуться к текущей
+                  </Button>
+                </>
+              ) : null}
+            </div>
+
+            {documentViewMode === "preview" ? (
+              <MarkdownPreview content={activeDocumentPreview} />
+            ) : (
+              <>
+                <Textarea value={documentEditorContent} onChange={(e) => setDocumentEditorContent(e.target.value)} rows={16} placeholder="Содержимое документа" />
+                <Input value={documentChangeSummary} onChange={(e) => setDocumentChangeSummary(e.target.value)} placeholder="Описание изменений" />
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleSaveDraft}>Сохранить черновик</Button>
+                  <Button size="sm" onClick={handleCreateVersion}>Создать версию</Button>
+                </div>
+              </>
+            )}
+
+            {selectedDocumentVersionId ? (
+              <div className="border rounded-md p-3 text-sm">
+                <div className="font-medium mb-1">Выбранная версия: {selectedDocumentVersionId}</div>
+                <div className="text-muted-foreground">{selectedDocumentVersionSummary || "Без описания"}</div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="border rounded-md p-3">
+              <div className="font-medium mb-2">Сравнение с текущей версией</div>
+              <div className="text-muted-foreground">Строк в текущей: {documentDiffStats.oldCount}</div>
+              <div className="text-muted-foreground">Строк в черновике: {documentDiffStats.newCount}</div>
+              <div className="text-green-600">Добавлено строк: {documentDiffStats.added}</div>
+              <div className="text-red-600">Удалено строк: {documentDiffStats.removed}</div>
+              <div className="mt-2 font-medium">{hasDocumentChanges ? "Есть изменения" : "Изменений нет"}</div>
+            </div>
+            <div className="border rounded-md p-3">
+              <div className="font-medium mb-2">Текущая версия (reference)</div>
+              <pre className="text-xs overflow-auto max-h-40 whitespace-pre-wrap">{currentVersionContent || "Пусто"}</pre>
+            </div>
+          </div>
+
+          <div className="border rounded-md p-4 space-y-2">
+            <h3 className="font-medium">История версий</h3>
+            {documentVersions.length > 0 ? documentVersions.map((version) => {
+              const versionId = version.version_id || version.id;
+              if (!versionId) return null;
+              return (
+                <div key={versionId} className="flex items-center justify-between border rounded-md p-2 text-sm">
+                  <div>
+                    <div className="font-medium">Версия #{version.version_number || "-"}</div>
+                    <div className="text-muted-foreground">{version.change_summary || "Без описания"}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => void handleViewDocumentVersion(versionId)}>Просмотр</Button>
+                    {isOwner ? <Button variant="outline" size="sm" onClick={() => void handleRestoreDocumentVersion(versionId)}>Восстановить</Button> : null}
+                  </div>
+                </div>
+              );
+            }) : <div className="text-sm text-muted-foreground">Версий пока нет</div>}
+          </div>
+        </div>
+      ) : null}
+
+      {isFile && file ? (
+        <div className="space-y-4">
+          <div className="border rounded-md p-4 space-y-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2"><Files className="h-5 w-5" /> {String(file.file_name || "Файл")}</h2>
+            <div className="text-sm text-muted-foreground">Тип: {effectivePreviewMimeType}</div>
+            <div className="text-sm text-muted-foreground">Источник: {activeFileStorageKey || "не задан"}</div>
+            {activeFileVersionId ? <div className="text-sm text-muted-foreground">Версия для просмотра: {activeFileVersionId}</div> : null}
+
+            {filePreviewLoading ? <div className="text-sm text-muted-foreground">Загрузка содержимого...</div> : null}
+            {filePreviewError ? <div className="text-sm text-red-600">{filePreviewError}</div> : null}
+
+            {!filePreviewLoading && !filePreviewError && isPdfPreview && filePreviewUrl ? (
+              <div className="space-y-2">
+                <div className="text-sm font-medium">PDF preview</div>
+                <iframe
+                  src={filePreviewUrl}
+                  title="pdf-preview"
+                  className="w-full h-[70vh] border rounded-md"
+                />
+              </div>
+            ) : null}
+
+            {!filePreviewLoading && !filePreviewError && isTextPreview ? (
+              <div className="space-y-2">
+                <div className="text-sm font-medium">{isMarkdownPreview ? "Markdown preview" : "Text preview"}</div>
+                {isMarkdownPreview ? (
+                  <MarkdownPreview content={filePreviewText || "_Пустой файл_"} className="max-h-[70vh] overflow-auto rounded-md border p-6 bg-background" />
+                ) : (
+                  <pre className="text-xs overflow-auto max-h-[70vh] whitespace-pre-wrap border rounded-md p-3 bg-muted/30">{filePreviewText || "Пустой файл"}</pre>
+                )}
+              </div>
+            ) : null}
+
+            {!filePreviewLoading && !filePreviewError && !isPdfPreview && !isTextPreview && filePreviewUrl ? (
+              <div className="text-sm text-muted-foreground">Для этого MIME пока доступен только переход по ссылке на контент.</div>
+            ) : null}
+
+            {filePreviewUrl ? (
+              <div>
+                <a href={filePreviewUrl} target="_blank" rel="noreferrer" className="text-sm underline text-primary">
+                  Открыть файл в новой вкладке
+                </a>
+              </div>
+            ) : null}
+
+            {selectedFileVersionId && selectedFileVersionDetails ? (
+              <div className="border rounded-md p-3 text-sm space-y-1">
+                <div className="font-medium">Просмотр версии файла: {selectedFileVersionId}</div>
+                <div className="text-muted-foreground">Storage key: {String(selectedFileVersionDetails.storage_key || "-")}</div>
+                <div className="text-muted-foreground">MIME: {String(selectedFileVersionDetails.mime_type || "-")}</div>
+                <div className="text-muted-foreground">Размер: {String(selectedFileVersionDetails.size_bytes || "-")} bytes</div>
+                <div className="text-muted-foreground">Описание: {String(selectedFileVersionDetails.change_summary || "Без описания")}</div>
+                <Button variant="ghost" size="sm" onClick={handleUseCurrentFileVersion}>Вернуться к текущей</Button>
+              </div>
+            ) : null}
+          </div>
+
+          {isOwner ? (
+            <div className="border rounded-md p-4 space-y-2">
+              <h3 className="font-medium">Добавить версию файла</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <Input value={fileVersionStorageKey} onChange={(e) => setFileVersionStorageKey(e.target.value)} placeholder="Storage key" />
+                <Input value={fileVersionMimeType} onChange={(e) => setFileVersionMimeType(e.target.value)} placeholder="MIME type" />
+                <Input value={fileVersionSize} onChange={(e) => setFileVersionSize(e.target.value)} placeholder="Размер в байтах" />
+                <Input value={fileVersionChangeSummary} onChange={(e) => setFileVersionChangeSummary(e.target.value)} placeholder="Описание изменений" />
+              </div>
+              <Button size="sm" onClick={handleAddFileVersion}>Добавить версию</Button>
+            </div>
+          ) : null}
+
+          <div className="border rounded-md p-4 space-y-2">
+            <h3 className="font-medium">История версий файла</h3>
+            {fileVersions.length > 0 ? fileVersions.map((version) => {
+              const versionId = version.version_id || version.id;
+              if (!versionId) return null;
+              return (
+                <div key={versionId} className="flex items-center justify-between border rounded-md p-2 text-sm">
+                  <div>
+                    <div className="font-medium">Версия #{version.version_number || "-"}</div>
+                    <div className="text-muted-foreground">{version.change_summary || "Без описания"}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => void handleViewFileVersion(versionId)}>Просмотр</Button>
+                    {isOwner ? <Button variant="outline" size="sm" onClick={() => void handleRestoreFileVersion(versionId)}>Восстановить</Button> : null}
+                  </div>
+                </div>
+              );
+            }) : <div className="text-sm text-muted-foreground">Версий пока нет</div>}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}

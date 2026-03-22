@@ -13,7 +13,7 @@ RUN go mod download
 
 COPY api-gateway/. .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /bin/api-gateway ./cmd/gateway/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/api-gateway ./cmd/gateway/main.go
 
 FROM alpine:latest
 
@@ -33,3 +33,4 @@ USER appuser
 EXPOSE 8080
 
 CMD ["/app/api-gateway"]
+

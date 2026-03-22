@@ -304,6 +304,187 @@ curl -X DELETE http://localhost:8080/api/v1/repositories/660e8400-e29b-41d4-a716
 
 ## Error Examples
 
+## Profile Examples
+
+### 1. Get My Profile
+
+```bash
+curl -X GET http://localhost:8080/api/v1/profiles/me \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 2. Get Profile by User ID
+
+```bash
+curl -X GET http://localhost:8080/api/v1/profiles/by-user/$USER_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 3. Get Profile by Username
+
+```bash
+curl -X GET http://localhost:8080/api/v1/profiles/by-username/alice_wonder \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 4. Update My Profile
+
+```bash
+curl -X PATCH http://localhost:8080/api/v1/profiles/me \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "display_name": "Alice Wonder",
+    "bio": "Go backend engineer",
+    "avatar_url": "https://cdn.example.com/avatars/alice.png",
+    "cover_url": "https://cdn.example.com/covers/alice.png",
+    "location": "Moscow",
+    "website_url": "https://alice.dev",
+    "is_public": true
+  }'
+```
+
+### 5. Update Profile README
+
+```bash
+curl -X PATCH http://localhost:8080/api/v1/profiles/me/readme \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "readme_markdown": "# About me\n\nI build distributed systems."
+  }'
+```
+
+### 6. List Social Links
+
+```bash
+curl -X GET http://localhost:8080/api/v1/profiles/$USER_ID/social-links \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 7. Create Social Link
+
+```bash
+curl -X POST http://localhost:8080/api/v1/profiles/social-links \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "platform": "github",
+    "url": "https://github.com/alice",
+    "label": "GitHub",
+    "position": 10,
+    "is_visible": true
+  }'
+```
+
+Response:
+```json
+{
+  "social_link": {
+    "social_link_id": "8f666666-6f6f-6f6f-6f6f-666666666666",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "platform": "github",
+    "url": "https://github.com/alice",
+    "label": "GitHub",
+    "position": 10,
+    "is_visible": true,
+    "created_at": "2026-03-20T17:10:00Z",
+    "updated_at": "2026-03-20T17:10:00Z"
+  }
+}
+```
+
+### 8. Update Social Link
+
+```bash
+SOCIAL_LINK_ID="8f666666-6f6f-6f6f-6f6f-666666666666"
+
+curl -X PUT http://localhost:8080/api/v1/profiles/social-links \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "social_link_id": "'"$SOCIAL_LINK_ID"'",
+    "platform": "github",
+    "url": "https://github.com/alice-updated",
+    "label": "Main GitHub",
+    "position": 5,
+    "is_visible": true
+  }'
+```
+
+### 9. Delete Social Link
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/profiles/social-links/$SOCIAL_LINK_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 10. Follow User
+
+```bash
+TARGET_USER_ID="550e8400-e29b-41d4-a716-446655440111"
+
+curl -X POST http://localhost:8080/api/v1/profiles/$TARGET_USER_ID/follow \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 11. Unfollow User
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/profiles/$TARGET_USER_ID/follow \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 12. List Followers
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/profiles/$USER_ID/followers?limit=20&offset=0" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 13. List Following
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/profiles/$USER_ID/following?limit=20&offset=0" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 14. List Available Titles
+
+```bash
+curl -X GET http://localhost:8080/api/v1/profiles/titles
+```
+
+### 15. Set My Profile Title
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/profiles/me/title \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title_code": "mentor"
+  }'
+```
+
+### 16. Typical Onboarding Flow
+
+```bash
+# 1) Register
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "new_user_2026",
+    "email": "new_user_2026@example.com",
+    "password": "SuperSecure123!"
+  }'
+
+# 2) Save access token and call profile endpoint
+curl -X GET http://localhost:8080/api/v1/profiles/me \
+  -H "Authorization: Bearer <ACCESS_TOKEN_FROM_REGISTER>"
+```
+
+`profiles/me` должен вернуть профиль даже для старого аккаунта без заранее созданной записи профиля, т.к. profile-service выполняет lazy create по JWT claims.
+
 ### 400 Bad Request
 
 ```bash

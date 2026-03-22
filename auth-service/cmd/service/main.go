@@ -2,18 +2,24 @@ package main
 
 import (
 	"auth-service/config"
+	"auth-service/internal/kafka"
+	model "auth-service/internal/models"
 	"auth-service/internal/repository"
 	"auth-service/internal/security"
 	"auth-service/internal/service"
 	grpcserver "auth-service/internal/transport/grpc"
+	"context"
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
 	authv1 "github.com/Anabol1ks/Forklore/pkg/pb/auth/v1"
 	"github.com/Anabol1ks/Forklore/pkg/utils/database"
 	"github.com/Anabol1ks/Forklore/pkg/utils/logger"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -47,7 +53,24 @@ func main() {
 
 	authService := service.NewAuthService(repos, passwordManager, tokenManager, cfg.Auth.RefreshTokenTTL)
 
-	authHandler := grpcserver.NewAuthHandler(authService)
+	eventProducer := kafka.NewProducer(kafka.ProducerConfig{
+		Brokers:   cfg.Kafka.Brokers,
+		AuthTopic: cfg.Kafka.AuthTopic,
+		ClientID:  cfg.Kafka.ClientID,
+	}, log)
+	defer func() {
+		if err := eventProducer.Close(); err != nil {
+			log.Warn("failed to close kafka producer", zap.Error(err))
+		}
+	}()
+
+	bootstrapCtx, cancelBootstrap := context.WithTimeout(context.Background(), 20*time.Second)
+	if err := publishBootstrapUserRegisteredEvents(bootstrapCtx, repos, eventProducer, log); err != nil {
+		log.Warn("bootstrap publish for existing users failed", zap.Error(err))
+	}
+	cancelBootstrap()
+
+	authHandler := grpcserver.NewAuthHandler(authService, eventProducer, log)
 	loggingInterceptor := grpcserver.NewLoggingInterceptor(log)
 	authInterceptor := grpcserver.NewAuthInterceptor(tokenManager)
 
@@ -92,4 +115,66 @@ func main() {
 	healthSrv.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	grpcServer.GracefulStop()
 	log.Info("gRPC server stopped")
+}
+
+func publishBootstrapUserRegisteredEvents(
+	ctx context.Context,
+	repos *repository.Repository,
+	producer grpcserver.UserRegisteredPublisher,
+	log *zap.Logger,
+) error {
+	if repos == nil || producer == nil {
+		return nil
+	}
+
+	users, err := repos.User.List(ctx)
+	if err != nil {
+		return err
+	}
+
+	if len(users) == 0 {
+		log.Info("no users found for bootstrap profile events")
+		return nil
+	}
+
+	published := 0
+	for _, user := range users {
+		if !shouldPublishBootstrapEvent(user) {
+			continue
+		}
+
+		if err := producer.PublishUserRegistered(ctx, user.ID, user.Username, user.Email); err != nil {
+			log.Warn("failed to publish bootstrap user.registered event",
+				zap.String("user_id", user.ID.String()),
+				zap.String("username", user.Username),
+				zap.Error(err),
+			)
+			continue
+		}
+
+		published++
+	}
+
+	log.Info("bootstrap user.registered publish completed",
+		zap.Int("total_users", len(users)),
+		zap.Int("published", published),
+	)
+
+	return nil
+}
+
+func shouldPublishBootstrapEvent(user *model.User) bool {
+	if user == nil {
+		return false
+	}
+
+	if user.ID == uuid.Nil {
+		return false
+	}
+
+	if strings.TrimSpace(user.Username) == "" || strings.TrimSpace(user.Email) == "" {
+		return false
+	}
+
+	return true
 }

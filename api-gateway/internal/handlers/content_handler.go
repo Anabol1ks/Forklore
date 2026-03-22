@@ -867,13 +867,34 @@ func (h *ContentHandler) DeleteFile(c *gin.Context) {
 	fileID := c.Param("file_id")
 
 	ctx := forwardAuth(c)
-	_, err := h.client.Client.DeleteFile(ctx, &contentv1.DeleteFileRequest{
+	storageInfo, err := h.client.Client.GetFileStorageInfo(ctx, &contentv1.GetFileStorageInfoRequest{
 		FileId: &commonv1.UUID{Value: fileID},
 	})
 	if err != nil {
 		code, errResp := handleGRPCError(err)
 		c.JSON(code, errResp)
 		return
+	}
+
+	storageKey := strings.TrimSpace(storageInfo.GetStorageKey())
+	otherReferences := storageInfo.GetOtherReferencesCount()
+
+	_, err = h.client.Client.DeleteFile(ctx, &contentv1.DeleteFileRequest{
+		FileId: &commonv1.UUID{Value: fileID},
+	})
+	if err != nil {
+		code, errResp := handleGRPCError(err)
+		c.JSON(code, errResp)
+		return
+	}
+
+	if storageKey != "" && otherReferences == 0 {
+		if !(strings.HasPrefix(storageKey, "http://") || strings.HasPrefix(storageKey, "https://") || strings.HasPrefix(storageKey, "data:")) {
+			cleanKey := filepath.Clean(storageKey)
+			if !filepath.IsAbs(cleanKey) && !strings.HasPrefix(cleanKey, "..") {
+				_ = os.Remove(cleanKey)
+			}
+		}
 	}
 
 	c.Status(http.StatusNoContent)
