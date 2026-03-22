@@ -67,14 +67,21 @@ func main() {
 	}
 	defer searchClient.Close()
 
+	profileClient, err := clients.NewProfileClient(cfg.ProfileServiceAddr)
+	if err != nil {
+		log.Fatal("failed to connect to profile-service", zap.Error(err))
+	}
+	defer profileClient.Close()
+
 	// ── Handlers ──
 	authHandler := handlers.NewAuthHandler(authClient)
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryClient, contentClient)
 	contentHandler := handlers.NewContentHandler(contentClient)
 	searchHandler := handlers.NewSearchHandler(searchClient)
+	profileHandler := handlers.NewProfileHandler(profileClient)
 
 	// ── Router ──
-	r := router.Setup(log, authHandler, repositoryHandler, contentHandler, searchHandler)
+	r := router.Setup(log, authHandler, repositoryHandler, contentHandler, searchHandler, profileHandler)
 
 	// ── HTTP server ──
 	srv := &http.Server{

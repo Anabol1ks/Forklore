@@ -6,6 +6,7 @@ import (
 	"profile-service/internal/service"
 
 	profilev1 "github.com/Anabol1ks/Forklore/pkg/pb/profile/v1"
+	"github.com/Anabol1ks/Forklore/pkg/utils/authjwt"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -35,6 +36,12 @@ func (h *ProfileHandler) GetMyProfile(ctx context.Context, _ *emptypb.Empty) (*p
 	claims, ok := ClaimsFromContext(ctx)
 	if !ok {
 		return nil, LogAndMapError(h.logger, "get my profile: missing claims", domain.ErrUnauthorized)
+	}
+
+	if err := h.ensureRequesterProfile(ctx, claims); err != nil {
+		return nil, LogAndMapError(h.logger, "get my profile: ensure profile failed", err,
+			zap.String("requester_id", claims.UserID.String()),
+		)
 	}
 
 	state, err := h.service.GetMyProfile(ctx, claims.UserID)
@@ -104,6 +111,12 @@ func (h *ProfileHandler) UpdateProfile(ctx context.Context, req *profilev1.Updat
 		return nil, LogAndMapError(h.logger, "update profile: missing claims", domain.ErrUnauthorized)
 	}
 
+	if err := h.ensureRequesterProfile(ctx, claims); err != nil {
+		return nil, LogAndMapError(h.logger, "update profile: ensure profile failed", err,
+			zap.String("requester_id", claims.UserID.String()),
+		)
+	}
+
 	state, err := h.service.UpdateProfile(ctx, service.UpdateProfileInput{
 		RequesterID: claims.UserID,
 		DisplayName: req.GetDisplayName(),
@@ -137,6 +150,12 @@ func (h *ProfileHandler) UpdateProfileReadme(ctx context.Context, req *profilev1
 	claims, ok := ClaimsFromContext(ctx)
 	if !ok {
 		return nil, LogAndMapError(h.logger, "update profile readme: missing claims", domain.ErrUnauthorized)
+	}
+
+	if err := h.ensureRequesterProfile(ctx, claims); err != nil {
+		return nil, LogAndMapError(h.logger, "update profile readme: ensure profile failed", err,
+			zap.String("requester_id", claims.UserID.String()),
+		)
 	}
 
 	state, err := h.service.UpdateProfileReadme(ctx, service.UpdateProfileReadmeInput{
@@ -193,6 +212,12 @@ func (h *ProfileHandler) UpsertProfileSocialLink(ctx context.Context, req *profi
 		return nil, LogAndMapError(h.logger, "upsert social link: missing claims", domain.ErrUnauthorized)
 	}
 
+	if err := h.ensureRequesterProfile(ctx, claims); err != nil {
+		return nil, LogAndMapError(h.logger, "upsert social link: ensure profile failed", err,
+			zap.String("requester_id", claims.UserID.String()),
+		)
+	}
+
 	socialLinkID, err := parseOptionalProtoUUID(req.GetSocialLinkId(), "social_link_id")
 	if err != nil {
 		return nil, err
@@ -233,6 +258,12 @@ func (h *ProfileHandler) DeleteProfileSocialLink(ctx context.Context, req *profi
 		return nil, LogAndMapError(h.logger, "delete social link: missing claims", domain.ErrUnauthorized)
 	}
 
+	if err := h.ensureRequesterProfile(ctx, claims); err != nil {
+		return nil, LogAndMapError(h.logger, "delete social link: ensure profile failed", err,
+			zap.String("requester_id", claims.UserID.String()),
+		)
+	}
+
 	socialLinkID, err := parseProtoUUID(req.GetSocialLinkId(), "social_link_id")
 	if err != nil {
 		return nil, err
@@ -263,6 +294,12 @@ func (h *ProfileHandler) FollowUser(ctx context.Context, req *profilev1.FollowUs
 		return nil, LogAndMapError(h.logger, "follow user: missing claims", domain.ErrUnauthorized)
 	}
 
+	if err := h.ensureRequesterProfile(ctx, claims); err != nil {
+		return nil, LogAndMapError(h.logger, "follow user: ensure profile failed", err,
+			zap.String("requester_id", claims.UserID.String()),
+		)
+	}
+
 	followeeID, err := parseProtoUUID(req.GetFolloweeId(), "followee_id")
 	if err != nil {
 		return nil, err
@@ -291,6 +328,12 @@ func (h *ProfileHandler) UnfollowUser(ctx context.Context, req *profilev1.Unfoll
 	claims, ok := ClaimsFromContext(ctx)
 	if !ok {
 		return nil, LogAndMapError(h.logger, "unfollow user: missing claims", domain.ErrUnauthorized)
+	}
+
+	if err := h.ensureRequesterProfile(ctx, claims); err != nil {
+		return nil, LogAndMapError(h.logger, "unfollow user: ensure profile failed", err,
+			zap.String("requester_id", claims.UserID.String()),
+		)
 	}
 
 	followeeID, err := parseProtoUUID(req.GetFolloweeId(), "followee_id")
@@ -392,6 +435,12 @@ func (h *ProfileHandler) SetProfileTitle(ctx context.Context, req *profilev1.Set
 		return nil, LogAndMapError(h.logger, "set profile title: missing claims", domain.ErrUnauthorized)
 	}
 
+	if err := h.ensureRequesterProfile(ctx, claims); err != nil {
+		return nil, LogAndMapError(h.logger, "set profile title: ensure profile failed", err,
+			zap.String("requester_id", claims.UserID.String()),
+		)
+	}
+
 	state, err := h.service.SetProfileTitle(ctx, service.SetProfileTitleInput{
 		RequesterID: claims.UserID,
 		TitleCode:   req.GetTitleCode(),
@@ -430,4 +479,15 @@ func requesterIDFromContext(ctx context.Context) uuid.UUID {
 		return uuid.Nil
 	}
 	return claims.UserID
+}
+
+func (h *ProfileHandler) ensureRequesterProfile(ctx context.Context, claims *authjwt.AccessClaims) error {
+	if claims == nil {
+		return domain.ErrUnauthorized
+	}
+
+	return h.service.CreateProfileIfNotExists(ctx, service.CreateProfileInput{
+		UserID:   claims.UserID,
+		Username: claims.Username,
+	})
 }

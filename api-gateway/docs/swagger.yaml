@@ -352,10 +352,38 @@ definitions:
       user:
         $ref: '#/definitions/models.UserResponse'
     type: object
+  models.GetProfileResponse:
+    properties:
+      profile:
+        $ref: '#/definitions/models.ProfileResponse'
+    type: object
   models.GetRepositoryResponse:
     properties:
       repository:
         $ref: '#/definitions/models.RepositoryResponse'
+    type: object
+  models.ListAvailableTitlesResponse:
+    properties:
+      titles:
+        items:
+          $ref: '#/definitions/models.ProfileTitleResponse'
+        type: array
+    type: object
+  models.ListProfilePreviewsResponse:
+    properties:
+      profiles:
+        items:
+          $ref: '#/definitions/models.ProfilePreviewResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  models.ListProfileSocialLinksResponse:
+    properties:
+      social_links:
+        items:
+          $ref: '#/definitions/models.ProfileSocialLinkResponse'
+        type: array
     type: object
   models.ListRepositoriesResponse:
     properties:
@@ -397,6 +425,94 @@ definitions:
         type: string
     required:
     - refresh_token
+    type: object
+  models.ProfilePreviewResponse:
+    properties:
+      avatar_url:
+        type: string
+      display_name:
+        type: string
+      title:
+        $ref: '#/definitions/models.ProfileTitleResponse'
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  models.ProfileResponse:
+    properties:
+      avatar_url:
+        type: string
+      bio:
+        type: string
+      cover_url:
+        type: string
+      created_at:
+        type: string
+      display_name:
+        type: string
+      followers_count:
+        type: integer
+      following_count:
+        type: integer
+      is_public:
+        type: boolean
+      location:
+        type: string
+      readme_markdown:
+        type: string
+      social_links:
+        items:
+          $ref: '#/definitions/models.ProfileSocialLinkResponse'
+        type: array
+      title:
+        $ref: '#/definitions/models.ProfileTitleResponse'
+      title_source:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+      website_url:
+        type: string
+    type: object
+  models.ProfileSocialLinkResponse:
+    properties:
+      created_at:
+        type: string
+      is_visible:
+        type: boolean
+      label:
+        type: string
+      platform:
+        type: string
+      position:
+        type: integer
+      social_link_id:
+        type: string
+      updated_at:
+        type: string
+      url:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.ProfileTitleResponse:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      is_active:
+        type: boolean
+      is_system:
+        type: boolean
+      label:
+        type: string
+      sort_order:
+        type: integer
     type: object
   models.RefreshRequest:
     properties:
@@ -609,6 +725,14 @@ definitions:
         example: 42
         type: integer
     type: object
+  models.SetProfileTitleRequest:
+    properties:
+      title_code:
+        maxLength: 64
+        type: string
+    required:
+    - title_code
+    type: object
   models.TokenPairResponse:
     properties:
       access_expires_at:
@@ -629,6 +753,36 @@ definitions:
       token_type:
         example: Bearer
         type: string
+    type: object
+  models.UpdateProfileReadmeRequest:
+    properties:
+      readme_markdown:
+        type: string
+    type: object
+  models.UpdateProfileRequest:
+    properties:
+      avatar_url:
+        maxLength: 2048
+        type: string
+      bio:
+        maxLength: 1000
+        type: string
+      cover_url:
+        maxLength: 2048
+        type: string
+      display_name:
+        maxLength: 100
+        type: string
+      is_public:
+        type: boolean
+      location:
+        maxLength: 100
+        type: string
+      website_url:
+        maxLength: 2048
+        type: string
+    required:
+    - display_name
     type: object
   models.UpdateRepositoryRequest:
     properties:
@@ -732,6 +886,31 @@ definitions:
     - repo_id
     - tag_id
     - updated_at
+    type: object
+  models.UpsertProfileSocialLinkRequest:
+    properties:
+      is_visible:
+        type: boolean
+      label:
+        maxLength: 64
+        type: string
+      platform:
+        type: string
+      position:
+        type: integer
+      social_link_id:
+        type: string
+      url:
+        maxLength: 2048
+        type: string
+    required:
+    - platform
+    - url
+    type: object
+  models.UpsertProfileSocialLinkResponse:
+    properties:
+      social_link:
+        $ref: '#/definitions/models.ProfileSocialLinkResponse'
     type: object
   models.UpsertRepositoryIndexRequest:
     properties:
@@ -1408,6 +1587,491 @@ paths:
       summary: Восстановить версию файла
       tags:
       - content
+  /profiles/{followee_id}/follow:
+    delete:
+      description: Удаляет подписку текущего пользователя на пользователя followee_id
+      parameters:
+      - description: ID пользователя, от которого отписываемся
+        in: path
+        name: followee_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Отписаться от пользователя
+      tags:
+      - profiles
+    post:
+      description: Создаёт подписку текущего пользователя на пользователя followee_id
+      parameters:
+      - description: ID пользователя, на которого подписываемся
+        in: path
+        name: followee_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Подписаться на пользователя
+      tags:
+      - profiles
+  /profiles/{user_id}/followers:
+    get:
+      description: Возвращает подписчиков пользователя user_id
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - default: 20
+        description: Лимит (1..100)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListProfilePreviewsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список подписчиков пользователя
+      tags:
+      - profiles
+  /profiles/{user_id}/following:
+    get:
+      description: Возвращает пользователей, на которых подписан user_id
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - default: 20
+        description: Лимит (1..100)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListProfilePreviewsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список подписок пользователя
+      tags:
+      - profiles
+  /profiles/{user_id}/social-links:
+    get:
+      description: Возвращает социальные ссылки профиля по user_id
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListProfileSocialLinksResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список соцссылок профиля
+      tags:
+      - profiles
+  /profiles/by-user/{user_id}:
+    get:
+      description: Возвращает профиль пользователя по user_id
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить профиль по user_id
+      tags:
+      - profiles
+  /profiles/by-username/{username}:
+    get:
+      description: Возвращает профиль пользователя по username
+      parameters:
+      - description: Username пользователя
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить профиль по username
+      tags:
+      - profiles
+  /profiles/me:
+    get:
+      description: Возвращает профиль текущего авторизованного пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить мой профиль
+      tags:
+      - profiles
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет публичные поля профиля текущего пользователя
+      parameters:
+      - description: Данные профиля
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить профиль
+      tags:
+      - profiles
+  /profiles/me/readme:
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет readme_markdown текущего пользователя
+      parameters:
+      - description: README профиля
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateProfileReadmeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить README профиля
+      tags:
+      - profiles
+  /profiles/me/title:
+    put:
+      consumes:
+      - application/json
+      description: Устанавливает title_code для текущего пользователя
+      parameters:
+      - description: Титул профиля
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.SetProfileTitleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Установить титул профиля
+      tags:
+      - profiles
+  /profiles/social-links:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую соцссылку или обновляет существующую по social_link_id
+      parameters:
+      - description: Данные соцссылки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpsertProfileSocialLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpsertProfileSocialLinkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать или обновить соцссылку
+      tags:
+      - profiles
+    put:
+      consumes:
+      - application/json
+      description: Создаёт новую соцссылку или обновляет существующую по social_link_id
+      parameters:
+      - description: Данные соцссылки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpsertProfileSocialLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpsertProfileSocialLinkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать или обновить соцссылку
+      tags:
+      - profiles
+  /profiles/social-links/{social_link_id}:
+    delete:
+      description: Удаляет соцссылку текущего пользователя по social_link_id
+      parameters:
+      - description: ID соцссылки
+        in: path
+        name: social_link_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить соцссылку
+      tags:
+      - profiles
+  /profiles/titles:
+    get:
+      description: Возвращает активные титулы профиля
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListAvailableTitlesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Список доступных титулов
+      tags:
+      - profiles
   /repositories:
     post:
       consumes:

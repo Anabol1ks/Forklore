@@ -134,5 +134,5 @@ func main() {
 		grpcServer.Stop()
 	}
 
-	log.Info("search-service stopped")
+	log.Info("profile-service stopped")
 }

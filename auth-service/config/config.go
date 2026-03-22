@@ -12,9 +12,10 @@ import (
 )
 
 type Config struct {
-	Port string
-	DB   DB
-	Auth Auth
+	Port  string
+	DB    DB
+	Auth  Auth
+	Kafka KafkaProducerConfig
 }
 
 type DB struct {
@@ -27,6 +28,12 @@ type Auth struct {
 	AccessTokenTTL  time.Duration
 	RefreshTokenTTL time.Duration
 	BcryptCost      int
+}
+
+type KafkaProducerConfig struct {
+	Brokers   []string
+	AuthTopic string
+	ClientID  string
 }
 
 func Load(log *zap.Logger) *Config {
@@ -48,6 +55,11 @@ func Load(log *zap.Logger) *Config {
 			AccessTokenTTL:  parseDurationWithDays(getEnv("AccessTokenTTL", log)),
 			RefreshTokenTTL: parseDurationWithDays(getEnv("RefreshTokenTTL", log)),
 			BcryptCost:      atoiDefault(getEnv("BcryptCost", log), 12),
+		},
+		Kafka: KafkaProducerConfig{
+			Brokers:   splitAndTrim(getEnv("KAFKA_BROKERS", log)),
+			AuthTopic: getEnv("KAFKA_PROFILE_TOPIC", log),
+			ClientID:  getEnv("KAFKA_CLIENT_ID", log),
 		},
 	}
 }

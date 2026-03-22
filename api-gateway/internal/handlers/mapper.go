@@ -7,6 +7,7 @@ import (
 	authv1 "github.com/Anabol1ks/Forklore/pkg/pb/auth/v1"
 	commonv1 "github.com/Anabol1ks/Forklore/pkg/pb/common/v1"
 	contentv1 "github.com/Anabol1ks/Forklore/pkg/pb/content/v1"
+	profilev1 "github.com/Anabol1ks/Forklore/pkg/pb/profile/v1"
 	repositoryv1 "github.com/Anabol1ks/Forklore/pkg/pb/repository/v1"
 	searchv1 "github.com/Anabol1ks/Forklore/pkg/pb/search/v1"
 )
@@ -407,6 +408,143 @@ func mapSearchEntityType(entityType commonv1.SearchEntityType) string {
 		return "document"
 	case commonv1.SearchEntityType_SEARCH_ENTITY_TYPE_FILE:
 		return "file"
+	default:
+		return "unspecified"
+	}
+}
+
+func mapProfile(profile *profilev1.Profile) models.ProfileResponse {
+	if profile == nil {
+		return models.ProfileResponse{}
+	}
+
+	var createdAt, updatedAt string
+	if profile.GetCreatedAt() != nil {
+		createdAt = profile.GetCreatedAt().AsTime().Format(time.RFC3339)
+	}
+	if profile.GetUpdatedAt() != nil {
+		updatedAt = profile.GetUpdatedAt().AsTime().Format(time.RFC3339)
+	}
+
+	links := make([]models.ProfileSocialLinkResponse, len(profile.GetSocialLinks()))
+	for i, link := range profile.GetSocialLinks() {
+		links[i] = mapProfileSocialLink(link)
+	}
+
+	return models.ProfileResponse{
+		UserID:         profile.GetUserId().GetValue(),
+		Username:       profile.GetUsername(),
+		DisplayName:    profile.GetDisplayName(),
+		Bio:            profile.GetBio(),
+		AvatarURL:      profile.GetAvatarUrl(),
+		CoverURL:       profile.GetCoverUrl(),
+		Location:       profile.GetLocation(),
+		WebsiteURL:     profile.GetWebsiteUrl(),
+		ReadmeMarkdown: profile.GetReadmeMarkdown(),
+		IsPublic:       profile.GetIsPublic(),
+		Title:          mapOptionalProfileTitle(profile.GetTitle()),
+		TitleSource:    mapProfileTitleSource(profile.GetTitleSource()),
+		FollowersCount: profile.GetFollowersCount(),
+		FollowingCount: profile.GetFollowingCount(),
+		SocialLinks:    links,
+		CreatedAt:      createdAt,
+		UpdatedAt:      updatedAt,
+	}
+}
+
+func mapProfilePreview(profile *profilev1.ProfilePreview) models.ProfilePreviewResponse {
+	if profile == nil {
+		return models.ProfilePreviewResponse{}
+	}
+
+	return models.ProfilePreviewResponse{
+		UserID:      profile.GetUserId().GetValue(),
+		Username:    profile.GetUsername(),
+		DisplayName: profile.GetDisplayName(),
+		AvatarURL:   profile.GetAvatarUrl(),
+		Title:       mapOptionalProfileTitle(profile.GetTitle()),
+	}
+}
+
+func mapProfileSocialLink(link *profilev1.ProfileSocialLink) models.ProfileSocialLinkResponse {
+	if link == nil {
+		return models.ProfileSocialLinkResponse{}
+	}
+
+	var createdAt, updatedAt string
+	if link.GetCreatedAt() != nil {
+		createdAt = link.GetCreatedAt().AsTime().Format(time.RFC3339)
+	}
+	if link.GetUpdatedAt() != nil {
+		updatedAt = link.GetUpdatedAt().AsTime().Format(time.RFC3339)
+	}
+
+	return models.ProfileSocialLinkResponse{
+		SocialLinkID: link.GetSocialLinkId().GetValue(),
+		UserID:       link.GetUserId().GetValue(),
+		Platform:     mapSocialPlatform(link.GetPlatform()),
+		URL:          link.GetUrl(),
+		Label:        link.GetLabel(),
+		Position:     link.GetPosition(),
+		IsVisible:    link.GetIsVisible(),
+		CreatedAt:    createdAt,
+		UpdatedAt:    updatedAt,
+	}
+}
+
+func mapProfileTitle(title *profilev1.ProfileTitle) models.ProfileTitleResponse {
+	if title == nil {
+		return models.ProfileTitleResponse{}
+	}
+
+	return models.ProfileTitleResponse{
+		Code:        title.GetCode(),
+		Label:       title.GetLabel(),
+		Description: title.GetDescription(),
+		SortOrder:   title.GetSortOrder(),
+		IsActive:    title.GetIsActive(),
+		IsSystem:    title.GetIsSystem(),
+	}
+}
+
+func mapOptionalProfileTitle(title *profilev1.ProfileTitle) *models.ProfileTitleResponse {
+	if title == nil {
+		return nil
+	}
+
+	mapped := mapProfileTitle(title)
+	return &mapped
+}
+
+func mapProfileTitleSource(source profilev1.ProfileTitleSource) string {
+	switch source {
+	case profilev1.ProfileTitleSource_PROFILE_TITLE_SOURCE_MANUAL:
+		return string(models.ProfileTitleSourceManual)
+	case profilev1.ProfileTitleSource_PROFILE_TITLE_SOURCE_ACHIEVEMENT:
+		return string(models.ProfileTitleSourceAchievement)
+	default:
+		return string(models.ProfileTitleSourceSystem)
+	}
+}
+
+func mapSocialPlatform(platform profilev1.SocialPlatform) string {
+	switch platform {
+	case profilev1.SocialPlatform_SOCIAL_PLATFORM_TELEGRAM:
+		return string(models.SocialPlatformTelegram)
+	case profilev1.SocialPlatform_SOCIAL_PLATFORM_GITHUB:
+		return string(models.SocialPlatformGithub)
+	case profilev1.SocialPlatform_SOCIAL_PLATFORM_VK:
+		return string(models.SocialPlatformVK)
+	case profilev1.SocialPlatform_SOCIAL_PLATFORM_LINKEDIN:
+		return string(models.SocialPlatformLinkedIn)
+	case profilev1.SocialPlatform_SOCIAL_PLATFORM_X:
+		return string(models.SocialPlatformX)
+	case profilev1.SocialPlatform_SOCIAL_PLATFORM_YOUTUBE:
+		return string(models.SocialPlatformYoutube)
+	case profilev1.SocialPlatform_SOCIAL_PLATFORM_WEBSITE:
+		return string(models.SocialPlatformWebsite)
+	case profilev1.SocialPlatform_SOCIAL_PLATFORM_OTHER:
+		return string(models.SocialPlatformOther)
 	default:
 		return "unspecified"
 	}

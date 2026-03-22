@@ -27,8 +27,11 @@ services:
     environment:
       # Внутри docker-сети хост БД должен быть именем сервиса, а не localhost.
       DB_AUTH_HOST: auth-db
+      KAFKA_BROKERS: kafka:9092
     depends_on:
       auth-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     ports:
       - "8081:8081"
@@ -183,6 +186,25 @@ services:
     networks:
       - forklore-network
 
+  profile-service:
+    build:
+      context: .
+      dockerfile: profile-service/Dockerfile
+    env_file: .env
+    environment:
+      DB_PROFILE_HOST: profile-db
+      DB_PROFILE_PORT: "5432"
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      profile-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8085:8085"
+    networks:
+      - forklore-network
+
   # api-gateway:
   #   build:
   #     context: .
@@ -193,6 +215,7 @@ services:
   #     REPOSITORY_SERVICE_ADDR: repository-service:8082
   #     CONTENT_SERVICE_ADDR: content-service:8083
   #     SEARCH_SERVICE_ADDR: search-service:8084
+  #     PROFILE_SERVICE_ADDR: profile-service:8085
   #     GATEWAY_PORT: "8080"
   #   depends_on:
   #     auth-service:
@@ -202,6 +225,8 @@ services:
   #     content-service:
   #       condition: service_started
   #     search-service:
+  #       condition: service_started
+  #     profile-service:
   #       condition: service_started
   #   ports:
   #     - "8080:8080"
