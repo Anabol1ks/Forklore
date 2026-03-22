@@ -204,6 +204,45 @@ services:
     networks:
       - forklore-network
 
+  ranking-db:
+    image: postgres:17
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DB_RANKING_USER}
+      POSTGRES_PASSWORD: ${DB_RANKING_PASSWORD}
+      POSTGRES_DB: ${DB_RANKING_NAME}
+    volumes:
+      - ranking_db_data:/var/lib/postgresql/data
+    ports:
+      - "5450:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_RANKING_USER} -d ${DB_RANKING_NAME} -h localhost -p 5432 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - forklore-network
+
+  ranking-service:
+    build:
+      context: .
+      dockerfile: ranking-service/Dockerfile
+    env_file: .env
+    environment:
+      DB_RANKING_HOST: ranking-db
+      DB_RANKING_PORT: "5432"
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      ranking-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8087:8087"
+    networks:
+      - forklore-network
+
   study-service:
     build:
       context: .
@@ -233,6 +272,7 @@ services:
       CONTENT_SERVICE_ADDR: content-service:8083
       SEARCH_SERVICE_ADDR: search-service:8084
       PROFILE_SERVICE_ADDR: profile-service:8085
+      RANKING_SERVICE_ADDR: ranking-service:8087
       STUDY_SERVICE_URL: http://study-service:8086
       GATEWAY_PORT: "8080"
     depends_on:
@@ -246,10 +286,49 @@ services:
         condition: service_started
       profile-service:
         condition: service_started
+      ranking-service:
+        condition: service_started
       study-service:
         condition: service_healthy
     ports:
       - "8080:8080"
+    networks:
+      - forklore-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: /api/v1
+    environment:
+      NEXT_PUBLIC_API_URL: /api/v1
+      NODE_ENV: production
+    depends_on:
+      api-gateway:
+        condition: service_started
+    expose:
+      - "3000"
+    networks:
+      - forklore-network
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      CADDY_DOMAIN: ${CADDY_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      frontend:
+        condition: service_started
+      api-gateway:
+        condition: service_started
     networks:
       - forklore-network
 
@@ -291,7 +370,10 @@ volumes:
   content_db_data:
   search_db_data:
   profile_db_data:
+  ranking_db_data:
   kafka_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   forklore-network:

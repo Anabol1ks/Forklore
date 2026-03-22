@@ -16,8 +16,8 @@ RUN go mod download
 COPY content-service/. .
 
 # Собираем бинарники для всех компонентов
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /bin/content-service ./cmd/service/main.go
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /bin/migrate ./cmd/migrate/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/content-service ./cmd/service/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/migrate ./cmd/migrate/main.go
 
 FROM alpine:latest
 

@@ -16,8 +16,8 @@ RUN go mod download
 COPY search-service/. .
 
 # Собираем бинарники для всех компонентов
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /bin/search-service ./cmd/service/main.go
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /bin/migrate ./cmd/migrate/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/search-service ./cmd/service/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/migrate ./cmd/migrate/main.go
 
 FROM alpine:latest
 

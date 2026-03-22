@@ -73,6 +73,12 @@ func main() {
 	}
 	defer profileClient.Close()
 
+	rankingClient, err := clients.NewRankingClient(cfg.RankingServiceAddr)
+	if err != nil {
+		log.Fatal("failed to connect to ranking-service", zap.Error(err))
+	}
+	defer rankingClient.Close()
+
 	studyClient := clients.NewStudyClient(cfg.StudyServiceURL)
 	// ── Handlers ──
 	authHandler := handlers.NewAuthHandler(authClient)
@@ -80,10 +86,11 @@ func main() {
 	contentHandler := handlers.NewContentHandler(contentClient)
 	searchHandler := handlers.NewSearchHandler(searchClient, profileClient)
 	profileHandler := handlers.NewProfileHandler(profileClient)
+	rankingHandler := handlers.NewRankingHandler(rankingClient)
 	studyHandler := handlers.NewStudyHandler(studyClient)
 
 	// ── Router ──
-	r := router.Setup(log, authHandler, repositoryHandler, contentHandler, searchHandler, studyHandler, profileHandler)
+	r := router.Setup(log, authHandler, repositoryHandler, contentHandler, searchHandler, studyHandler, profileHandler, rankingHandler)
 
 	// ── HTTP server ──
 	srv := &http.Server{

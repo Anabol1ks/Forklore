@@ -54,4 +54,16 @@ proto:
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		--validate_out=lang=go,paths=source_relative:. \
 		--grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative
+	protoc -I. \
+		ranking/v1/ranking.proto \
+		--go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		--validate_out=lang=go,paths=source_relative:. \
+		--grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative
+	protoc -I. \
+		ranking/events/v1/ranking_events.proto \
+		--go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		--validate_out=lang=go,paths=source_relative:. \
+		--grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative
 	

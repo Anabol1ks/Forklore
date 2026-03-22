@@ -511,7 +511,7 @@ function SearchPageContent() {
               <Select
                 value={selectedUniversity || "all"}
                 onValueChange={(value) => {
-                  const nextUniversity = value === "all" ? "" : value;
+                  const nextUniversity = value === "all" || value == null ? "" : value;
                   setSelectedUniversity(nextUniversity);
                   setSelectedSubjectTagID("");
                   updateUrl(queryInput, activeType, activeMode, nextUniversity, "");
@@ -536,7 +536,7 @@ function SearchPageContent() {
               <Select
                 value={selectedSubjectTagID || "all"}
                 onValueChange={(value) => {
-                  const nextSubjectTagID = value === "all" ? "" : value;
+                  const nextSubjectTagID = value === "all" || value == null ? "" : value;
                   setSelectedSubjectTagID(nextSubjectTagID);
                   updateUrl(queryInput, activeType, activeMode, selectedUniversity, nextSubjectTagID);
                 }}

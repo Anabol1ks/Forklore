@@ -514,6 +514,56 @@ definitions:
       sort_order:
         type: integer
     type: object
+  models.RankingEntryResponse:
+    properties:
+      active_months_count:
+        type: integer
+      active_weeks_last_8:
+        type: integer
+      activity_points_30d:
+        type: integer
+      activity_points_total:
+        type: integer
+      avatar_url:
+        type: string
+      display_name:
+        type: string
+      followers_count:
+        type: integer
+      followers_gained_30d:
+        type: integer
+      forks_received_30d:
+        type: integer
+      forks_received_total:
+        type: integer
+      public_repositories_count:
+        type: integer
+      score:
+        type: number
+      stars_received_30d:
+        type: integer
+      stars_received_total:
+        type: integer
+      subject_score:
+        type: number
+      tag_id:
+        type: string
+      title_label:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  models.RankingResponse:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/models.RankingEntryResponse'
+        type: array
+      total:
+        type: integer
+    type: object
   models.RefreshRequest:
     properties:
       refresh_token:
@@ -2164,6 +2214,107 @@ paths:
       summary: Список доступных титулов
       tags:
       - profiles
+  /rankings/monthly:
+    get:
+      description: Возвращает таблицу лидеров по рейтингу за последние 30 дней
+      parameters:
+      - default: 20
+        description: Лимит
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RankingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить месячный рейтинг
+      tags:
+      - rankings
+  /rankings/overall:
+    get:
+      description: Возвращает таблицу лидеров по общему рейтингу пользователей
+      parameters:
+      - default: 20
+        description: Лимит
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RankingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить общий рейтинг
+      tags:
+      - rankings
+  /rankings/subject/{tag_id}:
+    get:
+      description: Возвращает таблицу лидеров по выбранному предметному тегу
+      parameters:
+      - description: ID предметного тега
+        in: path
+        name: tag_id
+        required: true
+        type: string
+      - default: 20
+        description: Лимит
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RankingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Получить предметный рейтинг
+      tags:
+      - rankings
   /repositories:
     post:
       consumes:

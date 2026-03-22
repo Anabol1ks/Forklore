@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler, searchHandler *handlers.SearchHandler, studyHandler *handlers.StudyHandler, profileHandler *handlers.ProfileHandler) *gin.Engine {
+func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler *handlers.RepositoryHandler, contentHandler *handlers.ContentHandler, searchHandler *handlers.SearchHandler, studyHandler *handlers.StudyHandler, profileHandler *handlers.ProfileHandler, rankingHandler *handlers.RankingHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.CORS())
@@ -49,6 +49,9 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 		v1.GET("/profiles/:user_id/followers", profileHandler.ListFollowers)
 		v1.GET("/profiles/:user_id/following", profileHandler.ListFollowing)
 		v1.GET("/profiles/titles", profileHandler.ListAvailableTitles)
+		v1.GET("/rankings/overall", rankingHandler.GetOverallLeaderboard)
+		v1.GET("/rankings/monthly", rankingHandler.GetMonthlyLeaderboard)
+		v1.GET("/rankings/subject/:tag_id", rankingHandler.GetSubjectLeaderboard)
 
 		// ── Auth ──
 		auth := v1.Group("/auth")

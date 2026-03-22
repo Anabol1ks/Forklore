@@ -44,6 +44,7 @@ export function Navbar() {
           </Link>
           <div className="hidden md:flex space-x-4 shrink-0">
             <Link href="/" className="text-sm font-medium hover:underline underline-offset-4">Репозитории</Link>
+            <Link href="/ranking" className="text-sm font-medium hover:underline underline-offset-4">Рейтинг</Link>
           </div>
           <div className="hidden md:flex items-center w-90 lg:w-105">
             <div className="relative w-full">
