@@ -1,8 +1,9 @@
+# syntax=docker/dockerfile:1.7
 FROM golang:1.25-alpine AS builder
 
 RUN apk add --no-cache git make
 
-WORKDIR /app/content-service
+WORKDIR /app/search-service
 
 # Копируем go.mod/go.sum search-service и локальные модули, нужные для replace
 COPY search-service/go.mod search-service/go.sum ./
@@ -10,14 +11,20 @@ COPY pkg/pb ../pkg/pb
 COPY pkg/utils ../pkg/utils
 
 # Загружаем зависимости
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 
 # Копируем исходный код search-service
 COPY search-service/. .
 
 # Собираем бинарники для всех компонентов
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/search-service ./cmd/service/main.go
-RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/migrate ./cmd/migrate/main.go
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux go build -o /bin/search-service ./cmd/service/main.go
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux go build -o /bin/migrate ./cmd/migrate/main.go
 
 FROM alpine:latest
 

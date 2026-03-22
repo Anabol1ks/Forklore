@@ -465,7 +465,7 @@ export default function BlobPage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-10 w-80" />
+        <Skeleton className="h-10 w-full max-w-md" />
         <Skeleton className="h-80 w-full" />
       </div>
     );
@@ -480,31 +480,31 @@ export default function BlobPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between border-b pb-4">
-        <div className="flex items-center gap-2 text-xl font-semibold">
-          <Button variant="ghost" size="sm" onClick={() => router.push(`/${owner}/${repoSlug}`)}>
+      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-lg font-semibold sm:text-xl">
+          <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => router.push(`/${owner}/${repoSlug}`)}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Назад
           </Button>
-          <span className="text-primary">{owner}</span>
+          <span className="text-primary break-all">{owner}</span>
           <span className="text-muted-foreground">/</span>
-          <span>{repo.name}</span>
+          <span className="min-w-0 truncate">{repo.name}</span>
         </div>
       </div>
 
       {isDocument && document ? (
         <div className="space-y-4">
           <div className="border rounded-md p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold flex items-center gap-2"><FileText className="h-5 w-5" /> {String(document.title || "Документ")}</h2>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => setFlashcardsDrawerOpen(true)}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-semibold flex items-center gap-2 min-w-0"><FileText className="h-5 w-5 shrink-0" /> <span className="truncate">{String(document.title || "Документ")}</span></h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => setFlashcardsDrawerOpen(true)}>
                   <Sparkles className="h-4 w-4 mr-2" /> Сгенерировать карточки
                 </Button>
                 <span className="text-sm text-muted-foreground">Версий: {documentVersions.length}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 border-b pb-2">
+            <div className="flex flex-wrap items-center gap-2 border-b pb-2">
               <Button size="sm" variant={documentViewMode === "preview" ? "default" : "outline"} onClick={() => setDocumentViewMode("preview")}>Preview</Button>
               {isOwner ? <Button size="sm" variant={documentViewMode === "edit" ? "default" : "outline"} onClick={() => setDocumentViewMode("edit")}>Edit</Button> : null}
             </div>
@@ -515,7 +515,7 @@ export default function BlobPage() {
                 <>
                   {": "}
                   <span className="font-medium text-foreground">{selectedDocumentVersionId}</span>
-                  <Button variant="ghost" size="sm" className="ml-2" onClick={handleUseCurrentDocumentVersion}>
+                  <Button variant="ghost" size="sm" className="ml-0 mt-2 sm:ml-2 sm:mt-0" onClick={handleUseCurrentDocumentVersion}>
                     Вернуться к текущей
                   </Button>
                 </>
@@ -528,9 +528,9 @@ export default function BlobPage() {
               <>
                 <Textarea value={documentEditorContent} onChange={(e) => setDocumentEditorContent(e.target.value)} rows={16} placeholder="Содержимое документа" />
                 <Input value={documentChangeSummary} onChange={(e) => setDocumentChangeSummary(e.target.value)} placeholder="Описание изменений" />
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleSaveDraft}>Сохранить черновик</Button>
-                  <Button size="sm" onClick={handleCreateVersion}>Создать версию</Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleSaveDraft}>Сохранить черновик</Button>
+                  <Button size="sm" className="w-full sm:w-auto" onClick={handleCreateVersion}>Создать версию</Button>
                 </div>
               </>
             )}
@@ -564,12 +564,12 @@ export default function BlobPage() {
               const versionId = version.version_id || version.id;
               if (!versionId) return null;
               return (
-                <div key={versionId} className="flex items-center justify-between border rounded-md p-2 text-sm">
+                <div key={versionId} className="flex flex-col gap-2 border rounded-md p-2 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="font-medium">Версия #{version.version_number || "-"}</div>
                     <div className="text-muted-foreground">{version.change_summary || "Без описания"}</div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => void handleViewDocumentVersion(versionId)}>Просмотр</Button>
                     {isOwner ? <Button variant="outline" size="sm" onClick={() => void handleRestoreDocumentVersion(versionId)}>Восстановить</Button> : null}
                   </div>
@@ -609,7 +609,7 @@ export default function BlobPage() {
 
                 <p className="text-sm text-muted-foreground">Количество карточек: {FLASHCARDS_FIXED_COUNT}</p>
 
-                <Button onClick={() => void handleGenerateFlashcards()} disabled={isGeneratingFlashcards}>
+                <Button className="w-full sm:w-auto" onClick={() => void handleGenerateFlashcards()} disabled={isGeneratingFlashcards}>
                   {isGeneratingFlashcards ? "Генерация..." : "Сгенерировать"}
                 </Button>
 
@@ -733,12 +733,12 @@ export default function BlobPage() {
               const versionId = version.version_id || version.id;
               if (!versionId) return null;
               return (
-                <div key={versionId} className="flex items-center justify-between border rounded-md p-2 text-sm">
+                <div key={versionId} className="flex flex-col gap-2 border rounded-md p-2 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="font-medium">Версия #{version.version_number || "-"}</div>
                     <div className="text-muted-foreground">{version.change_summary || "Без описания"}</div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => void handleViewFileVersion(versionId)}>Просмотр</Button>
                     {isOwner ? <Button variant="outline" size="sm" onClick={() => void handleRestoreFileVersion(versionId)}>Восстановить</Button> : null}
                   </div>

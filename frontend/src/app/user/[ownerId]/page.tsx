@@ -838,7 +838,7 @@ export default function UserProfilePage() {
             {togglingFollow ? "Обработка..." : isFollowing ? "Отписаться" : "Подписаться"}
           </Button>
         ) : null}
-        <div className="flex gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1 hover:text-primary cursor-pointer" onClick={() => setActiveTab("followers")}>
             <Users className="h-4 w-4" /> {profile.followers_count} подписчиков
           </span>
@@ -876,7 +876,7 @@ export default function UserProfilePage() {
 
       <div className="w-full md:w-3/4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 w-full">
             <TabsTrigger value="repositories" className="flex items-center gap-2">
               <Book className="h-4 w-4" /> Репозитории
               <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-xs">{repos.length}</span>
@@ -896,12 +896,12 @@ export default function UserProfilePage() {
           </TabsList>
 
           <TabsContent value="repositories" className="space-y-4">
-            <Input placeholder="Найти репозиторий..." className="max-w-md" />
+            <Input placeholder="Найти репозиторий..." className="w-full max-w-md" />
             <div className="grid grid-cols-1 gap-4">
               {repos.map((repo) => (
                 <Card key={repo.repo_id || repo.id || repo.name} className="pt-2 hover:border-primary/50 transition">
                   <CardHeader className="py-4">
-                    <div className="flex justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <Link href={`/${profile.username}/${repo.slug || repo.name}`} className="hover:underline">
                         <CardTitle className="text-xl text-primary flex items-center gap-2">
                           {repo.name} <span className="text-xs border rounded-full px-2 py-1 text-muted-foreground bg-background">{repo.visibility || "public"}</span>
@@ -920,7 +920,7 @@ export default function UserProfilePage() {
               {starredRepos.length > 0 ? starredRepos.map((repo) => (
                 <Card key={repo.repo_id || repo.id || repo.name} className="pt-2 hover:border-primary/50 transition">
                   <CardHeader className="py-4">
-                    <div className="flex justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <Link href={`/${repo.owner_username || profile.username}/${repo.slug || repo.name}`} className="hover:underline">
                         <CardTitle className="text-xl text-primary flex items-center gap-2">
                           {repo.name} <span className="text-xs border rounded-full px-2 py-1 text-muted-foreground bg-background">{repo.visibility || "public"}</span>
@@ -1102,7 +1102,7 @@ export default function UserProfilePage() {
                             <p className="text-xs text-muted-foreground">
                               {pendingAvatarFile.name} ({formatFileSize(pendingAvatarFile.size)})
                             </p>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                               <Button
                                 type="button"
                                 size="sm"
@@ -1175,7 +1175,7 @@ export default function UserProfilePage() {
                             <p className="text-xs text-muted-foreground">
                               {pendingCoverFile.name} ({formatFileSize(pendingCoverFile.size)})
                             </p>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                               <Button
                                 type="button"
                                 size="sm"
@@ -1208,12 +1208,13 @@ export default function UserProfilePage() {
                       />
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <Button onClick={handleSaveProfile} disabled={savingProfile}>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Button className="w-full sm:w-auto" onClick={handleSaveProfile} disabled={savingProfile}>
                       {savingProfile ? "Сохранение..." : "Сохранить профиль"}
                     </Button>
                     <Button
                       variant="outline"
+                      className="w-full sm:w-auto"
                       onClick={() => setProfileForm((prev) => ({ ...prev, is_public: !prev.is_public }))}
                     >
                       {profileForm.is_public ? "Сделать приватным" : "Сделать публичным"}
@@ -1325,13 +1326,14 @@ export default function UserProfilePage() {
                       Новая ссылка автоматически становится первой. Порядок можно менять перетаскиванием.
                     </p>
                   </div>
-                  <div className="flex gap-3">
-                    <Button onClick={handleSubmitSocialLink} disabled={savingSocial}>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Button className="w-full sm:w-auto" onClick={handleSubmitSocialLink} disabled={savingSocial}>
                       {savingSocial ? "Сохранение..." : socialForm.social_link_id ? "Обновить ссылку" : "Добавить ссылку"}
                     </Button>
                     {socialForm.social_link_id ? (
                       <Button
                         variant="outline"
+                        className="w-full sm:w-auto"
                         onClick={() =>
                           setSocialForm({
                             social_link_id: "",
@@ -1394,7 +1396,7 @@ export default function UserProfilePage() {
                             {!link.is_visible ? <p className="text-xs text-muted-foreground mt-1">Скрыта из публичного профиля</p> : null}
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <p className="font-medium">
                             Позиция: {link.position + 1}
                           </p>

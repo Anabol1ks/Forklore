@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+	output: "standalone",
 	allowedDevOrigins: [
 		'26.117.119.83',
 		'*.lhr.life',
@@ -8,6 +9,7 @@ const nextConfig: NextConfig = {
 		'https://c2ui1i-83-69-253-9.ru.tuna.am',
 		'https://qnne5e-83-69-253-9.ru.tuna.am',
 		'*.ru.tuna.am',
+		'loremru.hackaton.profcomff.com'
 	],
 	turbopack: {
 		root: __dirname,

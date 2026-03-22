@@ -194,9 +194,9 @@ export default function CreateRepoPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-10 space-y-6">
+    <div className="max-w-2xl mx-auto py-6 sm:py-10 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Создать новый репозиторий</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Создать новый репозиторий</h1>
         <p className="text-muted-foreground mt-2">
           Репозиторий содержит все материалы вашего проекта.
         </p>
@@ -229,7 +229,7 @@ export default function CreateRepoPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Видимость</Label>
                 <Select value={visibility} onValueChange={(val) => setVisibility(val ?? "public")}>
@@ -399,11 +399,11 @@ export default function CreateRepoPage() {
             </div>
 
           </CardContent>
-          <CardFooter className="flex justify-between border-t px-6 py-4">
-            <Button variant="outline" type="button" onClick={() => router.back()}>
+          <CardFooter className="flex flex-col-reverse gap-3 border-t px-6 py-4 sm:flex-row sm:justify-between">
+            <Button variant="outline" type="button" onClick={() => router.back()} className="w-full sm:w-auto">
               Отмена
             </Button>
-            <Button type="submit" disabled={loading || !name || !tagId}>
+            <Button type="submit" disabled={loading || !name || !tagId} className="w-full sm:w-auto">
               {loading ? "Создается..." : "Создать репозиторий"}
             </Button>
           </CardFooter>

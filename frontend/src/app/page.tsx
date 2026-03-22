@@ -72,25 +72,25 @@ export default function Home() {
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
             Учебные материалы по-новому
           </h1>
-          <p className="max-w-150 text-lg text-muted-foreground">
+          <p className="max-w-3xl text-base text-muted-foreground sm:text-lg">
             Forklore — это платформа для хранения, ведения и распространения учебных материалов.
             Создавайте базы знаний, развивайте их вместе с сообществом и делайте форки.
           </p>
-          <div className="flex gap-4">
+          <div className="flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
             <Link href="/register">
-              <Button size="lg">Начать использование</Button>
+              <Button size="lg" className="w-full sm:w-auto">Начать использование</Button>
             </Link>
             <Link href="/login">
-              <Button size="lg" variant="outline">Уже есть аккаунт?</Button>
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">Уже есть аккаунт?</Button>
             </Link>
           </div>
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-3xl font-bold tracking-tight">Ваши репозитории</h2>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Ваши репозитории</h2>
             <Link href="/repo/create">
-              <Button>Создать репозиторий</Button>
+              <Button className="w-full sm:w-auto">Создать репозиторий</Button>
             </Link>
           </div>
           
@@ -103,11 +103,11 @@ export default function Home() {
               repos.map((repo, index) => (
                 <Card key={repo.id || `${repo.slug}-${index}`} className="hover:border-primary/50 transition-colors">
                   <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         <BookOpen className="h-5 w-5 text-primary" />
-                        <Link href={`/${user?.username}/${repo.slug}`} className="hover:underline">
-                          <CardTitle className="text-xl">{repo.name}</CardTitle>
+                        <Link href={`/${user?.username}/${repo.slug}`} className="min-w-0 hover:underline">
+                          <CardTitle className="truncate text-lg sm:text-xl">{repo.name}</CardTitle>
                         </Link>
                       </div>
                       <span className="text-xs text-muted-foreground border px-2 py-1 rounded-full capitalize">
@@ -119,7 +119,7 @@ export default function Home() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <GitFork className="h-4 w-4" /> {repo.stats?.forks || 0}
                       </span>
