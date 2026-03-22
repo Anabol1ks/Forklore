@@ -29,6 +29,7 @@ type Auth struct {
 type Kafka struct {
 	Brokers          []string
 	SearchIndexTopic string
+	RankingTopic     string
 }
 
 func Load(log *zap.Logger) *Config {
@@ -50,6 +51,7 @@ func Load(log *zap.Logger) *Config {
 		Kafka: Kafka{
 			Brokers:          splitAndTrim(getEnv("KAFKA_BROKERS", log)),
 			SearchIndexTopic: getEnv("KAFKA_SEARCH_TOPIC", log),
+			RankingTopic:     getEnv("KAFKA_RANKING_TOPIC", log),
 		},
 	}
 }

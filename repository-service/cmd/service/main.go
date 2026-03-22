@@ -51,13 +51,20 @@ func main() {
 		Brokers: cfg.Kafka.Brokers,
 		Topic:   cfg.Kafka.SearchIndexTopic,
 	})
+	rankingEventsProducer := kafka.NewRankingProducer(kafka.RankingProducerConfig{
+		Brokers: cfg.Kafka.Brokers,
+		Topic:   cfg.Kafka.RankingTopic,
+	})
 	defer func() {
 		if err := searchEventsProducer.Close(); err != nil {
 			log.Warn("failed to close search events producer", zap.Error(err))
 		}
+		if err := rankingEventsProducer.Close(); err != nil {
+			log.Warn("failed to close ranking events producer", zap.Error(err))
+		}
 	}()
 
-	repoService := service.NewRepositoryService(repos, searchEventsProducer, log)
+	repoService := service.NewRepositoryService(repos, searchEventsProducer, rankingEventsProducer, log)
 	reindexCtx, cancelReindex := context.WithTimeout(context.Background(), 5*time.Minute)
 	if err := repoService.ReindexSearchIndex(reindexCtx, 200); err != nil {
 		log.Warn("failed to reindex repository search data on startup", zap.Error(err))
