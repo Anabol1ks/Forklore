@@ -19,10 +19,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config as { _retry?: boolean; headers: Record<string, string> };
+    const originalRequest = error.config as { _retry?: boolean; url?: string; headers: Record<string, string> };
     const status = error?.response?.status;
+    const requestURL = originalRequest?.url || '';
+    const isRefreshCall = requestURL.includes('/auth/refresh');
 
-    if (status === 401 && originalRequest && !originalRequest._retry) {
+    if (status === 401 && originalRequest && !originalRequest._retry && !isRefreshCall) {
       const refreshToken = getRefreshToken() || (typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null);
       if (!refreshToken) {
         return Promise.reject(error);
@@ -45,13 +47,13 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${access_token}`;
         }
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch {
         if (typeof window !== 'undefined') {
           clearAuthTokens();
           localStorage.removeItem('token');
           localStorage.removeItem('refresh_token');
         }
-        return Promise.reject(refreshError);
+        return Promise.reject(error);
       }
     }
 

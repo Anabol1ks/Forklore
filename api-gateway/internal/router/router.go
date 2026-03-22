@@ -38,6 +38,7 @@ func Setup(log *zap.Logger, authHandler *handlers.AuthHandler, repositoryHandler
 		v1.GET("/document-versions/:version_id", contentHandler.GetDocumentVersion)
 		v1.GET("/file-versions/:version_id", contentHandler.GetFileVersion)
 		v1.POST("/search", searchHandler.Search)
+		v1.POST("/search/users", searchHandler.SearchUsers)
 
 		v1.GET("/users/:owner_id/repositories", repositoryHandler.ListUserRepositories)
 		v1.GET("/users/:owner_id/repositories/:slug", repositoryHandler.GetRepositoryBySlug)

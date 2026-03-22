@@ -104,6 +104,7 @@ const SOCIAL_PLATFORM_LABELS: Record<string, string> = {
 
 const MAX_PROFILE_IMAGE_SIZE = 10 * 1024 * 1024;
 const PROFILE_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const UNIVERSITY_OPTIONS = ["МИРЭА", "МГУ"] as const;
 
 function validateProfileImageFile(file: File): string | null {
   if (!PROFILE_IMAGE_MIME_TYPES.includes(file.type)) {
@@ -242,6 +243,9 @@ export default function UserProfilePage() {
 
   const displayName = profile?.display_name?.trim() || profile?.username || ownerId;
   const coverBannerURL = pendingCoverPreviewURL || profile?.cover_url || "";
+  const selectedUniversityValue = UNIVERSITY_OPTIONS.includes(profileForm.location as (typeof UNIVERSITY_OPTIONS)[number])
+    ? profileForm.location
+    : "other";
 
   useEffect(() => {
     if (!pendingAvatarFile) {
@@ -842,7 +846,7 @@ export default function UserProfilePage() {
             {profile.following_count} подписок
           </span>
         </div>
-        {profile.location ? <p className="text-sm text-muted-foreground">Город: {profile.location}</p> : null}
+        {profile.location ? <p className="text-sm text-muted-foreground">Вуз: {profile.location}</p> : null}
         {profile.website_url ? (
           <a className="text-sm text-primary hover:underline" href={profile.website_url} target="_blank" rel="noreferrer">
             {profile.website_url}
@@ -988,13 +992,37 @@ export default function UserProfilePage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="location">Город</Label>
-                      <Input
-                        id="location"
-                        value={profileForm.location}
-                        onChange={(event) => setProfileForm((prev) => ({ ...prev, location: event.target.value }))}
-                        placeholder="Например: Москва"
-                      />
+                      <Label htmlFor="university">Вуз</Label>
+                      <Select
+                        value={selectedUniversityValue}
+                        onValueChange={(value) => {
+                          if (value === "other") {
+                            setProfileForm((prev) => ({ ...prev, location: "" }));
+                            return;
+                          }
+                          setProfileForm((prev) => ({ ...prev, location: value ?? "" }));
+                        }}
+                      >
+                        <SelectTrigger id="university" className="w-full">
+                          <SelectValue placeholder="Выберите вуз" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {UNIVERSITY_OPTIONS.map((university) => (
+                            <SelectItem key={university} value={university}>
+                              {university}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="other">Другой</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {selectedUniversityValue === "other" ? (
+                        <Input
+                          id="location"
+                          value={profileForm.location}
+                          onChange={(event) => setProfileForm((prev) => ({ ...prev, location: event.target.value }))}
+                          placeholder="Укажите ваш вуз"
+                        />
+                      ) : null}
                     </div>
                     <div className="space-y-1 md:col-span-2">
                       <Label htmlFor="bio">О себе</Label>

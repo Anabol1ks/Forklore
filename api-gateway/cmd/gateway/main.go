@@ -77,7 +77,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authClient)
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryClient, contentClient)
 	contentHandler := handlers.NewContentHandler(contentClient)
-	searchHandler := handlers.NewSearchHandler(searchClient)
+	searchHandler := handlers.NewSearchHandler(searchClient, profileClient)
 	profileHandler := handlers.NewProfileHandler(profileClient)
 
 	// ── Router ──
