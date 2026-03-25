@@ -3,7 +3,9 @@ package grpcserver
 import (
 	"context"
 	"profile-service/internal/domain"
+	"profile-service/internal/kafka"
 	"profile-service/internal/service"
+	"time"
 
 	profilev1 "github.com/Anabol1ks/Forklore/pkg/pb/profile/v1"
 	"github.com/Anabol1ks/Forklore/pkg/utils/authjwt"
@@ -17,18 +19,20 @@ import (
 type ProfileHandler struct {
 	profilev1.UnimplementedProfileServiceServer
 
-	service service.ProfileService
-	logger  *zap.Logger
+	service          service.ProfileService
+	rankingPublisher kafka.RankingProducer
+	logger           *zap.Logger
 }
 
-func NewProfileHandler(service service.ProfileService, logger *zap.Logger) *ProfileHandler {
+func NewProfileHandler(service service.ProfileService, rankingPublisher kafka.RankingProducer, logger *zap.Logger) *ProfileHandler {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 
 	return &ProfileHandler{
-		service: service,
-		logger:  logger,
+		service:          service,
+		rankingPublisher: rankingPublisher,
+		logger:           logger,
 	}
 }
 
@@ -317,6 +321,18 @@ func (h *ProfileHandler) FollowUser(ctx context.Context, req *profilev1.FollowUs
 		zap.String("followee_id", followeeID.String()),
 	)
 
+	if h.rankingPublisher != nil {
+		publishCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+
+		if err := h.rankingPublisher.PublishUserFollowed(publishCtx, followeeID, 1); err != nil {
+			h.logger.Warn("failed to publish ranking user.followed event",
+				zap.String("followee_id", followeeID.String()),
+				zap.Error(err),
+			)
+		}
+	}
+
 	return &emptypb.Empty{}, nil
 }
 
@@ -352,6 +368,18 @@ func (h *ProfileHandler) UnfollowUser(ctx context.Context, req *profilev1.Unfoll
 		zap.String("follower_id", claims.UserID.String()),
 		zap.String("followee_id", followeeID.String()),
 	)
+
+	if h.rankingPublisher != nil {
+		publishCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+
+		if err := h.rankingPublisher.PublishUserUnfollowed(publishCtx, followeeID, 1); err != nil {
+			h.logger.Warn("failed to publish ranking user.unfollowed event",
+				zap.String("followee_id", followeeID.String()),
+				zap.Error(err),
+			)
+		}
+	}
 
 	return &emptypb.Empty{}, nil
 }

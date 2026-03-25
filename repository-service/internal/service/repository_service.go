@@ -16,23 +16,28 @@ import (
 )
 
 type repositoryService struct {
-	repos     *repository.Repository
-	publisher SearchEventPublisher
-	logger    *zap.Logger
+	repos            *repository.Repository
+	publisher        SearchEventPublisher
+	rankingPublisher RankingEventPublisher
+	logger           *zap.Logger
 }
 
-func NewRepositoryService(repos *repository.Repository, publisher SearchEventPublisher, logger *zap.Logger) RepositoryService {
+func NewRepositoryService(repos *repository.Repository, publisher SearchEventPublisher, rankingPublisher RankingEventPublisher, logger *zap.Logger) RepositoryService {
 	if publisher == nil {
 		publisher = NewNoopSearchEventPublisher()
+	}
+	if rankingPublisher == nil {
+		rankingPublisher = NewNoopRankingEventPublisher()
 	}
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 
 	return &repositoryService{
-		repos:     repos,
-		publisher: publisher,
-		logger:    logger,
+		repos:            repos,
+		publisher:        publisher,
+		rankingPublisher: rankingPublisher,
+		logger:           logger,
 	}
 }
 
@@ -118,6 +123,12 @@ func (s *repositoryService) CreateRepository(ctx context.Context, input CreateRe
 			zap.Error(err),
 		)
 	}
+	if err := s.rankingPublisher.PublishRepositoryCreated(ctx, created); err != nil {
+		s.logger.Warn("failed to publish repository created ranking event",
+			zap.String("repo_id", created.ID.String()),
+			zap.Error(err),
+		)
+	}
 
 	return created, nil
 }
@@ -187,6 +198,7 @@ func (s *repositoryService) UpdateRepository(ctx context.Context, input UpdateRe
 	if repo.OwnerID != input.RequesterID {
 		return nil, domain.ErrRepositoryAccessDenied
 	}
+	originalVisibility := repo.Visibility
 
 	if input.TagID != nil && *input.TagID != uuid.Nil && *input.TagID != repo.TagID {
 		tag, err := s.repos.Tag.GetByID(ctx, *input.TagID)
@@ -253,6 +265,24 @@ func (s *repositoryService) UpdateRepository(ctx context.Context, input UpdateRe
 			zap.String("repo_id", updated.ID.String()),
 			zap.Error(err),
 		)
+	}
+
+	if input.Visibility != "" && updated.Visibility != originalVisibility {
+		if updated.Visibility == model.RepositoryVisibilityPublic {
+			if err := s.rankingPublisher.PublishRepositoryVisibilityChanged(ctx, updated, 1); err != nil {
+				s.logger.Warn("failed to publish repository visibility changed ranking event",
+					zap.String("repo_id", updated.ID.String()),
+					zap.Error(err),
+				)
+			}
+		} else {
+			if err := s.rankingPublisher.PublishRepositoryVisibilityChanged(ctx, updated, -1); err != nil {
+				s.logger.Warn("failed to publish repository visibility changed ranking event",
+					zap.String("repo_id", updated.ID.String()),
+					zap.Error(err),
+				)
+			}
+		}
 	}
 
 	return updated, nil
@@ -376,6 +406,12 @@ func (s *repositoryService) ForkRepository(ctx context.Context, input ForkReposi
 	if err := s.publisher.PublishRepositoryUpserted(ctx, created); err != nil {
 		s.logger.Warn("failed to publish repository upsert event",
 			zap.String("repo_id", created.ID.String()),
+			zap.Error(err),
+		)
+	}
+	if err := s.rankingPublisher.PublishRepositoryForked(ctx, sourceRepo, 1); err != nil {
+		s.logger.Warn("failed to publish repository forked ranking event",
+			zap.String("repo_id", sourceRepo.ID.String()),
 			zap.Error(err),
 		)
 	}
@@ -507,6 +543,22 @@ func (s *repositoryService) ToggleRepositoryStar(ctx context.Context, requesterI
 	starsCount, err := s.repos.Star.CountByRepoID(ctx, repoID)
 	if err != nil {
 		return nil, err
+	}
+
+	if starred {
+		if err := s.rankingPublisher.PublishRepositoryStarred(ctx, repo, 1); err != nil {
+			s.logger.Warn("failed to publish repository starred ranking event",
+				zap.String("repo_id", repo.ID.String()),
+				zap.Error(err),
+			)
+		}
+	} else {
+		if err := s.rankingPublisher.PublishRepositoryUnstarred(ctx, repo, -1); err != nil {
+			s.logger.Warn("failed to publish repository unstarred ranking event",
+				zap.String("repo_id", repo.ID.String()),
+				zap.Error(err),
+			)
+		}
 	}
 
 	return &RepositoryStarState{

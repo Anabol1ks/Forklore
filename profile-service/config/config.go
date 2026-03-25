@@ -27,9 +27,10 @@ type Auth struct {
 }
 
 type KafkaConfig struct {
-	Brokers   []string
-	AuthTopic string
-	GroupID   string
+	Brokers      []string
+	AuthTopic    string
+	RankingTopic string
+	GroupID      string
 }
 
 func Load(log *zap.Logger) *Config {
@@ -49,9 +50,10 @@ func Load(log *zap.Logger) *Config {
 			JWTSecret: getEnv("JWTSecret", log),
 		},
 		Kafka: KafkaConfig{
-			Brokers:   splitAndTrim(getEnv("KAFKA_BROKERS", log)),
-			AuthTopic: getEnv("KAFKA_PROFILE_TOPIC", log),
-			GroupID:   getEnv("KAFKA_PROFILE_GROUP_ID", log),
+			Brokers:      splitAndTrim(getEnv("KAFKA_BROKERS", log)),
+			AuthTopic:    getEnv("KAFKA_PROFILE_TOPIC", log),
+			RankingTopic: getEnv("KAFKA_RANKING_TOPIC", log),
+			GroupID:      getEnv("KAFKA_PROFILE_GROUP_ID", log),
 		},
 	}
 }

@@ -45,6 +45,15 @@ func main() {
 	defer stop()
 
 	repos := repository.New(db)
+	rankingProducer := kafka.NewRankingProducer(kafka.RankingProducerConfig{
+		Brokers: cfg.Kafka.Brokers,
+		Topic:   cfg.Kafka.RankingTopic,
+	}, log)
+	defer func() {
+		if err := rankingProducer.Close(); err != nil {
+			log.Warn("failed to close ranking producer", zap.Error(err))
+		}
+	}()
 
 	profileService := service.NewProfileService(
 		repos,
@@ -66,7 +75,7 @@ func main() {
 		HandleTimeout:   10 * time.Second,
 	}, kafkaHandler, log)
 
-	profileHandler := grpcserver.NewProfileHandler(profileService, log)
+	profileHandler := grpcserver.NewProfileHandler(profileService, rankingProducer, log)
 
 	tokenManager := authjwt.NewJWTVerifier(cfg.Auth.JWTSecret)
 	authInterceptor := grpcserver.NewAuthInterceptor(tokenManager, log)
