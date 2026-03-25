@@ -10,4 +10,3 @@
         reverse_proxy frontend:3000
     }
 }
-curl.exe -X GET "https://loremru.hackaton.profcomff.com/api/v1/rankings/overall?limit=20&offset=0" -H "accept: application/json"
